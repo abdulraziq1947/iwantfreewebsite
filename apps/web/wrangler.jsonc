@@ -67,10 +67,10 @@
       "d1_databases": [
         {
           "binding": "DB",
-          // Create a SEPARATE D1 named iwfw-production — never reuse staging UUID
+          // Separate production D1 (created manually) — never reuse staging UUID
           // 6ff3f735-0dd5-4204-a778-b39b94dbfb19.
           "database_name": "iwfw-production",
-          "database_id": "REPLACE_WITH_PRODUCTION_D1_UUID",
+          "database_id": "634c4590-3ace-4416-a439-9c634827f4ba",
           "migrations_dir": "../../packages/db/migrations"
         }
       ]

@@ -27,7 +27,7 @@ Do **not** build without `CLOUDFLARE_ENV=production` for production: the top-lev
 | --- | --- | --- |
 | **Worker** | `iwantfreewebsite` | `iwfw-staging` |
 | **Select env** | `CLOUDFLARE_ENV=production` | `CLOUDFLARE_ENV=staging` |
-| **D1 name** | `iwfw-production` (own UUID) | `iwfw-staging` (`6ff3f735-0dd5-4204-a778-b39b94dbfb19`) |
+| **D1 name** | `iwfw-production` (`634c4590-3ace-4416-a439-9c634827f4ba`) | `iwfw-staging` (`6ff3f735-0dd5-4204-a778-b39b94dbfb19`) |
 | **Secrets** | On Worker `iwantfreewebsite` only; **new** `BETTER_AUTH_SECRET` | Staging-only secret values |
 | **Git branch** | **`main`** (after approved merge) | `staging` |
 
@@ -55,7 +55,7 @@ Pause Builds until `main` contains Phase 1 + production D1 UUID and secrets are 
 ## Prerequisites / blockers
 
 1. **`main` lacks Phase 1 code** — currently still the initial commit. Production Builds on `main` cannot deploy the app until an approved merge from `staging` (or equivalent).
-2. **Production D1 not created** — `database_id` is still `REPLACE_WITH_PRODUCTION_D1_UUID`. Create D1 named **`iwfw-production`**, then paste its UUID into `env.production` only.
+2. **Production D1 UUID wired** — `iwfw-production` / `634c4590-3ace-4416-a439-9c634827f4ba` is in `env.production`. Migrations still not applied remotely.
 3. **Production secrets not set** on Worker `iwantfreewebsite`.
 4. **Existing Workers Builds** for `iwantfreewebsite` is misconfigured (root `/`, wrong build command) and runs on PR branches — pause/fix before cutover. See [`WORKERS_BUILDS_INVESTIGATION.md`](./WORKERS_BUILDS_INVESTIGATION.md).
 5. **Custom domain** `iwantfreewebsite.com` must resolve to this Worker and match `APP_URL` for Better Auth cookies / `trustedOrigins`.
@@ -65,10 +65,9 @@ Pause Builds until `main` contains Phase 1 + production D1 UUID and secrets are 
 
 ## D1 (create only after approval)
 
-1. Create D1 database named **`iwfw-production`** (empty; **not** `iwfw-staging`).
-2. Set `apps/web/wrangler.jsonc` → `env.production.d1_databases[0].database_id` to that UUID.
-3. Binding: **`DB`**.
-4. Apply migrations to **that** database only (after approval):
+1. D1 **`iwfw-production`** exists — UUID `634c4590-3ace-4416-a439-9c634827f4ba` is in Wrangler `env.production`.
+2. Binding: **`DB`**.
+3. Apply migrations to **that** database only (after approval):
 
 ```bash
 cd apps/web
@@ -111,7 +110,7 @@ Phase 1 does **not** require Stripe / MXroute / DataForSEO secrets.
 
 ## Recommended cutover order (after approval)
 
-1. Create D1 `iwfw-production`; commit UUID on a production-prep branch; merge into `staging` then `main` as agreed.
+1. Production D1 UUID is committed on the production-prep branch; merge into `staging` then `main` as agreed.
 2. Set production secrets/vars on Worker `iwantfreewebsite` (not on `iwfw-staging`).
 3. Pause or fix Builds: root `apps/web`, `CLOUDFLARE_ENV=production` build command, branch `main`, preview off.
 4. Merge approved app code to `main` (does not happen in this prep).
@@ -128,4 +127,4 @@ Phase 1 does **not** require Stripe / MXroute / DataForSEO secrets.
 pnpm --filter @iwfw/web deploy:production:dry
 ```
 
-Expect flattened **`name`: `iwantfreewebsite`**, D1 **`iwfw-production`**, and **not** staging UUID `6ff3f735-0dd5-4204-a778-b39b94dbfb19`.
+Expect flattened **`name`: `iwantfreewebsite`**, D1 **`iwfw-production`** / `634c4590-3ace-4416-a439-9c634827f4ba`, and **not** staging UUID `6ff3f735-0dd5-4204-a778-b39b94dbfb19`.
