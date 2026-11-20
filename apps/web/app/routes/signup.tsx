@@ -97,7 +97,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       }
     }
 
-    return redirectWithAuthCookies(signUp, "/dashboard");
+    return redirectWithAuthCookies(signUp, "/dashboard/onboarding");
   } catch (error) {
     log("error", "signup_failed", {
       error: error instanceof Error ? error.message : "unknown",

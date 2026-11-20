@@ -1,44 +1,95 @@
-import { Link, Outlet } from "react-router";
+import { Form, Link, NavLink, Outlet, useLocation } from "react-router";
 import { requireAuth } from "../lib/session.server";
+import { CUSTOMER_NAV } from "../lib/customer-dashboard";
 import type { Route } from "./+types/customer-layout";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
   return {
     user: { name: auth.name, email: auth.email },
+    isStaff: auth.staffRoles.length > 0,
     organisationIds: auth.memberships.map((m) => m.organisationId),
   };
 }
 
 export default function CustomerLayout({ loaderData }: Route.ComponentProps) {
+  const { pathname } = useLocation();
+
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-[var(--iwfw-border)] bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-[var(--iwfw-muted)]">
-              Customer
-            </p>
-            <Link to="/dashboard" className="font-[family-name:var(--iwfw-font-display)] text-lg font-bold">
-              Dashboard
+    <div className="iwfw-dash">
+      <header className="iwfw-dash__topbar">
+        <div className="iwfw-dash__topbar-inner">
+          <div className="iwfw-dash__brand">
+            <Link to="/dashboard" className="iwfw-dash__logo">
+              iwantfreewebsite
             </Link>
+            <span className="iwfw-dash__eyebrow">Customer area</span>
           </div>
-          <div className="text-right text-sm">
-            <p className="font-semibold">{loaderData.user.name}</p>
-            <p className="text-[var(--iwfw-muted)]">{loaderData.user.email}</p>
+
+          <div className="iwfw-dash__user">
+            <div className="iwfw-dash__user-text">
+              <p className="iwfw-dash__user-name">{loaderData.user.name}</p>
+              <p className="iwfw-dash__user-email">{loaderData.user.email}</p>
+            </div>
+            {loaderData.isStaff && (
+              <Link to="/admin" className="iwfw-btn iwfw-btn--outline iwfw-dash__btn">
+                Admin
+              </Link>
+            )}
+            <Form method="post" action="/logout">
+              <button type="submit" className="iwfw-btn iwfw-btn--outline iwfw-dash__btn">
+                Log out
+              </button>
+            </Form>
           </div>
         </div>
       </header>
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:grid-cols-[200px_1fr]">
-        <aside className="space-y-2 text-sm font-semibold">
-          <Link className="block rounded-md px-3 py-2 hover:bg-white" to="/dashboard">
-            Overview
-          </Link>
-          <Link className="block rounded-md px-3 py-2 text-[var(--iwfw-muted)] hover:bg-white" to="/">
+
+      <div className="iwfw-dash__shell">
+        <aside className="iwfw-dash__nav" aria-label="Customer">
+          {CUSTOMER_NAV.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={"end" in item ? item.end : false}
+              className={({ isActive }) =>
+                `iwfw-dash__nav-link${isActive ? " is-active" : ""}`
+              }
+            >
+              {item.label}
+            </NavLink>
+          ))}
+          <Form method="post" action="/logout" className="iwfw-dash__nav-logout">
+            <button type="submit" className="iwfw-dash__nav-link iwfw-dash__nav-link--logout">
+              Log out
+            </button>
+          </Form>
+          <Link to="/" className="iwfw-dash__nav-link iwfw-dash__nav-link--muted">
             Marketing site
           </Link>
         </aside>
-        <Outlet />
+
+        <div className="iwfw-dash__mobile-nav" aria-label="Customer sections">
+          {CUSTOMER_NAV.map((item) => {
+            const active =
+              item.to === "/dashboard"
+                ? pathname === "/dashboard"
+                : pathname.startsWith(item.to);
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`iwfw-dash__chip${active ? " is-active" : ""}`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+
+        <main className="iwfw-dash__main">
+          <Outlet />
+        </main>
       </div>
     </div>
   );
