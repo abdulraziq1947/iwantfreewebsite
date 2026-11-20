@@ -4,10 +4,14 @@
   "type": "module",
   "scripts": {
     "build": "react-router build",
+    "build:staging": "CLOUDFLARE_ENV=staging react-router build",
     "dev": "react-router dev",
     "typecheck": "wrangler types && react-router typegen && tsc -b",
     "cf-typegen": "wrangler types",
     "db:migrate:local": "wrangler d1 migrations apply iwfw-local --local",
+    "db:migrate:staging": "wrangler d1 migrations apply DB --env staging --remote",
+    "deploy:staging": "pnpm run build:staging && wrangler deploy",
+    "deploy:staging:dry": "pnpm run build:staging && wrangler deploy --dry-run",
     "test": "vitest run",
     "preview": "pnpm run build && vite preview"
   },
