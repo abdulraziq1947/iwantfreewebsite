@@ -1,45 +1,47 @@
 import { Link } from "react-router";
-import { Button, Panel } from "@iwfw/ui";
 import type { Route } from "./+types/pricing";
 
 export function meta(_args: Route.MetaArgs) {
-  return [{ title: "Pricing — iwantfreewebsite" }];
+  return [
+    { title: "Pricing — iwantfreewebsite.com" },
+    {
+      name: "description",
+      content:
+        "£39.99/month for a managed business website. No upfront website fee. No minimum contract. Cancel anytime.",
+    },
+  ];
 }
 
 export default function Pricing() {
   return (
-    <main className="mx-auto max-w-4xl px-4 py-16">
-      <h1 className="text-4xl font-bold">Simple monthly pricing</h1>
-      <p className="mt-3 text-[var(--iwfw-muted)]">
-        No upfront website fee. No minimum contract. Cancel anytime.
+    <main className="iwfw-pricing">
+      <h1>Simple monthly pricing</h1>
+      <p className="iwfw-pricing__lead">
+        £39.99/month. No upfront website fee. No minimum contract. Cancel anytime.
       </p>
-      <Panel className="mt-10">
-        <p className="text-sm font-semibold uppercase tracking-wide text-[var(--iwfw-accent)]">
-          Core package
-        </p>
-        <p className="mt-2 font-[family-name:var(--iwfw-font-display)] text-5xl font-bold">
+
+      <div className="iwfw-pricing__plan">
+        <p className="iwfw-pricing__price">
           £39.99
-          <span className="text-lg font-sans font-semibold text-[var(--iwfw-muted)]">
-            /month
-          </span>
+          <span>/month</span>
         </p>
-        <ul className="mt-6 space-y-2 text-[var(--iwfw-muted)]">
-          <li>Professional managed website</li>
-          <li>Hosting, maintenance and support</li>
-          <li>Domain help (manual purchase by our team after payment)</li>
-          <li>One business email mailbox</li>
-          <li>Weekly Google Business Profile posting (manual)</li>
+        <ul className="iwfw-pricing__list">
+          <li>Professional business website</li>
+          <li>Domain name &amp; hosting</li>
+          <li>Business email address</li>
+          <li>Weekly Google Business Profile post</li>
+          <li>Google review replies</li>
         </ul>
-        <p className="mt-6 text-sm text-[var(--iwfw-muted)]">
+        <p className="iwfw-pricing__note">
           Optional Google Rank Tracking (£9.99/month) will be offered only once
           that feature is operational.
         </p>
-        <div className="mt-8">
-          <Link to="/signup">
-            <Button type="button">Start signup</Button>
+        <div className="iwfw-pricing__cta">
+          <Link to="/signup" className="iwfw-btn iwfw-btn--green">
+            Get My Website Today
           </Link>
         </div>
-      </Panel>
+      </div>
     </main>
   );
 }
