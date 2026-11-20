@@ -49,6 +49,7 @@ export default function PublicLayout({ loaderData }: Route.ComponentProps) {
             <Link to="/" className={isHome ? "is-active" : undefined}>
               Home
             </Link>
+            <a href={isHome ? "#examples" : "/#examples"}>Our Work</a>
             <a href={isHome ? "#how-it-works" : "/#how-it-works"}>How It Works</a>
             <a href={isHome ? "#included" : "/#included"}>What&apos;s Included</a>
             <a href={isHome ? "#faqs" : "/#faqs"}>FAQs</a>

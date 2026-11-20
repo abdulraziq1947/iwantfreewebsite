@@ -139,7 +139,47 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="how-it-works" className="iwfw-band iwfw-band--muted">
+      <section id="examples" className="iwfw-band iwfw-band--muted">
+        <div className="iwfw-band__inner">
+          <h2>Some of the sites we&apos;ve built</h2>
+          <p className="iwfw-band__lead">
+            Real UK businesses live on the web — open any site to see the kind
+            of presence we put together.
+          </p>
+          <ul className="iwfw-examples">
+            {BUILT_SITES.map((site) => (
+              <li key={site.href}>
+                <a
+                  className={`iwfw-example iwfw-example--${site.tone}`}
+                  href={site.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span className="iwfw-example__chrome" aria-hidden="true">
+                    <i />
+                    <i />
+                    <i />
+                    <em>{site.host}</em>
+                  </span>
+                  <span className="iwfw-example__preview">
+                    <strong>{site.name}</strong>
+                    <span>{site.tagline}</span>
+                  </span>
+                  <span className="iwfw-example__meta">
+                    <span>{site.trade}</span>
+                    <span className="iwfw-example__visit">
+                      Visit site
+                      <ArrowIcon />
+                    </span>
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section id="how-it-works" className="iwfw-band">
         <div className="iwfw-band__inner">
           <h2>How it works</h2>
           <p className="iwfw-band__lead">
@@ -171,7 +211,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="faqs" className="iwfw-band">
+      <section id="faqs" className="iwfw-band iwfw-band--muted">
         <div className="iwfw-band__inner iwfw-faqs">
           <h2>Questions people ask before they sign up</h2>
           <details open>
@@ -245,6 +285,49 @@ export default function Home() {
     </main>
   );
 }
+
+const BUILT_SITES = [
+  {
+    name: "Fencing Company Derby",
+    host: "fencingcompanyderby.co.uk",
+    href: "https://fencingcompanyderby.co.uk/",
+    trade: "Fencing · Derby",
+    tagline: "24-hour fencing installations and repairs across Derbyshire.",
+    tone: "fence",
+  },
+  {
+    name: "Stretton Solicitors",
+    host: "strettonsolicitors.co.uk",
+    href: "https://strettonsolicitors.co.uk/",
+    trade: "Immigration & commercial lease law · UK",
+    tagline: "Specialist solicitors with offices across the UK.",
+    tone: "law",
+  },
+  {
+    name: "Expert Removals Manchester",
+    host: "manchesterremovalsgb.co.uk",
+    href: "https://manchesterremovalsgb.co.uk/",
+    trade: "Removals · Greater Manchester",
+    tagline: "House, office and long-distance moves with local branches.",
+    tone: "move",
+  },
+  {
+    name: "Super Plumbers",
+    host: "superplumbers.co.uk",
+    href: "https://superplumbers.co.uk/",
+    trade: "Plumbing · UK network",
+    tagline: "Vetted plumbers for emergencies, repairs and installations.",
+    tone: "plumb",
+  },
+  {
+    name: "Rubbish Removal Team",
+    host: "rubbishremovalteam.co.uk",
+    href: "https://rubbishremovalteam.co.uk/",
+    trade: "Rubbish removal · West Midlands & beyond",
+    tagline: "House clearance, junk removal and licensed waste collection.",
+    tone: "waste",
+  },
+] as const;
 
 function SampleSite({ variant }: { variant: "desktop" | "mobile" }) {
   return (
