@@ -256,11 +256,11 @@ h3 {
 
 .iwfw-hero h1 {
   margin: 0.9rem 0 0;
-  font-size: clamp(2.1rem, 4.6vw, 3.35rem);
+  font-size: clamp(1.9rem, 4.2vw, 3rem);
   font-weight: 800;
-  line-height: 1.08;
+  line-height: 1.1;
   color: var(--iwfw-ink);
-  max-width: 12ch;
+  max-width: 16ch;
   text-wrap: balance;
 }
 
@@ -626,7 +626,14 @@ h3 {
 }
 
 .iwfw-include-panel h2 {
-  margin-bottom: 1rem;
+  margin-bottom: 0.45rem;
+}
+
+.iwfw-include-panel__intro {
+  margin: 0 0 1rem;
+  color: var(--iwfw-muted);
+  font-weight: 600;
+  line-height: 1.45;
 }
 
 .iwfw-include-panel ul {
@@ -641,10 +648,9 @@ h3 {
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 0.7rem;
-  align-items: center;
-  padding: 0.55rem 0.35rem;
+  align-items: start;
+  padding: 0.7rem 0.35rem;
   border-bottom: 1px solid #eef2f7;
-  font-weight: 700;
   color: var(--iwfw-ink);
 }
 
@@ -661,11 +667,30 @@ h3 {
   border-radius: 0.5rem;
   background: #eaf1ff;
   color: var(--iwfw-accent);
+  margin-top: 0.1rem;
+}
+
+.iwfw-include-panel__text {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.iwfw-include-panel__text strong {
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.iwfw-include-panel__text span {
+  color: var(--iwfw-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 .iwfw-include-panel__check {
   color: var(--iwfw-cta);
   font-weight: 800;
+  margin-top: 0.15rem;
 }
 
 .iwfw-price-panel {
@@ -685,7 +710,7 @@ h3 {
 }
 
 .iwfw-price-panel__amount {
-  margin: 0 0 1rem;
+  margin: 0;
   font-size: clamp(2.4rem, 5vw, 3.2rem);
   font-weight: 800;
   line-height: 1;
@@ -704,6 +729,14 @@ h3 {
   margin-top: 0.55rem;
   background: var(--iwfw-mark);
   border-radius: 999px;
+}
+
+.iwfw-price-panel__note {
+  margin: 0.35rem 0 1rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.4;
+  opacity: 0.95;
 }
 
 .iwfw-how {

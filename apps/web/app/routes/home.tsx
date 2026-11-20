@@ -3,11 +3,14 @@ import type { Route } from "./+types/home";
 
 export function meta(_args: Route.MetaArgs) {
   return [
-    { title: "iwantfreewebsite.com — Get a Professional Business Website" },
+    {
+      title:
+        "iwantfreewebsite.com — Managed websites for UK trades & local businesses",
+    },
     {
       name: "description",
       content:
-        "£0 upfront. Just £39.99/month. We build your website, set up your domain, host it, and help with your Google Business Profile. Cancel anytime.",
+        "£39.99/month. No upfront website fee. No minimum contract. Cancel anytime. We build and manage your website, domain, business email and Google Business Profile — so you can get back to the job.",
     },
   ];
 }
@@ -21,20 +24,20 @@ export default function Home() {
             <p className="iwfw-hero__brand">iwantfreewebsite.com</p>
             <p className="iwfw-pill">
               <UkFlag />
-              UK-based website service
+              Built for UK trades &amp; local businesses
             </p>
-            <h1>Get a Professional Business Website</h1>
+            <h1>A website that brings in jobs — without the agency price tag</h1>
             <p className="iwfw-price-banner">
-              <span>£0 Upfront. Just £39.99/month.</span>
+              <span>£39.99/month. No upfront website fee.</span>
             </p>
             <p className="iwfw-hero__lead">
-              We build your website, set up your domain, host it, and help with
-              your Google Business Profile. All done for you, so you can focus
-              on running your business.
+              We design, host and look after your site, help with your domain,
+              set up business email, and keep your Google Business Profile
+              active. You stay on the tools — we keep you findable online.
             </p>
             <div className="iwfw-hero__ctas">
               <Link to="/signup" className="iwfw-btn iwfw-btn--green">
-                Get My Website Today
+                Start for £39.99/month
                 <ArrowIcon />
               </Link>
               <a className="iwfw-speak" href="tel:08008527267">
@@ -42,7 +45,7 @@ export default function Home() {
                   <PhoneIcon />
                 </span>
                 <span>
-                  <strong>Speak to Us Today</strong>
+                  <strong>Prefer to talk it through?</strong>
                   <em>0800 852 7267</em>
                 </span>
               </a>
@@ -69,19 +72,19 @@ export default function Home() {
         <div className="iwfw-trust iwfw-anim iwfw-anim--3">
           <div className="iwfw-trust__item">
             <TrustIcon kind="support" />
-            <span>UK-Based Support</span>
+            <span>UK team on the phone</span>
           </div>
           <div className="iwfw-trust__item">
             <TrustIcon kind="setup" />
-            <span>Quick Setup</span>
+            <span>No upfront website fee</span>
           </div>
           <div className="iwfw-trust__item">
             <TrustIcon kind="hosting" />
-            <span>Reliable Hosting</span>
+            <span>Hosting &amp; updates included</span>
           </div>
           <div className="iwfw-trust__item">
             <TrustIcon kind="trusted" />
-            <span>Trusted by UK Businesses</span>
+            <span>Cancel anytime</span>
           </div>
         </div>
       </section>
@@ -89,22 +92,48 @@ export default function Home() {
       <section id="included" className="iwfw-band">
         <div className="iwfw-band__inner iwfw-band__split">
           <div className="iwfw-include-panel">
-            <h2>What&apos;s Included?</h2>
+            <h2>Everything in the £39.99 plan</h2>
+            <p className="iwfw-include-panel__intro">
+              One clear monthly price. No surprise build invoices.
+            </p>
             <ul>
-              <IncludeItem icon="globe" label="Professional business website" />
-              <IncludeItem icon="domain" label="Domain name & hosting" />
-              <IncludeItem icon="mail" label="Business email address" />
-              <IncludeItem icon="shop" label="Weekly Google Business Profile post" />
-              <IncludeItem icon="star" label="Google review replies" />
+              <IncludeItem
+                icon="globe"
+                label="Professional business website"
+                detail="A clean site that shows your services and makes it easy to enquire."
+              />
+              <IncludeItem
+                icon="domain"
+                label="Domain help &amp; hosting"
+                detail="Choose a domain; we purchase and renew it manually. Hosting is included while you subscribe."
+              />
+              <IncludeItem
+                icon="mail"
+                label="Business email mailbox"
+                detail="One custom mailbox so customers contact you@yourbusiness — not a free webmail address."
+              />
+              <IncludeItem
+                icon="shop"
+                label="Weekly Google Business Profile post"
+                detail="We publish a post each week to keep your listing looking active."
+              />
+              <IncludeItem
+                icon="star"
+                label="Google review replies"
+                detail="We help reply to reviews so you look professional and stay visible."
+              />
             </ul>
           </div>
           <div className="iwfw-price-panel">
-            <p>All for just</p>
+            <p>Transparent pricing</p>
             <p className="iwfw-price-panel__amount">
               £39.99 <span>/month</span>
             </p>
+            <p className="iwfw-price-panel__note">
+              No upfront website fee. No minimum contract. Cancel anytime.
+            </p>
             <Link to="/signup" className="iwfw-btn iwfw-btn--green iwfw-btn--block">
-              Get Started
+              Create my account
             </Link>
           </div>
         </div>
@@ -112,22 +141,31 @@ export default function Home() {
 
       <section id="how-it-works" className="iwfw-band iwfw-band--muted">
         <div className="iwfw-band__inner">
-          <h2>How It Works</h2>
+          <h2>How it works</h2>
           <p className="iwfw-band__lead">
-            Three simple steps from signup to a live business website.
+            From signup to a live site — without briefings that drag on for weeks.
           </p>
           <ol className="iwfw-how">
             <li>
-              <strong>1. Get started</strong>
-              <p>Create your account and subscribe for £39.99/month.</p>
+              <strong>1. Subscribe in minutes</strong>
+              <p>
+                Create your account for £39.99/month. No long contracts and no
+                deposit for the website itself.
+              </p>
             </li>
             <li>
-              <strong>2. Tell us about your business</strong>
-              <p>Share your services, photos, and preferred domain name.</p>
+              <strong>2. Send us the essentials</strong>
+              <p>
+                Business name, services, photos, contact details and the domain
+                you want. We guide you through a simple checklist.
+              </p>
             </li>
             <li>
-              <strong>3. We build and manage it</strong>
-              <p>Website, hosting, email and Google Business Profile support included.</p>
+              <strong>3. We launch and look after it</strong>
+              <p>
+                We build the site, help with domain and email, and keep Google
+                Business Profile posts and review replies moving.
+              </p>
             </li>
           </ol>
         </div>
@@ -135,27 +173,53 @@ export default function Home() {
 
       <section id="faqs" className="iwfw-band">
         <div className="iwfw-band__inner iwfw-faqs">
-          <h2>FAQs</h2>
+          <h2>Questions people ask before they sign up</h2>
           <details open>
-            <summary>Is there an upfront website fee?</summary>
-            <p>No. There is no upfront website fee — just £39.99/month.</p>
-          </details>
-          <details>
-            <summary>Is there a minimum contract?</summary>
-            <p>No minimum contract. Cancel anytime; service continues to the end of the paid period.</p>
-          </details>
-          <details>
-            <summary>What do I get for £39.99/month?</summary>
+            <summary>Is the website really £0 upfront?</summary>
             <p>
-              A managed business website, hosting, domain help, one business
-              mailbox, weekly Google Business Profile posts, and review replies.
+              Yes. There is no upfront website fee. You pay £39.99/month for the
+              managed service. Domain registration costs are handled separately
+              when we purchase the name you choose.
             </p>
           </details>
           <details>
-            <summary>Do you buy the domain for me?</summary>
+            <summary>Who is this for?</summary>
             <p>
-              You search and select a domain. Our team purchases and renews it
-              manually after payment — there is no automatic domain purchase.
+              UK trades and local businesses that need a proper online presence —
+              plumbers, electricians, builders, cleaners, salons, cafés and
+              similar — without hiring an agency on a big project fee.
+            </p>
+          </details>
+          <details>
+            <summary>Can I cancel if it is not right for me?</summary>
+            <p>
+              Yes. There is no minimum contract. Cancel anytime and your service
+              continues until the end of the period you have already paid for.
+            </p>
+          </details>
+          <details>
+            <summary>What exactly is included each month?</summary>
+            <p>
+              A managed business website, hosting and maintenance, domain help
+              (manual purchase and renewals by our team), one business email
+              mailbox, one Google Business Profile post per week, and help with
+              review replies — plus access to your customer dashboard and
+              support.
+            </p>
+          </details>
+          <details>
+            <summary>Do you buy and renew the domain automatically?</summary>
+            <p>
+              No automatic purchases. You search and select a domain; our team
+              buys and renews it manually after payment. That keeps you in
+              control and avoids surprise auto-charges.
+            </p>
+          </details>
+          <details>
+            <summary>Is rank tracking included?</summary>
+            <p>
+              Not yet. Optional Google Rank Tracking (£9.99/month, up to 5
+              keywords) will only be offered once that feature is operational.
             </p>
           </details>
         </div>
@@ -163,11 +227,14 @@ export default function Home() {
 
       <section className="iwfw-band iwfw-band--close">
         <div className="iwfw-band__inner iwfw-close">
-          <h2>Ready for a website that works for your business?</h2>
-          <p>£0 upfront. Just £39.99/month. Cancel anytime.</p>
+          <h2>Stop losing work to competitors who show up online first</h2>
+          <p>
+            £39.99/month. No upfront website fee. No minimum contract. Cancel
+            anytime.
+          </p>
           <div className="iwfw-close__actions">
             <Link to="/signup" className="iwfw-btn iwfw-btn--green">
-              Get My Website Today
+              Start for £39.99/month
             </Link>
             <a className="iwfw-btn iwfw-btn--outline" href="tel:08008527267">
               Call 0800 852 7267
@@ -183,7 +250,7 @@ function SampleSite({ variant }: { variant: "desktop" | "mobile" }) {
   return (
     <div className={`iwfw-sample iwfw-sample--${variant}`}>
       <header>
-        <strong>Your Business</strong>
+        <strong>Harris &amp; Son</strong>
         {variant === "desktop" && (
           <nav>
             <span>Home</span>
@@ -194,13 +261,13 @@ function SampleSite({ variant }: { variant: "desktop" | "mobile" }) {
       </header>
       <div className="iwfw-sample__hero">
         <div>
-          <p className="iwfw-sample__title">Trusted Local Plumbing Services</p>
+          <p className="iwfw-sample__title">Plumbing done properly, when you need it</p>
           <ul>
-            <li>Boiler repairs</li>
-            <li>Emergency call-outs</li>
-            <li>Bathroom fitting</li>
+            <li>Boilers &amp; heating</li>
+            <li>Same-day call-outs</li>
+            <li>Bathroom installs</li>
           </ul>
-          <span className="iwfw-sample__quote">Get a Free Quote</span>
+          <span className="iwfw-sample__quote">Request a call-back</span>
         </div>
         <div className="iwfw-sample__photo" />
       </div>
@@ -211,16 +278,21 @@ function SampleSite({ variant }: { variant: "desktop" | "mobile" }) {
 function IncludeItem({
   icon,
   label,
+  detail,
 }: {
   icon: "globe" | "domain" | "mail" | "shop" | "star";
   label: string;
+  detail: string;
 }) {
   return (
     <li>
       <span className="iwfw-include-panel__icon" aria-hidden="true">
         <IncludeIcon kind={icon} />
       </span>
-      <span>{label}</span>
+      <span className="iwfw-include-panel__text">
+        <strong>{label}</strong>
+        <span>{detail}</span>
+      </span>
       <span className="iwfw-include-panel__check" aria-hidden="true">
         ✓
       </span>

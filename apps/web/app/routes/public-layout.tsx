@@ -80,7 +80,10 @@ export default function PublicLayout({ loaderData }: Route.ComponentProps) {
             <LogoMark />
             <div>
               <strong>iwantfreewebsite.com</strong>
-              <p>£39.99/month · No minimum contract · Cancel anytime</p>
+              <p>
+                Managed websites for UK businesses · £39.99/month · Cancel
+                anytime
+              </p>
             </div>
           </div>
           <div className="iwfw-footer__links">
