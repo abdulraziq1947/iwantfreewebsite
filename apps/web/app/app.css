@@ -775,56 +775,25 @@ h3 {
   max-width: 100%;
 }
 
-.iwfw-example__preview {
-  display: grid;
-  gap: 0.35rem;
-  min-height: 7.5rem;
-  padding: 1.15rem 1.1rem 1rem;
-  color: #fff;
+.iwfw-example__shot {
+  display: block;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: #dbe4f0;
 }
 
-.iwfw-example__preview strong {
-  font-size: 1.15rem;
-  font-weight: 800;
-  line-height: 1.2;
+.iwfw-example__shot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  transition: transform 280ms ease;
 }
 
-.iwfw-example__preview > span {
-  max-width: 28ch;
-  font-size: 0.92rem;
-  font-weight: 600;
-  line-height: 1.4;
-  opacity: 0.92;
-}
-
-.iwfw-example--fence .iwfw-example__preview {
-  background:
-    linear-gradient(145deg, rgba(8, 28, 18, 0.2), rgba(8, 28, 18, 0.55)),
-    linear-gradient(135deg, #1f6b45 0%, #0f3d28 100%);
-}
-
-.iwfw-example--law .iwfw-example__preview {
-  background:
-    linear-gradient(145deg, rgba(12, 24, 48, 0.15), rgba(12, 24, 48, 0.5)),
-    linear-gradient(135deg, #1e3a6e 0%, #0f1f3d 100%);
-}
-
-.iwfw-example--move .iwfw-example__preview {
-  background:
-    linear-gradient(145deg, rgba(40, 18, 8, 0.15), rgba(40, 18, 8, 0.5)),
-    linear-gradient(135deg, #c45c16 0%, #7a3208 100%);
-}
-
-.iwfw-example--plumb .iwfw-example__preview {
-  background:
-    linear-gradient(145deg, rgba(8, 28, 48, 0.15), rgba(8, 28, 48, 0.45)),
-    linear-gradient(135deg, #0f6fb8 0%, #0a3d6b 100%);
-}
-
-.iwfw-example--waste .iwfw-example__preview {
-  background:
-    linear-gradient(145deg, rgba(28, 32, 12, 0.2), rgba(28, 32, 12, 0.55)),
-    linear-gradient(135deg, #5a6b1f 0%, #2f3a12 100%);
+.iwfw-example:hover .iwfw-example__shot img,
+.iwfw-example:focus-visible .iwfw-example__shot img {
+  transform: scale(1.03);
 }
 
 .iwfw-example__meta {
@@ -836,6 +805,22 @@ h3 {
   padding: 0.85rem 1.05rem;
   font-size: 0.86rem;
   font-weight: 700;
+  color: var(--iwfw-muted);
+}
+
+.iwfw-example__meta strong {
+  display: block;
+  color: var(--iwfw-ink);
+  font-size: 0.98rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.iwfw-example__meta em {
+  display: block;
+  margin-top: 0.15rem;
+  font-style: normal;
+  font-weight: 600;
   color: var(--iwfw-muted);
 }
 

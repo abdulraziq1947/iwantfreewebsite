@@ -111,13 +111,14 @@ export default function Home() {
         <div className="iwfw-band__inner">
           <h2>Some of the sites we&apos;ve built</h2>
           <p className="iwfw-band__lead">
-            Live examples from real customers. Click through to see the work.
+            Live examples from real customers — preview below, or open the full
+            site.
           </p>
           <ul className="iwfw-examples">
             {BUILT_SITES.map((site) => (
               <li key={site.href}>
                 <a
-                  className={`iwfw-example iwfw-example--${site.tone}`}
+                  className="iwfw-example"
                   href={site.href}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -128,12 +129,20 @@ export default function Home() {
                     <i />
                     <em>{site.host}</em>
                   </span>
-                  <span className="iwfw-example__preview">
-                    <strong>{site.name}</strong>
-                    <span>{site.tagline}</span>
+                  <span className="iwfw-example__shot">
+                    <img
+                      src={site.image}
+                      alt={`${site.name} website preview`}
+                      width={960}
+                      height={595}
+                      loading="lazy"
+                    />
                   </span>
                   <span className="iwfw-example__meta">
-                    <span>{site.trade}</span>
+                    <span>
+                      <strong>{site.name}</strong>
+                      <em>{site.trade}</em>
+                    </span>
                     <span className="iwfw-example__visit">
                       Visit site
                       <ArrowIcon />
@@ -231,32 +240,28 @@ const BUILT_SITES = [
     host: "fencingcompanyderby.co.uk",
     href: "https://fencingcompanyderby.co.uk/",
     trade: "Fencing contractor",
-    tagline: "24-hour fencing installations and repairs for homes and businesses.",
-    tone: "fence",
+    image: "/examples/fencing.jpg",
   },
   {
     name: "Expert Removals Manchester",
     host: "manchesterremovalsgb.co.uk",
     href: "https://manchesterremovalsgb.co.uk/",
     trade: "Removals · multi-branch",
-    tagline: "House, office and long-distance moves with local branches.",
-    tone: "move",
+    image: "/examples/removals.jpg",
   },
   {
     name: "Super Plumbers",
     host: "superplumbers.co.uk",
     href: "https://superplumbers.co.uk/",
     trade: "Plumbing · multi-location",
-    tagline: "Vetted plumbers for emergencies, repairs and installations.",
-    tone: "plumb",
+    image: "/examples/plumbers.jpg",
   },
   {
     name: "Rubbish Removal Team",
     host: "rubbishremovalteam.co.uk",
     href: "https://rubbishremovalteam.co.uk/",
     trade: "Rubbish removal · regional coverage",
-    tagline: "House clearance, junk removal and licensed waste collection.",
-    tone: "waste",
+    image: "/examples/rubbish.jpg",
   },
 ] as const;
 
