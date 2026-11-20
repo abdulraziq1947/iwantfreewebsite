@@ -15,6 +15,7 @@
     "db:generate": "pnpm --filter @iwfw/db generate",
     "db:migrate:local": "pnpm --filter @iwfw/web db:migrate:local",
     "deploy:staging:dry": "pnpm --filter @iwfw/web deploy:staging:dry",
+    "deploy:production:dry": "pnpm --filter @iwfw/web deploy:production:dry",
     "cf-typegen": "pnpm --filter @iwfw/web cf-typegen"
   },
   "devDependencies": {

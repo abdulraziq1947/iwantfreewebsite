@@ -41,7 +41,7 @@ Full dashboard values: [`STAGING_DEPLOYMENT.md`](./STAGING_DEPLOYMENT.md). Summa
 
 ### Production (later)
 
-Same pattern with `iwfw-production` D1 and Worker `iwantfreewebsite`. Requires separate approval.
+Full checklist: [`PRODUCTION_DEPLOYMENT.md`](./PRODUCTION_DEPLOYMENT.md). Requires separate D1 `iwfw-production`, `CLOUDFLARE_ENV=production` Builds on Worker `iwantfreewebsite`, and an approved merge to `main`. Never reuse the staging D1 UUID.
 
 ### Not required for Phase 1
 

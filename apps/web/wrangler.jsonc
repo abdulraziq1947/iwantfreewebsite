@@ -54,8 +54,12 @@
       ]
     },
     "production": {
-      // Kept for later. Do not deploy from staging Git connection.
-      // Production Worker remains "iwantfreewebsite" (top-level name).
+      // MUST set name explicitly. Without it, Wrangler suffixes the env and
+      // flattens to "iwantfreewebsite-production", which would miss the existing
+      // dashboard Worker "iwantfreewebsite".
+      // Build with: CLOUDFLARE_ENV=production pnpm run build
+      // Then deploy: wrangler deploy  (do NOT use --env after a Vite build)
+      "name": "iwantfreewebsite",
       "vars": {
         "APP_URL": "https://iwantfreewebsite.com",
         "APP_ENV": "production"
@@ -63,6 +67,8 @@
       "d1_databases": [
         {
           "binding": "DB",
+          // Create a SEPARATE D1 named iwfw-production — never reuse staging UUID
+          // 6ff3f735-0dd5-4204-a778-b39b94dbfb19.
           "database_name": "iwfw-production",
           "database_id": "REPLACE_WITH_PRODUCTION_D1_UUID",
           "migrations_dir": "../../packages/db/migrations"
