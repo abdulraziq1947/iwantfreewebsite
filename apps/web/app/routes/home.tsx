@@ -5,12 +5,12 @@ export function meta(_args: Route.MetaArgs) {
   return [
     {
       title:
-        "iwantfreewebsite.com — Managed websites for UK trades & local businesses",
+        "iwantfreewebsite.com — Managed websites for local businesses",
     },
     {
       name: "description",
       content:
-        "£39.99/month. No upfront website fee. No minimum contract. Cancel anytime. We build and manage your website, domain, business email and Google Business Profile — so you can get back to the job.",
+        "£39.99/month. No upfront website fee. No minimum contract. Cancel anytime. We build and manage your website, domain, business email and Google Business Profile — so you can focus on running the business.",
     },
   ];
 }
@@ -22,18 +22,15 @@ export default function Home() {
         <div className="iwfw-hero__inner">
           <div className="iwfw-hero__copy iwfw-anim iwfw-anim--1">
             <p className="iwfw-hero__brand">iwantfreewebsite.com</p>
-            <p className="iwfw-pill">
-              <UkFlag />
-              Built for UK trades &amp; local businesses
-            </p>
-            <h1>A website that brings in jobs — without the agency price tag</h1>
+            <p className="iwfw-pill">Fully managed website service</p>
+            <h1>A website that brings in customers — without the agency price tag</h1>
             <p className="iwfw-price-banner">
               <span>£39.99/month. No upfront website fee.</span>
             </p>
             <p className="iwfw-hero__lead">
               We design, host and look after your site, help with your domain,
               set up business email, and keep your Google Business Profile
-              active. You stay on the tools — we keep you findable online.
+              active. You run the business — we keep you findable online.
             </p>
             <div className="iwfw-hero__ctas">
               <Link to="/signup" className="iwfw-btn iwfw-btn--green">
@@ -72,7 +69,7 @@ export default function Home() {
         <div className="iwfw-trust iwfw-anim iwfw-anim--3">
           <div className="iwfw-trust__item">
             <TrustIcon kind="support" />
-            <span>UK team on the phone</span>
+            <span>Real people on the phone</span>
           </div>
           <div className="iwfw-trust__item">
             <TrustIcon kind="setup" />
@@ -143,8 +140,8 @@ export default function Home() {
         <div className="iwfw-band__inner">
           <h2>Some of the sites we&apos;ve built</h2>
           <p className="iwfw-band__lead">
-            Real UK businesses live on the web — open any site to see the kind
-            of presence we put together.
+            Real businesses live on the web — open any site to see the kind of
+            presence we put together.
           </p>
           <ul className="iwfw-examples">
             {BUILT_SITES.map((site) => (
@@ -225,9 +222,9 @@ export default function Home() {
           <details>
             <summary>Who is this for?</summary>
             <p>
-              UK trades and local businesses that need a proper online presence —
-              plumbers, electricians, builders, cleaners, salons, cafés and
-              similar — without hiring an agency on a big project fee.
+              Local and service businesses that need a proper online presence —
+              trades, salons, clinics, cafés, professional services and similar
+              — without hiring an agency on a big project fee.
             </p>
           </details>
           <details>
@@ -291,23 +288,23 @@ const BUILT_SITES = [
     name: "Fencing Company Derby",
     host: "fencingcompanyderby.co.uk",
     href: "https://fencingcompanyderby.co.uk/",
-    trade: "Fencing · Derby",
-    tagline: "24-hour fencing installations and repairs across Derbyshire.",
+    trade: "Fencing contractor",
+    tagline: "24-hour fencing installations and repairs for homes and businesses.",
     tone: "fence",
   },
   {
     name: "Stretton Solicitors",
     host: "strettonsolicitors.co.uk",
     href: "https://strettonsolicitors.co.uk/",
-    trade: "Immigration & commercial lease law · UK",
-    tagline: "Specialist solicitors with offices across the UK.",
+    trade: "Immigration & commercial lease law",
+    tagline: "Specialist solicitors with multiple office locations.",
     tone: "law",
   },
   {
     name: "Expert Removals Manchester",
     host: "manchesterremovalsgb.co.uk",
     href: "https://manchesterremovalsgb.co.uk/",
-    trade: "Removals · Greater Manchester",
+    trade: "Removals · multi-branch",
     tagline: "House, office and long-distance moves with local branches.",
     tone: "move",
   },
@@ -315,7 +312,7 @@ const BUILT_SITES = [
     name: "Super Plumbers",
     host: "superplumbers.co.uk",
     href: "https://superplumbers.co.uk/",
-    trade: "Plumbing · UK network",
+    trade: "Plumbing · multi-location",
     tagline: "Vetted plumbers for emergencies, repairs and installations.",
     tone: "plumb",
   },
@@ -323,7 +320,7 @@ const BUILT_SITES = [
     name: "Rubbish Removal Team",
     host: "rubbishremovalteam.co.uk",
     href: "https://rubbishremovalteam.co.uk/",
-    trade: "Rubbish removal · West Midlands & beyond",
+    trade: "Rubbish removal · regional coverage",
     tagline: "House clearance, junk removal and licensed waste collection.",
     tone: "waste",
   },
@@ -380,18 +377,6 @@ function IncludeItem({
         ✓
       </span>
     </li>
-  );
-}
-
-function UkFlag() {
-  return (
-    <svg width="18" height="12" viewBox="0 0 18 12" aria-hidden="true">
-      <rect width="18" height="12" fill="#012169" />
-      <path d="M0 0l18 12M18 0L0 12" stroke="#fff" strokeWidth="2" />
-      <path d="M0 0l18 12M18 0L0 12" stroke="#C8102E" strokeWidth="1" />
-      <path d="M9 0v12M0 6h18" stroke="#fff" strokeWidth="3.5" />
-      <path d="M9 0v12M0 6h18" stroke="#C8102E" strokeWidth="2" />
-    </svg>
   );
 }
 

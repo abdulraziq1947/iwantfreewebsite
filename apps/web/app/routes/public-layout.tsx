@@ -82,7 +82,7 @@ export default function PublicLayout({ loaderData }: Route.ComponentProps) {
             <div>
               <strong>iwantfreewebsite.com</strong>
               <p>
-                Managed websites for UK businesses · £39.99/month · Cancel
+                Managed websites for local businesses · £39.99/month · Cancel
                 anytime
               </p>
             </div>

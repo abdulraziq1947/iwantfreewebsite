@@ -7,7 +7,7 @@ export function meta(_args: Route.MetaArgs) {
     {
       name: "description",
       content:
-        "£39.99/month for a managed UK business website. No upfront website fee. No minimum contract. Cancel anytime.",
+        "£39.99/month for a managed business website. No upfront website fee. No minimum contract. Cancel anytime.",
     },
   ];
 }
@@ -28,7 +28,7 @@ export default function Pricing() {
         </p>
         <ul className="iwfw-pricing__list">
           <li>Professional managed website built for your business</li>
-          <li>Hosting, maintenance and UK support</li>
+          <li>Hosting, maintenance and support</li>
           <li>Domain help — we purchase and renew manually after you choose</li>
           <li>One business email mailbox</li>
           <li>Weekly Google Business Profile post</li>
