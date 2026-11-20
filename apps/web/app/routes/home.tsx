@@ -25,9 +25,9 @@ export default function Home() {
               <span>£0 Upfront. Just £39.99/month.</span>
             </p>
             <p className="iwfw-hero__lead">
-              We build your website, set up your domain, host it, and help with
-              your Google Business Profile. All done for you, so you can focus
-              on running your business.
+              We build your website, set up your domain, host it, and manage
+              your Google Business Profile posts and review replies. You focus
+              on the business — we handle the website.
             </p>
             <div className="iwfw-hero__ctas">
               <Link to="/signup" className="iwfw-btn iwfw-btn--green">
@@ -111,8 +111,7 @@ export default function Home() {
         <div className="iwfw-band__inner">
           <h2>Some of the sites we&apos;ve built</h2>
           <p className="iwfw-band__lead">
-            Real businesses live on the web — open any site to see the kind of
-            presence we put together.
+            Live examples from real customers. Click through to see the work.
           </p>
           <ul className="iwfw-examples">
             {BUILT_SITES.map((site) => (
@@ -156,17 +155,17 @@ export default function Home() {
           <ol className="iwfw-how">
             <li>
               <strong>1. Get started</strong>
-              <p>Create your account and subscribe for £39.99/month.</p>
+              <p>Create your account and subscribe for £39.99/month. No upfront website fee.</p>
             </li>
             <li>
               <strong>2. Tell us about your business</strong>
-              <p>Share your services, photos, and preferred domain name.</p>
+              <p>Send your services, photos, contact details, and preferred domain.</p>
             </li>
             <li>
               <strong>3. We build and manage it</strong>
               <p>
-                Website, hosting, email and Google Business Profile support
-                included.
+                We launch your site and keep hosting, email, and Google Business
+                Profile support running.
               </p>
             </li>
           </ol>
@@ -178,27 +177,31 @@ export default function Home() {
           <h2>FAQs</h2>
           <details open>
             <summary>Is there an upfront website fee?</summary>
-            <p>No. There is no upfront website fee — just £39.99/month.</p>
+            <p>
+              No. There is no upfront website fee. You pay £39.99/month for the
+              managed service.
+            </p>
           </details>
           <details>
             <summary>Is there a minimum contract?</summary>
             <p>
-              No minimum contract. Cancel anytime; service continues to the end
-              of the paid period.
+              No. Cancel anytime. Your service continues until the end of the
+              period you have already paid for.
             </p>
           </details>
           <details>
             <summary>What do I get for £39.99/month?</summary>
             <p>
               A managed business website, hosting, domain help, one business
-              mailbox, weekly Google Business Profile posts, and review replies.
+              email mailbox, weekly Google Business Profile posts, and review
+              replies.
             </p>
           </details>
           <details>
             <summary>Do you buy the domain for me?</summary>
             <p>
-              You search and select a domain. Our team purchases and renews it
-              manually after payment — there is no automatic domain purchase.
+              You choose the domain. We purchase and renew it manually after
+              payment — nothing is bought automatically.
             </p>
           </details>
         </div>
