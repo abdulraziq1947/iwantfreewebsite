@@ -46,9 +46,9 @@
       "d1_databases": [
         {
           "binding": "DB",
-          // Create a SEPARATE D1 named iwfw-staging in the dashboard, then paste its UUID.
+          // Separate staging D1 (created manually) — never reuse a production UUID.
           "database_name": "iwfw-staging",
-          "database_id": "REPLACE_WITH_STAGING_D1_UUID",
+          "database_id": "6ff3f735-0dd5-4204-a778-b39b94dbfb19",
           "migrations_dir": "../../packages/db/migrations"
         }
       ]
