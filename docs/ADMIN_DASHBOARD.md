@@ -22,7 +22,9 @@ VA accounts typically use GBP Manager and/or Support Agent — never Platform Ow
 - **Domain renewal queue** (60/30/14/7 day tasks, escalation)
 - Email provisioning status
 - Website projects & deploy status
-- GBP task board
+- GBP invite acceptance queue (`Invitation Sent` → manual verify → `Connected`)
+- GBP help / no-profile assist queue
+- GBP task board (weekly posts, review replies, evidence, activity logs)
 - Rank tracking subscriptions & DataForSEO usage (when live)
 - Staff management
 - Support tickets

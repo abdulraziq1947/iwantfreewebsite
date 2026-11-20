@@ -111,11 +111,11 @@ Sales site + legal pages, auth, Stripe Checkout (website only), webhooks, entitl
 
 ## Phase 6 — GBP tasks
 
-**Objective:** Weekly post tasks + review reply tracking.
+**Objective:** Full Manager-invite onboarding + weekly post/review reply ops.
 
-**Features:** Cron task creation; VA board; evidence uploads; customer history view; overdue alerts.
+**Features:** Dedicated onboarding step with configurable Manager email; Manager-not-Owner instructions; I’ve sent invitation / I need help / I don’t have a profile; admin notify on invite claim; staff-only Connected verification; Cron weekly `gbp_post` for Connected orgs; review reply tasks; evidence + activity history; customer statuses Action Required / Invitation Sent / Connected.
 
-**Acceptance:** Entitled customers get weekly tasks; overdue notifies; no API review-scraping claims in UI.
+**Acceptance:** Customer click never alone sets Connected; admins notified on invite claim; entitled Connected customers get weekly tasks; overdue notifies; no API review-scraping claims in UI.
 
 ---
 

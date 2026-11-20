@@ -22,7 +22,10 @@ All automation is Cloudflare-native (Cron, Queues, Workflows). **No n8n.**
 | Email provision | Admin/auto when DNS ready | MXroute domain+mailbox; verify DNS auth records |
 | Website project create | Onboarding complete / admin | Create website row + build task |
 | Website deploy | Admin/CI action | Preview/live deploy hooks |
-| Weekly GBP posts | Cron weekly | Create VA tasks for entitled orgs |
+| GBP invite claimed | Customer “I’ve sent the invitation” | Notify admins/VA; create `gbp_accept_invite` task; status Invitation Sent (not Connected) |
+| GBP help / no profile | Customer choice | Notify admins; create assist task; keep Action Required |
+| Weekly GBP posts | Cron weekly | Create `gbp_post` VA tasks only for orgs with `gbp` entitlement **and** status Connected |
+| GBP review replies | VA intake / Cron placeholder | `gbp_review_reply` tasks; manual completion + evidence |
 | Overdue VA notify | Cron daily | Notify assignees/managers |
 | Weekly rank checks | Cron weekly | **Only if** entitlement + project enabled + system live |
 | Subscription status changes | Webhooks | Pause/resume jobs; cancel-before-complete website flag |
@@ -34,6 +37,7 @@ All automation is Cloudflare-native (Cron, Queues, Workflows). **No n8n.**
 - Automatic domain renewal payment at registrar
 - Automatic domain delete/release/transfer on cancel
 - Automatic GBP review scraping via unofficial means
+- Marking GBP Connected from customer self-confirmation alone
 - Rank-tracking purchases while feature flag false
 
 ## Domain renewal safeguard flow

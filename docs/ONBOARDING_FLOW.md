@@ -69,12 +69,40 @@ Guided multi-step onboarding after first successful payment. Progress saved so c
 - Migration required?
 - If existing provider: `mx_overwrite_approved` default false
 
-### 7. Google Business Profile
+### 7. Google Business Profile (dedicated step)
 
-- Existing profile URL?
-- Instructions to invite designated company Google account as **Manager**
-- Permission / approval preferences for posts and review replies
-- Track access status (manual verification by VA/admin — no fake API claims)
+This is a full onboarding step (not a footnote). Full product rules live in [GOOGLE_BUSINESS_MANAGEMENT.md](./GOOGLE_BUSINESS_MANAGEMENT.md).
+
+**Always show**
+
+- The platform’s **configurable Google Manager email** (`GBP_MANAGER_EMAIL`), copyable.
+- Explicit rule: invite us as **Manager**, **not Owner**.
+
+**Step-by-step invite instructions** (on-screen numbered list)
+
+1. Open Google Business Profile as the profile owner.
+2. Open Users / Managers.
+3. Add user → paste the Manager email shown above.
+4. Choose role **Manager** (not Owner).
+5. Send the invitation.
+6. Return to this page and confirm.
+
+**Customer outcomes (required UI choices)**
+
+| Action | Result |
+| --- | --- |
+| **I’ve sent the invitation** | Status → **Invitation Sent**; store claim timestamp; **notify admins**; create staff “accept invite” task. Does **not** mean Connected/verified. |
+| **I need help** | Status stays **Action Required** (`help_requested`); create support/VA assist task; notify admins. |
+| **I don’t have a Google Business Profile** | Status **Action Required** (`no_profile`); create assisted profile-setup task; notify admins. |
+
+Also collect:
+
+- Existing profile URL (optional if no profile).
+- Preference: VA may publish posts/replies directly vs customer approval required.
+
+**Verification rule (mandatory copy near confirmation)**
+
+> Clicking “I’ve sent the invitation” tells our team to look for your invite. Access is only marked Connected after our team accepts the invitation in Google and confirms Manager access.
 
 ### 8. Rank tracking (conditional)
 
@@ -97,6 +125,7 @@ If add-on not purchased/enabled: skip section; do not soft-sell unfinished produ
 
 - Customer: progress reminders (Cron) if incomplete after N days.
 - Admin: onboarding submitted / domain request ready.
+- Admin/VA: **immediately** when customer submits GBP “I’ve sent the invitation”, “I need help”, or “I don’t have a Google Business Profile”.
 
 ## Security
 

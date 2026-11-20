@@ -14,7 +14,7 @@
 | Website | Progress, preview link, live link, change requests, approvals |
 | Domain | Requested name, status timeline, expiry, renewal info, DNS help |
 | Email | Provisioning status, webmail instructions, quota |
-| Google Business | Access status, weekly post history, review reply activity (staff-recorded) |
+| Google Business | Status **Action Required** / **Invitation Sent** / **Connected**; Manager email + invite steps; help / no-profile actions; weekly post + review reply history with evidence (staff-recorded, not API-verified) |
 | Rank tracking | **Only if entitlement active**; charts organic vs maps; else hidden or “not included” |
 | Billing | Plan, next bill, cancel anytime CTA, invoices, payment method |
 | Support | Tickets |
@@ -27,6 +27,12 @@
 - “£39.99/month. No minimum contract. Cancel anytime.”
 - Cancel flow shows effective date and offboarding facts.
 - Rank add-on purchase button **absent** unless feature flag enabled.
+
+## Google Business status rules
+
+- **Action Required** — invite not done, help requested, no profile, or blocked.
+- **Invitation Sent** — customer self-reported invite; awaiting staff acceptance. Copy must state confirmation is pending.
+- **Connected** — only after admin/VA **manual** accept + verify in Google. Never set Connected from the customer confirmation click alone.
 
 ## Cancel-before-complete UX
 
