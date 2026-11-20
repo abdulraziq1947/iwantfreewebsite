@@ -1,0 +1,84 @@
+import {
+  createDb,
+  eq,
+  organisations,
+  onboardingProfiles,
+  inArray,
+} from "@iwfw/db";
+import type { AuthContext } from "@iwfw/auth";
+import { newId } from "./ids";
+import { parseOnboardingData } from "./onboarding";
+
+export async function getCustomerWorkspace(
+  db: ReturnType<typeof createDb>,
+  auth: AuthContext,
+) {
+  const orgIds = auth.memberships.map((m) => m.organisationId);
+  const orgs =
+    orgIds.length > 0
+      ? await db
+          .select()
+          .from(organisations)
+          .where(inArray(organisations.id, orgIds))
+      : [];
+
+  const primary = orgs[0] ?? null;
+  if (!primary) {
+    return {
+      orgs: [],
+      primary: null,
+      onboarding: null,
+      needsSubscription: true,
+    };
+  }
+
+  let profile = await db
+    .select()
+    .from(onboardingProfiles)
+    .where(eq(onboardingProfiles.organisationId, primary.id))
+    .get();
+
+  if (!profile) {
+    const id = newId("onb");
+    await db.insert(onboardingProfiles).values({
+      id,
+      organisationId: primary.id,
+      currentStep: 0,
+      dataJson: "{}",
+    });
+    profile = await db
+      .select()
+      .from(onboardingProfiles)
+      .where(eq(onboardingProfiles.id, id))
+      .get();
+  }
+
+  const data = parseOnboardingData(profile?.dataJson);
+  const completed = Boolean(profile?.completedAt);
+
+  return {
+    orgs: orgs.map((o) => ({
+      id: o.id,
+      tradingName: o.tradingName,
+      status: o.status,
+    })),
+    primary: {
+      id: primary.id,
+      tradingName: primary.tradingName,
+      status: primary.status,
+      registeredCompanyName: primary.registeredCompanyName,
+    },
+    onboarding: profile
+      ? {
+          id: profile.id,
+          currentStep: profile.currentStep,
+          completedAt: profile.completedAt
+            ? new Date(profile.completedAt).toISOString()
+            : null,
+          completed,
+          data,
+        }
+      : null,
+    needsSubscription: primary.status === "prospect",
+  };
+}

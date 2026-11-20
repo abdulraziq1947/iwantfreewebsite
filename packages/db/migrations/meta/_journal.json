@@ -15,6 +15,13 @@
       "when": 1763664300000,
       "tag": "0001_two_factor_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1763670000000,
+      "tag": "0002_onboarding",
+      "breakpoints": true
     }
   ]
 }

@@ -24,6 +24,8 @@ export const workerEnvSchema = z.object({
   APP_ENV: z.enum(appEnvironments).default("development"),
   BETTER_AUTH_SECRET: z.string().min(32),
   BOOTSTRAP_OWNER_EMAIL: z.string().email().optional(),
+  /** Google Business Profile Manager invite address shown in onboarding. */
+  GBP_MANAGER_EMAIL: z.string().email().optional(),
 });
 
 export type WorkerEnvConfig = z.infer<typeof workerEnvSchema>;
@@ -36,6 +38,7 @@ export function parseWorkerEnv(
     APP_ENV: env.APP_ENV ?? "development",
     BETTER_AUTH_SECRET: env.BETTER_AUTH_SECRET,
     BOOTSTRAP_OWNER_EMAIL: env.BOOTSTRAP_OWNER_EMAIL || undefined,
+    GBP_MANAGER_EMAIL: env.GBP_MANAGER_EMAIL || undefined,
   });
 }
 

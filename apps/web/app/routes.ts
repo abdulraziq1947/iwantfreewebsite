@@ -12,8 +12,17 @@ export default [
     route("signup", "routes/signup.tsx"),
     route("pricing", "routes/pricing.tsx"),
   ]),
+  route("logout", "routes/logout.tsx"),
   layout("routes/customer-layout.tsx", [
     route("dashboard", "routes/dashboard.tsx"),
+    route("dashboard/onboarding", "routes/dashboard.onboarding.tsx"),
+    route("dashboard/website", "routes/dashboard.website.tsx"),
+    route("dashboard/billing", "routes/dashboard.billing.tsx"),
+    route("dashboard/domain", "routes/dashboard.domain.tsx"),
+    route("dashboard/email", "routes/dashboard.email.tsx"),
+    route("dashboard/google-business", "routes/dashboard.google-business.tsx"),
+    route("dashboard/support", "routes/dashboard.support.tsx"),
+    route("dashboard/account", "routes/dashboard.account.tsx"),
   ]),
   layout("routes/admin-layout.tsx", [
     route("admin", "routes/admin._index.tsx"),

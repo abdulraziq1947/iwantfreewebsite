@@ -90,6 +90,29 @@ export const featureFlags = sqliteTable("feature_flags", {
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
 });
 
+export const onboardingProfiles = sqliteTable(
+  "onboarding_profiles",
+  {
+    id: text("id").primaryKey(),
+    organisationId: text("organisation_id")
+      .notNull()
+      .references(() => organisations.id, { onDelete: "cascade" }),
+    currentStep: integer("current_step").notNull().default(0),
+    completedAt: integer("completed_at", { mode: "timestamp_ms" }),
+    dataJson: text("data_json").notNull().default("{}"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+  },
+  (t) => [
+    uniqueIndex("onboarding_profiles_org_uidx").on(t.organisationId),
+    index("onboarding_profiles_org_id_idx").on(t.organisationId),
+  ],
+);
+
 export const auditLogs = sqliteTable(
   "audit_logs",
   {
