@@ -42,17 +42,14 @@ export default function PublicLayout({ loaderData }: Route.ComponentProps) {
         <div className="iwfw-topbar__inner">
           <Link to="/" className="iwfw-topbar__brand" aria-label="iwantfreewebsite.com home">
             <LogoMark />
-            <span>iwantfreewebsite.com</span>
+            <span>
+              iwantfreewebsite
+              <span className="iwfw-topbar__tld">.com</span>
+            </span>
           </Link>
 
           <nav className="iwfw-topbar__nav" aria-label="Primary">
-            <Link to="/" className={isHome ? "is-active" : undefined}>
-              Home
-            </Link>
-            <a href={isHome ? "#examples" : "/#examples"}>Our Work</a>
-            <a href={isHome ? "#how-it-works" : "/#how-it-works"}>How It Works</a>
-            <a href={isHome ? "#included" : "/#included"}>What&apos;s Included</a>
-            <a href={isHome ? "#faqs" : "/#faqs"}>FAQs</a>
+            <NavLinks isHome={isHome} />
           </nav>
 
           <div className="iwfw-topbar__actions">
@@ -69,6 +66,21 @@ export default function PublicLayout({ loaderData }: Route.ComponentProps) {
                 Get Started
               </Link>
             )}
+            <details className="iwfw-topbar__menu">
+              <summary aria-label="Open menu">
+                <MenuIcon />
+              </summary>
+              <nav className="iwfw-topbar__drawer" aria-label="Mobile">
+                <NavLinks isHome={isHome} />
+                {user ? (
+                  <Link to="/dashboard">Dashboard</Link>
+                ) : (
+                  <Link to="/signup">Get Started</Link>
+                )}
+                <a href="tel:08008527267">Call 0800 852 7267</a>
+                {!user && <Link to="/login">Log in</Link>}
+              </nav>
+            </details>
           </div>
         </div>
       </header>
@@ -96,6 +108,31 @@ export default function PublicLayout({ loaderData }: Route.ComponentProps) {
         </div>
       </footer>
     </div>
+  );
+}
+
+function NavLinks({ isHome }: { isHome: boolean }) {
+  return (
+    <>
+      <Link to="/" className={isHome ? "is-active" : undefined}>
+        Home
+      </Link>
+      <a href={isHome ? "#examples" : "/#examples"}>Our Work</a>
+      <a href={isHome ? "#how-it-works" : "/#how-it-works"}>How It Works</a>
+      <a href={isHome ? "#included" : "/#included"}>What&apos;s Included</a>
+      <a href={isHome ? "#faqs" : "/#faqs"}>FAQs</a>
+    </>
+  );
+}
+
+function MenuIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M4 7h16v2H4V7zm0 4h16v2H4v-2zm0 4h16v2H4v-2z"
+      />
+    </svg>
   );
 }
 
