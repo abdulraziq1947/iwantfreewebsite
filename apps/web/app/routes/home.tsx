@@ -235,14 +235,6 @@ const BUILT_SITES = [
     tone: "fence",
   },
   {
-    name: "Stretton Solicitors",
-    host: "strettonsolicitors.co.uk",
-    href: "https://strettonsolicitors.co.uk/",
-    trade: "Immigration & commercial lease law",
-    tagline: "Specialist solicitors with multiple office locations.",
-    tone: "law",
-  },
-  {
     name: "Expert Removals Manchester",
     host: "manchesterremovalsgb.co.uk",
     href: "https://manchesterremovalsgb.co.uk/",
