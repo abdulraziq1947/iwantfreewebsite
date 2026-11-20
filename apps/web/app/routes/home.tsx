@@ -7,7 +7,7 @@ export function meta(_args: Route.MetaArgs) {
     {
       name: "description",
       content:
-        "£0 upfront. Just £39.99/month. We build your website, set up your domain, host it, and help with your Google Business Profile. Cancel anytime.",
+        "£39.99/month. No upfront website fee. No minimum contract. Cancel anytime. We build your website, set up your domain, host it, and help with your Google Business Profile.",
     },
   ];
 }
@@ -22,7 +22,7 @@ export default function Home() {
             <p className="iwfw-pill">Managed website service</p>
             <h1>Get a Professional Business Website</h1>
             <p className="iwfw-price-banner">
-              <span>£0 Upfront. Just £39.99/month.</span>
+              <span>£39.99/month · No upfront website fee</span>
             </p>
             <p className="iwfw-hero__lead">
               We build your website, set up your domain, host it, and manage
@@ -210,7 +210,7 @@ export default function Home() {
       <section className="iwfw-band iwfw-band--close">
         <div className="iwfw-band__inner iwfw-close">
           <h2>Ready for a website that works for your business?</h2>
-          <p>£0 upfront. Just £39.99/month. Cancel anytime.</p>
+          <p>£39.99/month. No upfront website fee. Cancel anytime.</p>
           <div className="iwfw-close__actions">
             <Link to="/signup" className="iwfw-btn iwfw-btn--green">
               Get My Website Today
