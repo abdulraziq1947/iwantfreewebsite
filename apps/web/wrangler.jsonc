@@ -1,11 +1,16 @@
 /**
- * Phase 1 local-first Wrangler config.
- * database_id values are placeholders for local D1 only.
- * Do NOT run remote D1 create / deploy without explicit approval.
+ * Wrangler config — local-first. Do not deploy without approval.
+ *
+ * Workers:
+ * - Top-level name: iwantfreewebsite (local / future production default)
+ * - Staging Worker: iwfw-staging — select with CLOUDFLARE_ENV=staging at Vite build,
+ *   then `wrangler deploy` (flattened config already has name iwfw-staging).
+ *
+ * Isolation: staging uses its own D1 database_id and Worker secrets.
+ * Never point staging D1 at a production database UUID.
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  // Must match the Cloudflare dashboard Worker name connected to Git (Workers Builds).
   "name": "iwantfreewebsite",
   "compatibility_date": "2026-11-19",
   "compatibility_flags": ["nodejs_compat"],
@@ -27,23 +32,30 @@
     }
   ],
   "env": {
-    // Deploy with: wrangler deploy --env staging
-    // Dashboard Worker for staging should be iwantfreewebsite-staging (or use a separate Git connection).
     "staging": {
+      // Explicit Worker name — must match dashboard Worker "iwfw-staging".
+      // Build with: CLOUDFLARE_ENV=staging pnpm run build
+      // Then deploy: wrangler deploy  (do NOT use --env after a Vite build)
+      "name": "iwfw-staging",
       "vars": {
-        "APP_URL": "https://staging.iwantfreewebsite.com",
+        // After first workers.dev URL is known, update this var in the dashboard
+        // or here (then rebuild). Must match the public origin for Better Auth.
+        "APP_URL": "https://iwfw-staging.workers.dev",
         "APP_ENV": "staging"
       },
       "d1_databases": [
         {
           "binding": "DB",
+          // Create a SEPARATE D1 named iwfw-staging in the dashboard, then paste its UUID.
           "database_name": "iwfw-staging",
-          "database_id": "REPLACE_WITH_STAGING_D1_ID",
+          "database_id": "REPLACE_WITH_STAGING_D1_UUID",
           "migrations_dir": "../../packages/db/migrations"
         }
       ]
     },
     "production": {
+      // Kept for later. Do not deploy from staging Git connection.
+      // Production Worker remains "iwantfreewebsite" (top-level name).
       "vars": {
         "APP_URL": "https://iwantfreewebsite.com",
         "APP_ENV": "production"
@@ -52,7 +64,7 @@
         {
           "binding": "DB",
           "database_name": "iwfw-production",
-          "database_id": "REPLACE_WITH_PRODUCTION_D1_ID",
+          "database_id": "REPLACE_WITH_PRODUCTION_D1_UUID",
           "migrations_dir": "../../packages/db/migrations"
         }
       ]

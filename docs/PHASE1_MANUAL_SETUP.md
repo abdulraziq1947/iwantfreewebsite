@@ -30,17 +30,18 @@ In the dashboard for Worker **`iwantfreewebsite`** → Settings → Build:
 
 ### Resources to create (staging first)
 
-1. **D1 database** `iwfw-staging` — copy the database id into `apps/web/wrangler.jsonc` → `env.staging.d1_databases[0].database_id`
-2. **Worker secrets** on the staging Worker (`iwantfreewebsite-staging` when using `--env staging`):
-   - `BETTER_AUTH_SECRET` (32+ random chars)
-   - Optional `BOOTSTRAP_OWNER_EMAIL` (staging only; remove after first owner exists)
-3. **Vars** already sketched in wrangler: `APP_URL`, `APP_ENV=staging`
-4. Apply migrations: `wrangler d1 migrations apply iwfw-staging --env staging --remote` (only after approval)
-5. Deploy staging Worker: `pnpm --filter @iwfw/web exec wrangler deploy --env staging` (only after approval)
+Full dashboard values: [`STAGING_DEPLOYMENT.md`](./STAGING_DEPLOYMENT.md). Summary:
+
+1. **Worker** `iwfw-staging` (never `iwantfreewebsite`)
+2. **D1** `iwfw-staging` — paste UUID into `apps/web/wrangler.jsonc` → `env.staging.d1_databases[0].database_id`
+3. **Secrets** on Worker `iwfw-staging` only: `BETTER_AUTH_SECRET` (≥32 chars, staging-only); optional `BOOTSTRAP_OWNER_EMAIL`
+4. **Vars:** `APP_URL`, `APP_ENV=staging` (in `env.staging.vars`)
+5. **Build:** `CLOUDFLARE_ENV=staging … pnpm --filter @iwfw/web build` then `npx wrangler deploy`
+6. **Migrations** (after approval): `CLOUDFLARE_ENV=staging pnpm exec wrangler d1 migrations apply DB --remote` from `apps/web`
 
 ### Production (later)
 
-Same pattern with `iwfw-production` D1 and `iwfw-web-production` Worker. Requires separate approval.
+Same pattern with `iwfw-production` D1 and Worker `iwantfreewebsite`. Requires separate approval.
 
 ### Not required for Phase 1
 
