@@ -1,0 +1,38 @@
+{
+  "name": "@iwfw/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "react-router build",
+    "dev": "react-router dev",
+    "typecheck": "wrangler types && react-router typegen && tsc -b",
+    "cf-typegen": "wrangler types",
+    "db:migrate:local": "wrangler d1 migrations apply iwfw-local --local",
+    "test": "vitest run",
+    "preview": "pnpm run build && vite preview"
+  },
+  "dependencies": {
+    "@iwfw/auth": "workspace:*",
+    "@iwfw/config": "workspace:*",
+    "@iwfw/db": "workspace:*",
+    "@iwfw/ui": "workspace:*",
+    "isbot": "^5.1.36",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router": "^8.5.1"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.70.1",
+    "@cloudflare/workers-types": "^5.20261119.1",
+    "@react-router/dev": "^8.5.1",
+    "@tailwindcss/vite": "^4.2.2",
+    "@types/node": "^22",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.3",
+    "vitest": "^4.1.12",
+    "wrangler": "^4.166.0"
+  }
+}

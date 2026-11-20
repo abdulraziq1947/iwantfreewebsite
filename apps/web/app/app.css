@@ -1,0 +1,24 @@
+@import "tailwindcss";
+@import "@iwfw/ui/styles.css";
+
+@theme {
+  --font-sans: var(--iwfw-font-sans);
+  --font-display: var(--iwfw-font-display);
+}
+
+html,
+body {
+  min-height: 100%;
+  color: var(--iwfw-ink);
+  background:
+    radial-gradient(circle at top left, #dff3ea 0%, transparent 40%),
+    linear-gradient(180deg, #f7faf8 0%, #eef3f0 100%);
+  font-family: var(--iwfw-font-sans);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--iwfw-font-display);
+  letter-spacing: -0.02em;
+}

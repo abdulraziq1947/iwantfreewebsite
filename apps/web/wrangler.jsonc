@@ -1,0 +1,60 @@
+/**
+ * Phase 1 local-first Wrangler config.
+ * database_id values are placeholders for local D1 only.
+ * Do NOT run remote D1 create / deploy without explicit approval.
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "iwfw-web",
+  "compatibility_date": "2026-11-19",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "./workers/app.ts",
+  "observability": {
+    "enabled": true
+  },
+  "upload_source_maps": true,
+  "vars": {
+    "APP_URL": "http://localhost:5173",
+    "APP_ENV": "development"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "iwfw-local",
+      "database_id": "00000000-0000-4000-8000-000000000001",
+      "migrations_dir": "../../packages/db/migrations"
+    }
+  ],
+  "env": {
+    "staging": {
+      "name": "iwfw-web-staging",
+      "vars": {
+        "APP_URL": "https://staging.iwantfreewebsite.com",
+        "APP_ENV": "staging"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "iwfw-staging",
+          "database_id": "REPLACE_WITH_STAGING_D1_ID",
+          "migrations_dir": "../../packages/db/migrations"
+        }
+      ]
+    },
+    "production": {
+      "name": "iwfw-web-production",
+      "vars": {
+        "APP_URL": "https://iwantfreewebsite.com",
+        "APP_ENV": "production"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "iwfw-production",
+          "database_id": "REPLACE_WITH_PRODUCTION_D1_ID",
+          "migrations_dir": "../../packages/db/migrations"
+        }
+      ]
+    }
+  }
+}

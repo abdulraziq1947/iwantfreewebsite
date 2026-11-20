@@ -1,0 +1,14 @@
+:root {
+  --iwfw-ink: #0f1c17;
+  --iwfw-muted: #4b5c54;
+  --iwfw-paper: #f4f7f5;
+  --iwfw-surface: #ffffff;
+  --iwfw-accent: #0d6e4f;
+  --iwfw-accent-hover: #0a5840;
+  --iwfw-border: #d5e0da;
+  --iwfw-danger: #9b1c1c;
+  --iwfw-warning: #8a5a00;
+  --iwfw-radius: 0.5rem;
+  --iwfw-font-sans: "Source Sans 3", "Segoe UI", sans-serif;
+  --iwfw-font-display: "Fraunces", Georgia, serif;
+}
