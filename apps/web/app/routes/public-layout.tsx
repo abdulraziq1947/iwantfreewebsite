@@ -1,4 +1,4 @@
-import { Link, Outlet } from "react-router";
+import { Link, Outlet, useLocation } from "react-router";
 import { getOptionalAuth } from "../lib/session.server";
 import type { Route } from "./+types/public-layout";
 
@@ -11,47 +11,97 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   };
 }
 
+function LogoMark() {
+  return (
+    <svg
+      className="iwfw-logo-mark"
+      width="28"
+      height="28"
+      viewBox="0 0 28 28"
+      aria-hidden="true"
+    >
+      <rect x="3" y="5" width="22" height="15" rx="2.5" fill="currentColor" />
+      <rect x="6" y="8" width="16" height="9" rx="1" fill="#fff" />
+      <path d="M10 24h8l-1.2-3H11.2L10 24z" fill="currentColor" />
+      <path
+        d="M17.2 11.2l2.3 3.6-2.1-.4-.7 1.8-1.4-4.2 1.9.2z"
+        fill="var(--iwfw-accent)"
+      />
+    </svg>
+  );
+}
+
 export default function PublicLayout({ loaderData }: Route.ComponentProps) {
   const { user } = loaderData;
+  const { pathname } = useLocation();
+  const isHome = pathname === "/";
+
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-[var(--iwfw-border)]/70 bg-white/70 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
-          <Link to="/" className="font-[family-name:var(--iwfw-font-display)] text-xl font-bold text-[var(--iwfw-ink)]">
-            iwantfreewebsite
+    <div className={`iwfw-public${isHome ? " iwfw-public--home" : ""}`}>
+      <header className="iwfw-topbar">
+        <div className="iwfw-topbar__inner">
+          <Link to="/" className="iwfw-topbar__brand" aria-label="iwantfreewebsite.com home">
+            <LogoMark />
+            <span>iwantfreewebsite.com</span>
           </Link>
-          <nav className="flex items-center gap-4 text-sm font-semibold">
-            <Link to="/pricing" className="text-[var(--iwfw-muted)] hover:text-[var(--iwfw-ink)]">
-              Pricing
+
+          <nav className="iwfw-topbar__nav" aria-label="Primary">
+            <Link to="/" className={isHome ? "is-active" : undefined}>
+              Home
             </Link>
-            {user ? (
-              <>
-                <Link to="/dashboard" className="text-[var(--iwfw-muted)] hover:text-[var(--iwfw-ink)]">
-                  Dashboard
-                </Link>
-                {user.isStaff && (
-                  <Link to="/admin" className="text-[var(--iwfw-muted)] hover:text-[var(--iwfw-ink)]">
-                    Admin
-                  </Link>
-                )}
-              </>
-            ) : (
-              <>
-                <Link to="/login" className="text-[var(--iwfw-muted)] hover:text-[var(--iwfw-ink)]">
-                  Log in
-                </Link>
-                <Link
-                  to="/signup"
-                  className="rounded-[var(--iwfw-radius)] bg-[var(--iwfw-accent)] px-3 py-2 text-white hover:bg-[var(--iwfw-accent-hover)]"
-                >
-                  Sign up
-                </Link>
-              </>
-            )}
+            <a href={isHome ? "#how-it-works" : "/#how-it-works"}>How It Works</a>
+            <a href={isHome ? "#included" : "/#included"}>What&apos;s Included</a>
+            <a href={isHome ? "#faqs" : "/#faqs"}>FAQs</a>
           </nav>
+
+          <div className="iwfw-topbar__actions">
+            <a className="iwfw-topbar__phone" href="tel:08008527267">
+              <PhoneIcon />
+              <span>0800 852 7267</span>
+            </a>
+            {user ? (
+              <Link to="/dashboard" className="iwfw-btn iwfw-btn--blue">
+                Dashboard
+              </Link>
+            ) : (
+              <Link to="/signup" className="iwfw-btn iwfw-btn--blue">
+                Get Started
+              </Link>
+            )}
+          </div>
         </div>
       </header>
+
       <Outlet />
+
+      <footer className="iwfw-footer">
+        <div className="iwfw-footer__inner">
+          <div className="iwfw-footer__brand">
+            <LogoMark />
+            <div>
+              <strong>iwantfreewebsite.com</strong>
+              <p>£39.99/month · No minimum contract · Cancel anytime</p>
+            </div>
+          </div>
+          <div className="iwfw-footer__links">
+            <a href="tel:08008527267">0800 852 7267</a>
+            <Link to="/pricing">Pricing</Link>
+            <Link to="/signup">Get Started</Link>
+            {!user && <Link to="/login">Log in</Link>}
+          </div>
+        </div>
+      </footer>
     </div>
+  );
+}
+
+function PhoneIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M7.2 3.8c.4-.4 1-.5 1.5-.3l2.2 1c.5.2.8.7.8 1.2v2.1c0 .4-.2.8-.6 1-.8.5-1.2 1.4-1 2.3.5 2 2.1 3.6 4.1 4.1.9.2 1.8-.2 2.3-1 .2-.3.6-.5 1-.5h2.1c.5 0 1 .3 1.2.8l1 2.2c.2.5.1 1.1-.3 1.5-1.3 1.3-3.2 1.9-5.1 1.5C10.4 19.1 4.9 13.6 4.3 7.4c-.3-1.9.3-3.8 1.5-5.1z"
+        fill="currentColor"
+      />
+    </svg>
   );
 }
