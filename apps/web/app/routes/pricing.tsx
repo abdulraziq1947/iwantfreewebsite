@@ -7,7 +7,7 @@ export function meta(_args: Route.MetaArgs) {
     {
       name: "description",
       content:
-        "£39.99/month for a managed business website. No upfront website fee. No minimum contract. Cancel anytime.",
+        "£0 upfront. Just £39.99/month for a managed business website. No minimum contract. Cancel anytime.",
     },
   ];
 }
@@ -15,10 +15,9 @@ export function meta(_args: Route.MetaArgs) {
 export default function Pricing() {
   return (
     <main className="iwfw-pricing">
-      <h1>One plan. Everything you need online.</h1>
+      <h1>Simple monthly pricing</h1>
       <p className="iwfw-pricing__lead">
-        £39.99/month. No upfront website fee. No minimum contract. Cancel
-        anytime.
+        £0 upfront. No minimum contract. Cancel anytime.
       </p>
 
       <div className="iwfw-pricing__plan">
@@ -27,20 +26,19 @@ export default function Pricing() {
           <span>/month</span>
         </p>
         <ul className="iwfw-pricing__list">
-          <li>Professional managed website built for your business</li>
-          <li>Hosting, maintenance and support</li>
-          <li>Domain help — we purchase and renew manually after you choose</li>
-          <li>One business email mailbox</li>
+          <li>Professional business website</li>
+          <li>Domain name &amp; hosting</li>
+          <li>Business email address</li>
           <li>Weekly Google Business Profile post</li>
-          <li>Help replying to Google reviews</li>
+          <li>Google review replies</li>
         </ul>
         <p className="iwfw-pricing__note">
-          Optional Google Rank Tracking (£9.99/month, up to 5 keywords) will be
-          offered only once that feature is operational — it is not sold yet.
+          Optional Google Rank Tracking (£9.99/month) will be offered only once
+          that feature is operational.
         </p>
         <div className="iwfw-pricing__cta">
           <Link to="/signup" className="iwfw-btn iwfw-btn--green">
-            Start for £39.99/month
+            Get My Website Today
           </Link>
         </div>
       </div>
