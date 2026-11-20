@@ -5,7 +5,8 @@
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "iwfw-web",
+  // Must match the Cloudflare dashboard Worker name connected to Git (Workers Builds).
+  "name": "iwantfreewebsite",
   "compatibility_date": "2026-11-19",
   "compatibility_flags": ["nodejs_compat"],
   "main": "./workers/app.ts",
@@ -26,8 +27,9 @@
     }
   ],
   "env": {
+    // Deploy with: wrangler deploy --env staging
+    // Dashboard Worker for staging should be iwantfreewebsite-staging (or use a separate Git connection).
     "staging": {
-      "name": "iwfw-web-staging",
       "vars": {
         "APP_URL": "https://staging.iwantfreewebsite.com",
         "APP_ENV": "staging"
@@ -42,7 +44,6 @@
       ]
     },
     "production": {
-      "name": "iwfw-web-production",
       "vars": {
         "APP_URL": "https://iwantfreewebsite.com",
         "APP_ENV": "production"

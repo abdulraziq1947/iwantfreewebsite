@@ -17,10 +17,21 @@ A Cloudflare API token or `wrangler login` OAuth session with at least:
 
 Prefer an account-owned API token with the narrowest scopes rather than pasting secrets into chat.
 
+### Fix Workers Builds (GitHub check) before enabling deploys
+
+The GitHub check `Workers Builds: iwantfreewebsite` failed because the build integration’s **root directory** does not point at the monorepo app. See [`WORKERS_BUILDS_INVESTIGATION.md`](./WORKERS_BUILDS_INVESTIGATION.md).
+
+In the dashboard for Worker **`iwantfreewebsite`** → Settings → Build:
+
+1. **Root directory:** `apps/web`
+2. **Build command:** `cd ../.. && corepack enable && pnpm install && pnpm --filter @iwfw/web build`
+3. For PR/non-main branches: use **Preview** (not production deploy). Prefer pausing production auto-deploy until Phase 1 staging is approved.
+4. Wrangler `name` in-repo is already aligned to `iwantfreewebsite`.
+
 ### Resources to create (staging first)
 
 1. **D1 database** `iwfw-staging` — copy the database id into `apps/web/wrangler.jsonc` → `env.staging.d1_databases[0].database_id`
-2. **Worker secrets** on `iwfw-web-staging`:
+2. **Worker secrets** on the staging Worker (`iwantfreewebsite-staging` when using `--env staging`):
    - `BETTER_AUTH_SECRET` (32+ random chars)
    - Optional `BOOTSTRAP_OWNER_EMAIL` (staging only; remove after first owner exists)
 3. **Vars** already sketched in wrangler: `APP_URL`, `APP_ENV=staging`

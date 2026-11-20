@@ -62,9 +62,11 @@ Defined in `apps/web/wrangler.jsonc`:
 
 | Env | Worker name | Notes |
 | --- | --- | --- |
-| default / development | `iwfw-web` | Local D1 placeholder ID |
-| `staging` | `iwfw-web-staging` | Requires real D1 ID (not created yet) |
-| `production` | `iwfw-web-production` | Requires approval + real D1 ID |
+| default / development | `iwantfreewebsite` | Local D1 placeholder ID; matches dashboard Git Worker name |
+| `staging` | `iwantfreewebsite-staging` | Requires real D1 ID (not created yet) |
+| `production` | `iwantfreewebsite` / `--env production` | Requires approval + real D1 ID |
+
+Workers Builds must use **root directory `apps/web`**. See [`docs/WORKERS_BUILDS_INVESTIGATION.md`](./docs/WORKERS_BUILDS_INVESTIGATION.md).
 
 Secrets (never commit): `BETTER_AUTH_SECRET`, later Stripe/MXroute/DataForSEO keys via `wrangler secret put`.
 
