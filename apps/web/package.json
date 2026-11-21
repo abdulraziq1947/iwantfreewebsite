@@ -3,9 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "react-router build",
-    "build:staging": "CLOUDFLARE_ENV=staging react-router build",
-    "build:production": "CLOUDFLARE_ENV=production react-router build",
+    "build": "react-router build && node ./scripts/ensure-previews-config.mjs",
+    "build:staging": "CLOUDFLARE_ENV=staging react-router build && node ./scripts/ensure-previews-config.mjs",
+    "build:production": "CLOUDFLARE_ENV=production react-router build && node ./scripts/ensure-previews-config.mjs",
     "dev": "react-router dev",
     "typecheck": "wrangler types && react-router typegen && tsc -b",
     "cf-typegen": "wrangler types",
