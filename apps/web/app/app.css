@@ -171,6 +171,17 @@ h3 {
   white-space: nowrap;
 }
 
+/* Let the hero brand carry the name on small phones; keep the mark in nav. */
+@media (max-width: 479px) {
+  .iwfw-public--home .iwfw-topbar__brand > span {
+    display: none;
+  }
+
+  .iwfw-public--home .iwfw-topbar__brand {
+    flex: 0 0 auto;
+  }
+}
+
 .iwfw-topbar__tld {
   display: inline;
 }
@@ -323,7 +334,7 @@ h3 {
 .iwfw-hero {
   width: min(1140px, calc(100% - 1.25rem));
   margin: 0 auto;
-  padding: 1.35rem 0 1rem;
+  padding: 1rem 0 1.25rem;
 }
 
 @media (min-width: 760px) {
@@ -335,8 +346,14 @@ h3 {
 
 .iwfw-hero__inner {
   display: grid;
-  gap: 1.5rem;
+  gap: 1.15rem;
   align-items: center;
+}
+
+@media (min-width: 760px) {
+  .iwfw-hero__inner {
+    gap: 1.5rem;
+  }
 }
 
 @media (min-width: 960px) {
@@ -348,15 +365,15 @@ h3 {
 }
 
 .iwfw-hero__brand {
-  margin: 0 0 0.65rem;
-  font-size: clamp(1.15rem, 4.5vw, 1.7rem);
+  margin: 0 0 0.45rem;
+  font-size: clamp(1.35rem, 6vw, 1.7rem);
   font-weight: 800;
   letter-spacing: -0.03em;
   color: var(--iwfw-accent);
 }
 
 .iwfw-pill {
-  display: inline-flex;
+  display: none;
   align-items: center;
   gap: 0.45rem;
   margin: 0;
@@ -370,14 +387,31 @@ h3 {
   text-transform: uppercase;
 }
 
+@media (min-width: 760px) {
+  .iwfw-pill {
+    display: inline-flex;
+  }
+
+  .iwfw-hero__brand {
+    margin: 0 0 0.65rem;
+    font-size: clamp(1.15rem, 4.5vw, 1.7rem);
+  }
+}
+
 .iwfw-hero h1 {
-  margin: 0.75rem 0 0;
-  font-size: clamp(1.85rem, 8vw, 3.35rem);
+  margin: 0.35rem 0 0;
+  font-size: clamp(1.75rem, 7.2vw, 3.35rem);
   font-weight: 800;
   line-height: 1.08;
   color: var(--iwfw-ink);
   max-width: 14ch;
   text-wrap: balance;
+}
+
+@media (min-width: 760px) {
+  .iwfw-hero h1 {
+    margin: 0.75rem 0 0;
+  }
 }
 
 @media (min-width: 960px) {
@@ -387,7 +421,7 @@ h3 {
 }
 
 .iwfw-price-banner {
-  margin: 0.9rem 0 0;
+  margin: 0.75rem 0 0;
   display: block;
   position: relative;
   width: fit-content;
@@ -399,55 +433,78 @@ h3 {
   z-index: 1;
   display: inline-block;
   max-width: 100%;
-  padding: 0.5rem 0.85rem 0.55rem;
-  color: #fff;
-  font-size: clamp(0.95rem, 3.8vw, 1.35rem);
+  padding: 0.15rem 0;
+  color: var(--iwfw-accent);
+  font-size: clamp(1rem, 4vw, 1.35rem);
   font-weight: 800;
-  line-height: 1.25;
+  line-height: 1.3;
 }
 
 .iwfw-price-banner::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--iwfw-accent);
-  border-radius: 0.65rem;
-  transform: none;
+  content: none;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 760px) {
+  .iwfw-price-banner {
+    margin: 0.9rem 0 0;
+  }
+
+  .iwfw-price-banner span {
+    padding: 0.5rem 0.85rem 0.55rem;
+    color: #fff;
+  }
+
   .iwfw-price-banner::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--iwfw-accent);
     border-radius: 0.55rem 1.4rem 0.7rem 1.1rem;
     transform: skewX(-6deg);
   }
 }
 
 .iwfw-hero__lead {
-  margin: 0.95rem 0 0;
+  margin: 0.7rem 0 0;
   max-width: 34rem;
   color: var(--iwfw-muted);
-  font-size: 0.98rem;
-  line-height: 1.55;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.iwfw-hero__lead-full {
+  display: none;
 }
 
 @media (min-width: 760px) {
   .iwfw-hero__lead {
+    margin: 0.95rem 0 0;
     font-size: 1.05rem;
+    line-height: 1.55;
+  }
+
+  .iwfw-hero__lead-short {
+    display: none;
+  }
+
+  .iwfw-hero__lead-full {
+    display: inline;
   }
 }
 
 .iwfw-hero__ctas {
-  margin-top: 1.25rem;
+  margin-top: 1.1rem;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 0.85rem;
+  gap: 1rem;
 }
 
 .iwfw-hero__ctas .iwfw-btn {
   width: 100%;
   justify-content: center;
-  min-height: 3rem;
+  min-height: 3.15rem;
+  box-shadow: 0 10px 22px rgba(22, 163, 74, 0.22);
 }
 
 @media (min-width: 640px) {
@@ -460,6 +517,7 @@ h3 {
 
   .iwfw-hero__ctas .iwfw-btn {
     width: auto;
+    box-shadow: none;
   }
 }
 
@@ -475,13 +533,19 @@ h3 {
 .iwfw-hero__ctas .iwfw-speak {
   width: 100%;
   justify-content: flex-start;
-  padding: 0.35rem 0.15rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--iwfw-border);
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, #fff 82%, transparent);
 }
 
 @media (min-width: 640px) {
   .iwfw-hero__ctas .iwfw-speak {
     width: auto;
     padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
   }
 }
 
@@ -517,21 +581,23 @@ h3 {
 /* Devices */
 .iwfw-hero__visual {
   position: relative;
-  min-height: 14rem;
+  min-height: 15.5rem;
   order: 2;
+  margin-top: 0.15rem;
 }
 
 @media (min-width: 960px) {
   .iwfw-hero__visual {
     min-height: 18rem;
     order: initial;
+    margin-top: 0;
   }
 }
 
 .iwfw-devices {
   position: relative;
   width: 100%;
-  max-width: 22rem;
+  max-width: 24rem;
   margin-inline: auto;
   aspect-ratio: 5 / 4;
   animation: iwfw-float 4.8s ease-in-out infinite alternate;
@@ -550,13 +616,18 @@ h3 {
 }
 
 @media (max-width: 479px) {
+  .iwfw-devices {
+    max-width: min(100%, 21.5rem);
+  }
+
   .iwfw-laptop {
-    inset: 10% 18% 18% 8%;
+    inset: 8% 16% 14% 6%;
   }
 
   .iwfw-phone {
-    width: 38%;
+    width: 40%;
     right: 0;
+    bottom: 2%;
   }
 
   .iwfw-swoosh {
@@ -749,18 +820,17 @@ h3 {
 
 /* Trust strip */
 .iwfw-trust {
-  margin-top: 1.35rem;
+  margin-top: 1.1rem;
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.7rem;
-  padding: 1rem 0 0.15rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem 0.65rem;
+  padding: 0.85rem 0 0.15rem;
   border-top: 1px solid var(--iwfw-border);
 }
 
-@media (min-width: 480px) {
+@media (max-width: 359px) {
   .iwfw-trust {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.85rem 1rem;
+    grid-template-columns: 1fr;
   }
 }
 
@@ -768,6 +838,7 @@ h3 {
   .iwfw-trust {
     margin-top: 2rem;
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.85rem 1rem;
     padding: 1.1rem 0 0.25rem;
   }
 }

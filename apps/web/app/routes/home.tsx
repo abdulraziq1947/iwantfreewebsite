@@ -25,9 +25,15 @@ export default function Home() {
               <span>£39.99/month · No upfront website fee</span>
             </p>
             <p className="iwfw-hero__lead">
-              We build your website, set up your domain, host it, and manage
-              your Google Business Profile posts and review replies. You focus
-              on the business — we handle the website.
+              <span className="iwfw-hero__lead-short">
+                We build your website, domain, email, and Google Business
+                Profile — you focus on the business.
+              </span>
+              <span className="iwfw-hero__lead-full">
+                We build your website, set up your domain, host it, and manage
+                your Google Business Profile posts and review replies. You focus
+                on the business — we handle the website.
+              </span>
             </p>
             <div className="iwfw-hero__ctas">
               <Link to="/signup" className="iwfw-btn iwfw-btn--green">
