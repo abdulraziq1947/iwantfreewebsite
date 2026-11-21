@@ -2,7 +2,11 @@ import type { WorkerEnvConfig } from "@iwfw/config";
 import { createDb, eq, organisations } from "@iwfw/db";
 import type Stripe from "stripe";
 import { log } from "./logger";
-import { getStripe, msFromStripeSeconds } from "./stripe.server";
+import {
+  assertTestModeEvent,
+  assertWebhookConfigured,
+  msFromStripeSeconds,
+} from "./stripe.server";
 import {
   ensureAssetTransferTaskOnSubscriptionEnd,
   markCheckoutSessionComplete,
@@ -16,17 +20,14 @@ export async function handleStripeWebhookRequest(
   env: Env,
   config: WorkerEnvConfig,
 ): Promise<Response> {
-  if (!config.STRIPE_SECRET_KEY || !config.STRIPE_WEBHOOK_SECRET) {
+  const configured = assertWebhookConfigured(config);
+  if (!configured.ok) {
     return Response.json(
-      { error: "Stripe webhook is not configured." },
-      { status: 503 },
+      { error: configured.error },
+      { status: configured.status },
     );
   }
-
-  const stripe = getStripe(config);
-  if (!stripe) {
-    return Response.json({ error: "Stripe unavailable." }, { status: 503 });
-  }
+  const { stripe } = configured;
 
   const signature = request.headers.get("stripe-signature");
   if (!signature) {
@@ -36,16 +37,26 @@ export async function handleStripeWebhookRequest(
   const payload = await request.text();
   let event: Stripe.Event;
   try {
+    // Signing secret used only for verification — never logged.
     event = await stripe.webhooks.constructEventAsync(
       payload,
       signature,
-      config.STRIPE_WEBHOOK_SECRET,
+      config.STRIPE_WEBHOOK_SECRET!,
     );
   } catch (error) {
     log("warn", "stripe_webhook_signature_failed", {
       error: error instanceof Error ? error.message : "unknown",
     });
     return Response.json({ error: "Invalid signature." }, { status: 400 });
+  }
+
+  const modeCheck = assertTestModeEvent(event);
+  if (!modeCheck.ok) {
+    log("warn", "stripe_webhook_livemode_rejected", {
+      eventId: event.id,
+      type: event.type,
+    });
+    return Response.json({ error: modeCheck.error }, { status: 400 });
   }
 
   const db = createDb(env.DB);

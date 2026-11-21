@@ -14,10 +14,11 @@ import type Stripe from "stripe";
 import { newId } from "./ids";
 import { log } from "./logger";
 import {
+  assertCheckoutConfigured,
   getStripe,
   isBlockingSubscriptionStatus,
   msFromStripeSeconds,
-  requireStripePriceId,
+  verifyConfiguredWebsitePrice,
 } from "./stripe.server";
 
 type Db = ReturnType<typeof createDb>;
@@ -84,12 +85,15 @@ export async function createCheckoutSessionForOrg(options: {
   tradingName: string;
   email: string;
 }): Promise<{ url: string } | { error: string }> {
-  const stripe = getStripe(options.config);
-  if (!stripe || !options.config.STRIPE_PRICE_ID) {
-    return {
-      error:
-        "Stripe Checkout is not configured. Set STRIPE_SECRET_KEY and STRIPE_PRICE_ID.",
-    };
+  const configured = assertCheckoutConfigured(options.config);
+  if (!configured.ok) {
+    return { error: configured.error };
+  }
+  const { stripe, priceId } = configured;
+
+  const priceCheck = await verifyConfiguredWebsitePrice(stripe, priceId);
+  if (!priceCheck.ok) {
+    return { error: priceCheck.error };
   }
 
   if (await organisationHasBlockingSubscription(options.db, options.organisationId)) {
@@ -99,7 +103,6 @@ export async function createCheckoutSessionForOrg(options: {
     };
   }
 
-  const priceId = requireStripePriceId(options.config);
   const customerId = await ensureStripeCustomer({
     db: options.db,
     stripe,

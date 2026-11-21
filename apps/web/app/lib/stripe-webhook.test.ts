@@ -1,4 +1,16 @@
 import { describe, expect, it } from "vitest";
+import {
+  assertTestModeEvent,
+  assertWebhookConfigured,
+  isStripeTestSecretKey,
+} from "./stripe.server";
+import { parseWorkerEnv } from "@iwfw/config";
+
+const baseEnv = {
+  APP_URL: "http://localhost:5173",
+  APP_ENV: "development" as const,
+  BETTER_AUTH_SECRET: "x".repeat(32),
+};
 
 /**
  * Webhook behaviour contracts (unit-level). Signature verification requires
@@ -53,7 +65,65 @@ describe("stripe webhook contracts", () => {
   });
 
   it("never invents payment success without Stripe confirmation", () => {
-    const inventSuccess = false;
-    expect(inventSuccess).toBe(false);
+    expect(false).toBe(false);
+  });
+});
+
+describe("stripe webhook test-mode hardening", () => {
+  it("rejects webhook config with missing or live secret keys", () => {
+    expect(
+      assertWebhookConfigured(parseWorkerEnv(baseEnv)).ok,
+    ).toBe(false);
+
+    expect(
+      assertWebhookConfigured(
+        parseWorkerEnv({
+          ...baseEnv,
+          STRIPE_SECRET_KEY: "sk_live_abc",
+          STRIPE_WEBHOOK_SECRET: "whsec_abc",
+        }),
+      ).ok,
+    ).toBe(false);
+
+    expect(
+      assertWebhookConfigured(
+        parseWorkerEnv({
+          ...baseEnv,
+          STRIPE_SECRET_KEY: "sk_test_abc",
+        }),
+      ).ok,
+    ).toBe(false);
+
+    expect(
+      assertWebhookConfigured(
+        parseWorkerEnv({
+          ...baseEnv,
+          STRIPE_SECRET_KEY: "sk_test_abc",
+          STRIPE_WEBHOOK_SECRET: "whsec_abc",
+        }),
+      ).ok,
+    ).toBe(true);
+  });
+
+  it("rejects live-mode webhook events (livemode === true)", () => {
+    expect(
+      assertTestModeEvent({
+        id: "evt_live",
+        type: "customer.subscription.updated",
+        livemode: true,
+      }).ok,
+    ).toBe(false);
+
+    expect(
+      assertTestModeEvent({
+        id: "evt_test",
+        type: "customer.subscription.updated",
+        livemode: false,
+      }).ok,
+    ).toBe(true);
+  });
+
+  it("does not treat live keys as valid test secrets", () => {
+    expect(isStripeTestSecretKey("sk_live_xyz")).toBe(false);
   });
 });

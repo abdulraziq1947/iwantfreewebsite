@@ -6,7 +6,7 @@ Use **test mode only**. Do not enable live payments or change production billing
 
 | Name | Kind | Purpose |
 | --- | --- | --- |
-| `STRIPE_SECRET_KEY` | **Secret** | `sk_test_…` API key |
+| `STRIPE_SECRET_KEY` | **Secret** | `sk_test_…` API key only — `sk_live_…` is rejected in code |
 | `STRIPE_PRICE_ID` | **Non-secret var** | Canonical £39.99/month Price ID (`price_…`) |
 | `STRIPE_WEBHOOK_SECRET` | **Secret** | `whsec_…` signing secret |
 | `APP_URL` | Var | Success/cancel + webhook origin |
@@ -55,6 +55,8 @@ CLOUDFLARE_ENV=staging pnpm exec wrangler secret put STRIPE_WEBHOOK_SECRET
 ## 3. Behaviour summary
 
 - Checkout: Stripe-hosted subscription; server uses `STRIPE_PRICE_ID` only
+- Test-mode hardening: rejects non-`sk_test_` keys; rejects webhook events with `livemode: true`; verifies price is active £39.99 GBP/month on the test account
+- Credentials / `whsec_…` are never written to logs
 - Webhooks: source of truth for subscription + org status
 - Cancel: `cancel_at_period_end=true`; resume clears the flag
 - Asset transfer task: created once when subscription **ends** (`customer.subscription.deleted`), not when cancel is merely scheduled

@@ -1,10 +1,57 @@
 import Stripe from "stripe";
 import type { WorkerEnvConfig } from "@iwfw/config";
-import { isStripeCheckoutConfigured } from "@iwfw/config";
 
+/** Core website plan: £39.99 GBP / month (inclusive of VAT where applicable). */
+export const WEBSITE_PLAN_UNIT_AMOUNT = 3999;
+export const WEBSITE_PLAN_CURRENCY = "gbp";
+export const WEBSITE_PLAN_INTERVAL = "month" as const;
+
+const TEST_SECRET_PREFIX = "sk_test_";
+
+export function isStripeTestSecretKey(
+  key: string | null | undefined,
+): boolean {
+  return typeof key === "string" && key.startsWith(TEST_SECRET_PREFIX);
+}
+
+export function assertStripeTestSecretKey(
+  key: string | null | undefined,
+): { ok: true } | { ok: false; error: string } {
+  if (!key) {
+    return { ok: false, error: "Stripe secret key is not configured." };
+  }
+  if (!isStripeTestSecretKey(key)) {
+    return {
+      ok: false,
+      error:
+        "Stripe secret key must be a test-mode key (sk_test_…). Live keys are rejected.",
+    };
+  }
+  return { ok: true };
+}
+
+/** True when Checkout can run in test mode (test secret + price id present). */
+export function isStripeTestCheckoutReady(config: WorkerEnvConfig): boolean {
+  return Boolean(
+    isStripeTestSecretKey(config.STRIPE_SECRET_KEY) && config.STRIPE_PRICE_ID,
+  );
+}
+
+/** True when webhooks can run in test mode (test secret + webhook secret). */
+export function isStripeTestWebhookReady(config: WorkerEnvConfig): boolean {
+  return Boolean(
+    isStripeTestSecretKey(config.STRIPE_SECRET_KEY) &&
+      config.STRIPE_WEBHOOK_SECRET,
+  );
+}
+
+/**
+ * Returns a Stripe client only for valid test-mode secret keys.
+ * Live keys (sk_live_…) and missing keys yield null.
+ */
 export function getStripe(config: WorkerEnvConfig): Stripe | null {
-  if (!config.STRIPE_SECRET_KEY) return null;
-  return new Stripe(config.STRIPE_SECRET_KEY, {
+  if (!isStripeTestSecretKey(config.STRIPE_SECRET_KEY)) return null;
+  return new Stripe(config.STRIPE_SECRET_KEY!, {
     apiVersion: "2025-10-29.clover",
     httpClient: Stripe.createFetchHttpClient(),
   });
@@ -17,23 +64,131 @@ export function requireStripePriceId(config: WorkerEnvConfig): string {
   return config.STRIPE_PRICE_ID;
 }
 
-export function assertCheckoutConfigured(config: WorkerEnvConfig): {
-  ok: true;
-  stripe: Stripe;
-  priceId: string;
-} | { ok: false; error: string } {
-  if (!isStripeCheckoutConfigured(config)) {
+export function assertCheckoutConfigured(config: WorkerEnvConfig):
+  | { ok: true; stripe: Stripe; priceId: string }
+  | { ok: false; error: string } {
+  const keyCheck = assertStripeTestSecretKey(config.STRIPE_SECRET_KEY);
+  if (!keyCheck.ok) {
     return {
       ok: false,
       error:
-        "Stripe Checkout is not configured. Set STRIPE_SECRET_KEY and STRIPE_PRICE_ID (test mode).",
+        keyCheck.error === "Stripe secret key is not configured."
+          ? "Stripe Checkout is not configured. Set STRIPE_SECRET_KEY (sk_test_…) and STRIPE_PRICE_ID."
+          : keyCheck.error,
+    };
+  }
+  if (!config.STRIPE_PRICE_ID) {
+    return {
+      ok: false,
+      error:
+        "Stripe Checkout is not configured. Set STRIPE_SECRET_KEY (sk_test_…) and STRIPE_PRICE_ID.",
     };
   }
   const stripe = getStripe(config);
   if (!stripe) {
-    return { ok: false, error: "Stripe client could not be created." };
+    return { ok: false, error: "Stripe test client could not be created." };
   }
-  return { ok: true, stripe, priceId: config.STRIPE_PRICE_ID! };
+  return { ok: true, stripe, priceId: config.STRIPE_PRICE_ID };
+}
+
+export function assertWebhookConfigured(config: WorkerEnvConfig):
+  | { ok: true; stripe: Stripe }
+  | { ok: false; error: string; status: number } {
+  const keyCheck = assertStripeTestSecretKey(config.STRIPE_SECRET_KEY);
+  if (!keyCheck.ok) {
+    return { ok: false, error: keyCheck.error, status: 503 };
+  }
+  if (!config.STRIPE_WEBHOOK_SECRET) {
+    return {
+      ok: false,
+      error: "Stripe webhook is not configured.",
+      status: 503,
+    };
+  }
+  const stripe = getStripe(config);
+  if (!stripe) {
+    return { ok: false, error: "Stripe test client unavailable.", status: 503 };
+  }
+  return { ok: true, stripe };
+}
+
+/** Reject live-mode Stripe events even if signature somehow verified. */
+export function assertTestModeEvent(
+  event: Pick<Stripe.Event, "livemode" | "id" | "type">,
+): { ok: true } | { ok: false; error: string } {
+  if (event.livemode) {
+    return {
+      ok: false,
+      error: "Live-mode Stripe events are rejected. Test mode only.",
+    };
+  }
+  return { ok: true };
+}
+
+/**
+ * Pure price shape check: active recurring £39.99 GBP / month.
+ * Does not accept rank-tracking or other products.
+ */
+export type WebsitePlanPriceShape = {
+  id: string;
+  active: boolean;
+  currency: string;
+  unit_amount: number | null;
+  type: string;
+  recurring: { interval: string } | null;
+};
+
+export function assertWebsitePlanPrice(
+  price: WebsitePlanPriceShape,
+): { ok: true } | { ok: false; error: string } {
+  if (!price.active) {
+    return { ok: false, error: "Configured Stripe price is not active." };
+  }
+  if (price.type !== "recurring") {
+    return { ok: false, error: "Configured Stripe price must be recurring." };
+  }
+  if ((price.currency || "").toLowerCase() !== WEBSITE_PLAN_CURRENCY) {
+    return {
+      ok: false,
+      error: "Configured Stripe price must be GBP.",
+    };
+  }
+  if (price.unit_amount !== WEBSITE_PLAN_UNIT_AMOUNT) {
+    return {
+      ok: false,
+      error: "Configured Stripe price must be £39.99 (3999 pence).",
+    };
+  }
+  if (price.recurring?.interval !== WEBSITE_PLAN_INTERVAL) {
+    return {
+      ok: false,
+      error: "Configured Stripe price must bill monthly.",
+    };
+  }
+  return { ok: true };
+}
+
+/**
+ * Retrieve STRIPE_PRICE_ID with the test key (proves it belongs to that
+ * test account) and validate £39.99 GBP/month.
+ */
+export async function verifyConfiguredWebsitePrice(
+  stripe: Stripe,
+  priceId: string,
+): Promise<{ ok: true; price: Stripe.Price } | { ok: false; error: string }> {
+  let price: Stripe.Price;
+  try {
+    price = await stripe.prices.retrieve(priceId);
+  } catch {
+    return {
+      ok: false,
+      error:
+        "Configured STRIPE_PRICE_ID was not found on this Stripe test account.",
+    };
+  }
+  const shape = assertWebsitePlanPrice(price);
+  if (!shape.ok) return shape;
+  return { ok: true, price };
 }
 
 /** Active-like statuses that block a second Checkout. */
