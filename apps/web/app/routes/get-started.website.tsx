@@ -1,5 +1,6 @@
 import { Form, Link, redirect, useNavigation, data } from "react-router";
 import { createDb } from "@iwfw/db";
+import { MediaUploader } from "../components/media-uploader";
 import { getEnv } from "../lib/env.server";
 import {
   getOrCreateDraftOrder,
@@ -314,6 +315,11 @@ export default function GetStartedWebsite({
 
         {step === 5 && (
           <>
+            <MediaUploader
+              mode="order"
+              title="Upload your brand images"
+              description="Drag in logos, business photos, team shots or portfolio images. Files stay private in secure storage and carry over when you resume or after payment."
+            />
             <label className="iwfw-field">
               <span>Logo notes</span>
               <textarea name="logoNotes" rows={2} defaultValue={data.media.logoNotes} />
@@ -323,12 +329,12 @@ export default function GetStartedWebsite({
               <textarea name="imageNotes" rows={2} defaultValue={data.media.imageNotes} />
             </label>
             <label className="iwfw-field">
-              <span>Secure upload notes</span>
+              <span>Anything else about your images?</span>
               <textarea
                 name="uploadNotes"
                 rows={2}
                 defaultValue={data.media.uploadNotes}
-                placeholder="Describe files you will send securely after payment (logo, photos). Direct file upload to private storage can be enabled with an R2 binding."
+                placeholder="e.g. use the navy logo on light backgrounds; team photo is preferred for About"
               />
             </label>
             <label className="iwfw-field">

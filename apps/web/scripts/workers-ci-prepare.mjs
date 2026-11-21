@@ -53,11 +53,26 @@ function readGeneratedPreviews() {
 }
 
 function injectPreviews(config) {
-  if (config.previews !== undefined) return false;
-  config.previews = {};
+  let changed = false;
+  if (config.previews === undefined) {
+    config.previews = {};
+    changed = true;
+  }
+  const topR2 = Array.isArray(config.r2_buckets) ? config.r2_buckets : [];
+  const previewR2 = Array.isArray(config.previews.r2_buckets)
+    ? config.previews.r2_buckets
+    : [];
+  if (topR2.length > 0 && previewR2.length === 0) {
+    config.previews.r2_buckets = topR2.map((bucket) => ({
+      binding: bucket.binding,
+      bucket_name: bucket.bucket_name,
+    }));
+    changed = true;
+  }
+  if (!changed) return false;
   writeFileSync(generatedConfig, `${JSON.stringify(config)}\n`);
   console.log(
-    "workers-ci-prepare: injected previews into build/server/wrangler.json",
+    "workers-ci-prepare: ensured previews (+ R2 when present) on build/server/wrangler.json",
   );
   return true;
 }
@@ -150,16 +165,19 @@ const generated = readGeneratedPreviews();
 if (isPreviewBranch()) {
   if (!generated.exists) {
     runWebBuild();
-  } else if (!generated.hasPreviews && generated.config) {
-    injectPreviews(generated.config);
+  } else if (generated.config) {
+    const injected = injectPreviews(generated.config);
+    if (!injected && generated.hasPreviews) {
+      console.log(
+        "workers-ci-prepare: generated wrangler.json already has previews",
+      );
+    } else if (!injected && !generated.hasPreviews) {
+      runWebBuild();
+    }
   } else if (!generated.hasPreviews) {
     runWebBuild();
-  } else {
-    console.log(
-      "workers-ci-prepare: generated wrangler.json already has previews",
-    );
   }
-} else if (generated.exists && generated.config && !generated.hasPreviews) {
+} else if (generated.exists && generated.config) {
   injectPreviews(generated.config);
 }
 

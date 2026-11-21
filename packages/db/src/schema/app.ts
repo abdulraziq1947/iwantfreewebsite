@@ -370,3 +370,72 @@ export const accountActivationTokens = sqliteTable(
     index("account_activation_tokens_user_id_idx").on(t.userId),
   ],
 );
+
+/** Short-lived upload authorisation for pre-account pending orders. */
+export const uploadSessions = sqliteTable(
+  "upload_sessions",
+  {
+    id: text("id").primaryKey(),
+    pendingOrderId: text("pending_order_id")
+      .notNull()
+      .references(() => pendingOrders.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+    lastUsedAt: integer("last_used_at", { mode: "timestamp_ms" }),
+  },
+  (t) => [
+    uniqueIndex("upload_sessions_token_hash_uidx").on(t.tokenHash),
+    index("upload_sessions_pending_order_id_idx").on(t.pendingOrderId),
+  ],
+);
+
+export const customerUploads = sqliteTable(
+  "customer_uploads",
+  {
+    id: text("id").primaryKey(),
+    pendingOrderId: text("pending_order_id").references(() => pendingOrders.id, {
+      onDelete: "set null",
+    }),
+    organisationId: text("organisation_id").references(() => organisations.id, {
+      onDelete: "set null",
+    }),
+    category: text("category", {
+      enum: [
+        "logo",
+        "business_photo",
+        "team_photo",
+        "portfolio",
+        "other",
+      ],
+    }).notNull(),
+    originalFilename: text("original_filename").notNull(),
+    contentType: text("content_type").notNull(),
+    byteSize: integer("byte_size").notNull(),
+    r2Key: text("r2_key").notNull(),
+    status: text("status", {
+      enum: ["ready", "deleted"],
+    })
+      .notNull()
+      .default("ready"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
+  },
+  (t) => [
+    uniqueIndex("customer_uploads_r2_key_uidx").on(t.r2Key),
+    index("customer_uploads_pending_order_id_idx").on(t.pendingOrderId),
+    index("customer_uploads_organisation_id_idx").on(t.organisationId),
+  ],
+);
+
+export const uploadRateLimits = sqliteTable("upload_rate_limits", {
+  id: text("id").primaryKey(),
+  windowStartedAt: integer("window_started_at", {
+    mode: "timestamp_ms",
+  }).notNull(),
+  requestCount: integer("request_count").notNull().default(0),
+});

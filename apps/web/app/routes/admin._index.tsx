@@ -1,4 +1,4 @@
-import { Form } from "react-router";
+import { Form, Link } from "react-router";
 import { Badge, Panel } from "@iwfw/ui";
 import {
   createDb,
@@ -112,6 +112,11 @@ export default function AdminHome({
         <p className="mt-2 text-white/70">
           Customers, domain registration tasks and feature flags. Domains are
           never purchased automatically.
+        </p>
+        <p className="mt-3">
+          <Link to="/admin/media" className="iwfw-btn iwfw-btn--outline">
+            Customer images
+          </Link>
         </p>
       </div>
 

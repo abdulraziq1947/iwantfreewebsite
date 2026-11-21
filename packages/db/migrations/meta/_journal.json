@@ -43,6 +43,13 @@
       "when": 1763748000000,
       "tag": "0005_activation_email",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1763752000000,
+      "tag": "0006_customer_uploads",
+      "breakpoints": true
     }
   ]
 }

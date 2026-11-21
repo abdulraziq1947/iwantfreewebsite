@@ -28,6 +28,7 @@ export default [
     route("dashboard", "routes/dashboard.tsx"),
     route("dashboard/onboarding", "routes/dashboard.onboarding.tsx"),
     route("dashboard/website", "routes/dashboard.website.tsx"),
+    route("dashboard/media", "routes/dashboard.media.tsx"),
     route("dashboard/billing", "routes/dashboard.billing.tsx"),
     route("dashboard/domain", "routes/dashboard.domain.tsx"),
     route("dashboard/email", "routes/dashboard.email.tsx"),
@@ -37,5 +38,6 @@ export default [
   ]),
   layout("routes/admin-layout.tsx", [
     route("admin", "routes/admin._index.tsx"),
+    route("admin/media", "routes/admin.media.tsx"),
   ]),
 ] satisfies RouteConfig;

@@ -24,6 +24,7 @@ import { log } from "./logger";
 import { parseQuestionnaire } from "./order-questionnaire";
 import { emptyOnboardingData } from "./onboarding";
 import { upsertSubscriptionFromStripe } from "./billing.server";
+import { associateUploadsWithOrganisation } from "./uploads.server";
 
 type Db = ReturnType<typeof createDb>;
 
@@ -122,6 +123,11 @@ export async function fulfillPaidPendingOrder(options: {
         stripeSubscription: options.stripeSubscription,
       });
     }
+    await associateUploadsWithOrganisation({
+      db: options.db,
+      pendingOrderId: order.id,
+      organisationId: order.organisationId,
+    });
     return {
       organisationId: order.organisationId,
       userId: order.userId,
@@ -319,6 +325,12 @@ export async function fulfillPaidPendingOrder(options: {
       updatedAt: new Date(),
     })
     .where(eq(pendingOrders.id, order.id));
+
+  await associateUploadsWithOrganisation({
+    db: options.db,
+    pendingOrderId: order.id,
+    organisationId,
+  });
 
   return {
     organisationId,

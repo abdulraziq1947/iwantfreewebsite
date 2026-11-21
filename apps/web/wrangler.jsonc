@@ -14,6 +14,9 @@
  *
  * Resend: RESEND_API_KEY is a Wrangler/dashboard secret (production already
  * set). Optional RESEND_FROM_EMAIL defaults to accounts@iwantfreewebsite.com.
+ *
+ * R2: CUSTOMER_UPLOADS → iwfw-customer-uploads (private). Also declared under
+ * `previews` so Workers Builds preview deploys receive the binding.
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
@@ -25,10 +28,16 @@
     "enabled": true
   },
   "upload_source_maps": true,
-  // Required for Workers Builds preview (`npx wrangler preview`). Empty object is valid.
-  // Vite also copies this into build/server/wrangler.json; see workers-ci-prepare.mjs when
-  // the Preview build_command is skipped and only `pnpm install` + wrangler preview run.
-  "previews": {},
+  // Required for Workers Builds preview (`npx wrangler preview`). Empty object is valid
+  // for most settings; R2 must be listed here so preview deployments get the binding.
+  "previews": {
+    "r2_buckets": [
+      {
+        "binding": "CUSTOMER_UPLOADS",
+        "bucket_name": "iwfw-customer-uploads"
+      }
+    ]
+  },
   "vars": {
     "APP_URL": "http://localhost:5173",
     "APP_ENV": "development"
@@ -39,6 +48,13 @@
       "database_name": "iwfw-local",
       "database_id": "00000000-0000-4000-8000-000000000001",
       "migrations_dir": "../../packages/db/migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "CUSTOMER_UPLOADS",
+      "bucket_name": "iwfw-customer-uploads",
+      "preview_bucket_name": "iwfw-customer-uploads"
     }
   ],
   "env": {
@@ -56,6 +72,12 @@
           "database_id": "6ff3f735-0dd5-4204-a778-b39b94dbfb19",
           "migrations_dir": "../../packages/db/migrations"
         }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "CUSTOMER_UPLOADS",
+          "bucket_name": "iwfw-customer-uploads"
+        }
       ]
     },
     "production": {
@@ -71,6 +93,12 @@
           "database_name": "iwfw-production",
           "database_id": "634c4590-3ace-4416-a439-9c634827f4ba",
           "migrations_dir": "../../packages/db/migrations"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "CUSTOMER_UPLOADS",
+          "bucket_name": "iwfw-customer-uploads"
         }
       ]
     }
