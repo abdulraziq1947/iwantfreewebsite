@@ -14,6 +14,7 @@ import {
   resolveOrganisationIdForSubscription,
   upsertSubscriptionFromStripe,
 } from "./billing.server";
+import { deliverActivationEmail } from "./activation-email.server";
 import { fulfillPaidPendingOrder } from "./fulfill-order.server";
 
 export async function handleStripeWebhookRequest(
@@ -113,6 +114,41 @@ export async function handleStripeWebhookRequest(
             createdDomainTask: fulfilled.createdDomainTask,
             hasActivationToken: Boolean(fulfilled.activationToken),
           });
+
+          // Activation email only after verified payment + first-time token mint.
+          // Failures do not roll back the paid order; customer can use resend.
+          if (fulfilled.activationToken && fulfilled.activationTokenId) {
+            const paidOrder = await db
+              .select()
+              .from(pendingOrders)
+              .where(eq(pendingOrders.id, pendingOrderId))
+              .get();
+            const toEmail = (
+              paidOrder?.email ||
+              session.customer_details?.email ||
+              ""
+            )
+              .trim()
+              .toLowerCase();
+            if (toEmail) {
+              const emailResult = await deliverActivationEmail({
+                db,
+                config,
+                toEmail,
+                tradingName: paidOrder?.tradingName ?? null,
+                rawToken: fulfilled.activationToken,
+                tokenId: fulfilled.activationTokenId,
+                skipIfAlreadySent: true,
+              });
+              if (!emailResult.ok) {
+                log("warn", "activation_email_after_fulfillment_failed", {
+                  pendingOrderId,
+                  tokenId: fulfilled.activationTokenId,
+                  error: emailResult.error,
+                });
+              }
+            }
+          }
           break;
         }
 

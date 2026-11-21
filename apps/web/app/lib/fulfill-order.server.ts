@@ -96,6 +96,7 @@ export async function fulfillPaidPendingOrder(options: {
   organisationId: string;
   userId: string;
   activationToken: string | null;
+  activationTokenId: string | null;
   createdDomainTask: boolean;
 }> {
   const order = await options.db
@@ -125,6 +126,7 @@ export async function fulfillPaidPendingOrder(options: {
       organisationId: order.organisationId,
       userId: order.userId,
       activationToken: null,
+      activationTokenId: null,
       createdDomainTask: false,
     };
   }
@@ -152,6 +154,7 @@ export async function fulfillPaidPendingOrder(options: {
 
   let userId = existingUser?.id;
   let activationToken: string | null = null;
+  let activationTokenId: string | null = null;
 
   if (!userId) {
     userId = newId("user");
@@ -283,18 +286,21 @@ export async function fulfillPaidPendingOrder(options: {
   // Issue activation token for new users (never log the raw token)
   if (!existingUser && userId) {
     activationToken = generateRandomString(48);
+    activationTokenId = newId("act");
     const tokenHash = await sha256Hex(activationToken);
     await options.db.insert(accountActivationTokens).values({
-      id: newId("act"),
+      id: activationTokenId,
       userId,
       organisationId,
       pendingOrderId: order.id,
       tokenHash,
       expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 48),
+      emailSendCount: 0,
     });
     log("info", "account_activation_token_created", {
       userId,
       organisationId,
+      tokenId: activationTokenId,
     });
   }
 
@@ -318,6 +324,7 @@ export async function fulfillPaidPendingOrder(options: {
     organisationId,
     userId,
     activationToken,
+    activationTokenId,
     createdDomainTask: domainTask === "created",
   };
 }

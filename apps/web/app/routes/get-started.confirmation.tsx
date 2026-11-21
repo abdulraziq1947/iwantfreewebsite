@@ -127,7 +127,13 @@ export default function GetStartedConfirmation({
 
         {!loaderData.pending && (
           <div className="iwfw-start__form" style={{ marginTop: "1rem" }}>
-            <Link to="/login" className="iwfw-btn iwfw-btn--green iwfw-btn--block">
+            <Link
+              to="/get-started/activate"
+              className="iwfw-btn iwfw-btn--green iwfw-btn--block"
+            >
+              Open activation / resend email
+            </Link>
+            <Link to="/login" className="iwfw-btn iwfw-btn--outline iwfw-btn--block">
               Go to login
             </Link>
             <Link

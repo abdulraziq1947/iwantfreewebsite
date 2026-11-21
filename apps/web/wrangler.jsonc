@@ -11,6 +11,9 @@
  *
  * Stripe: STRIPE_PRICE_ID is a non-secret var. STRIPE_SECRET_KEY and
  * STRIPE_WEBHOOK_SECRET must be Wrangler/dashboard secrets — never commit.
+ *
+ * Resend: RESEND_API_KEY is a Wrangler/dashboard secret (production already
+ * set). Optional RESEND_FROM_EMAIL defaults to accounts@iwantfreewebsite.com.
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",

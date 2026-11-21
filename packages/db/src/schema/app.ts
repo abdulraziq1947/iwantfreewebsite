@@ -354,6 +354,13 @@ export const accountActivationTokens = sqliteTable(
     tokenHash: text("token_hash").notNull(),
     expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
     usedAt: integer("used_at", { mode: "timestamp_ms" }),
+    /** Set after Resend accepts the activation email (never store the raw token). */
+    emailSentAt: integer("email_sent_at", { mode: "timestamp_ms" }),
+    /** Last send attempt (success or failure) — used for resend rate limiting. */
+    lastEmailAttemptAt: integer("last_email_attempt_at", {
+      mode: "timestamp_ms",
+    }),
+    emailSendCount: integer("email_send_count").notNull().default(0),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .notNull()
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
