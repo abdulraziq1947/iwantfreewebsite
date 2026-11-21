@@ -62,7 +62,7 @@ export default function PublicLayout({ loaderData }: Route.ComponentProps) {
                 Dashboard
               </Link>
             ) : (
-              <Link to="/signup" className="iwfw-btn iwfw-btn--blue">
+              <Link to="/get-started" className="iwfw-btn iwfw-btn--blue">
                 Get Started
               </Link>
             )}
@@ -75,10 +75,12 @@ export default function PublicLayout({ loaderData }: Route.ComponentProps) {
                 {user ? (
                   <Link to="/dashboard">Dashboard</Link>
                 ) : (
-                  <Link to="/signup">Get Started</Link>
+                  <Link to="/get-started">Get Started</Link>
                 )}
                 <a href="tel:08008527267">Call 0800 852 7267</a>
-                {!user && <Link to="/login">Log in</Link>}
+                {!user && (
+                  <Link to="/get-started/account?mode=login">Log in</Link>
+                )}
               </nav>
             </details>
           </div>
@@ -102,8 +104,12 @@ export default function PublicLayout({ loaderData }: Route.ComponentProps) {
           <div className="iwfw-footer__links">
             <a href="tel:08008527267">0800 852 7267</a>
             <Link to="/pricing">Pricing</Link>
-            <Link to="/signup">Get Started</Link>
-            {!user && <Link to="/login">Log in</Link>}
+            <Link to="/get-started">Get Started</Link>
+            <Link to="/terms">Terms</Link>
+            <Link to="/privacy">Privacy</Link>
+            {!user && (
+              <Link to="/get-started/account?mode=login">Log in</Link>
+            )}
           </div>
         </div>
       </footer>

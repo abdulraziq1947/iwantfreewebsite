@@ -8,6 +8,9 @@
  *
  * Isolation: staging uses its own D1 database_id and Worker secrets.
  * Never point staging D1 at a production database UUID.
+ *
+ * Stripe: STRIPE_PRICE_ID is a non-secret var. STRIPE_SECRET_KEY and
+ * STRIPE_WEBHOOK_SECRET must be Wrangler/dashboard secrets — never commit.
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
@@ -33,20 +36,15 @@
   ],
   "env": {
     "staging": {
-      // Explicit Worker name — must match dashboard Worker "iwfw-staging".
-      // Build with: CLOUDFLARE_ENV=staging pnpm run build
-      // Then deploy: wrangler deploy  (do NOT use --env after a Vite build)
       "name": "iwfw-staging",
       "vars": {
-        // After first workers.dev URL is known, update this var in the dashboard
-        // or here (then rebuild). Must match the public origin for Better Auth.
         "APP_URL": "https://iwfw-staging.workers.dev",
-        "APP_ENV": "staging"
+        "APP_ENV": "staging",
+        "STRIPE_PRICE_ID": "price_1UeFSMDyQBgE8h6RPqVRtzDo"
       },
       "d1_databases": [
         {
           "binding": "DB",
-          // Separate staging D1 (created manually) — never reuse a production UUID.
           "database_name": "iwfw-staging",
           "database_id": "6ff3f735-0dd5-4204-a778-b39b94dbfb19",
           "migrations_dir": "../../packages/db/migrations"
@@ -54,21 +52,15 @@
       ]
     },
     "production": {
-      // MUST set name explicitly. Without it, Wrangler suffixes the env and
-      // flattens to "iwantfreewebsite-production", which would miss the existing
-      // dashboard Worker "iwantfreewebsite".
-      // Build with: CLOUDFLARE_ENV=production pnpm run build
-      // Then deploy: wrangler deploy  (do NOT use --env after a Vite build)
       "name": "iwantfreewebsite",
       "vars": {
         "APP_URL": "https://iwantfreewebsite.com",
-        "APP_ENV": "production"
+        "APP_ENV": "production",
+        "STRIPE_PRICE_ID": "price_1UeFSMDyQBgE8h6RPqVRtzDo"
       },
       "d1_databases": [
         {
           "binding": "DB",
-          // Separate production D1 (created manually) — never reuse staging UUID
-          // 6ff3f735-0dd5-4204-a778-b39b94dbfb19.
           "database_name": "iwfw-production",
           "database_id": "634c4590-3ace-4416-a439-9c634827f4ba",
           "migrations_dir": "../../packages/db/migrations"

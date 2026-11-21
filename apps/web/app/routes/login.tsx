@@ -19,6 +19,10 @@ export function meta(_args: Route.MetaArgs) {
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await getOptionalAuth(request, context);
   if (auth) throw redirect("/dashboard");
+  const url = new URL(request.url);
+  if (!url.searchParams.has("legacy")) {
+    throw redirect("/get-started/account?mode=login");
+  }
   return null;
 }
 
@@ -117,8 +121,11 @@ export default function Login({ actionData }: Route.ComponentProps) {
       </Panel>
       <p className="text-sm text-[var(--iwfw-muted)]">
         No account?{" "}
-        <Link className="font-semibold text-[var(--iwfw-accent)]" to="/signup">
-          Sign up
+        <Link
+          className="font-semibold text-[var(--iwfw-accent)]"
+          to="/get-started"
+        >
+          Get started
         </Link>
       </p>
     </main>

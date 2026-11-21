@@ -68,6 +68,11 @@ export type OnboardingData = {
     outcome: "invitation_sent" | "help_requested" | "no_profile" | "";
     publishDirectly: boolean;
   };
+  checkout: {
+    termsVersion: string;
+    termsAcceptedAt: string;
+    marketingOptIn: boolean;
+  };
 };
 
 export function emptyOnboardingData(): OnboardingData {
@@ -128,6 +133,11 @@ export function emptyOnboardingData(): OnboardingData {
       outcome: "",
       publishDirectly: true,
     },
+    checkout: {
+      termsVersion: "",
+      termsAcceptedAt: "",
+      marketingOptIn: false,
+    },
   };
 }
 
@@ -144,6 +154,7 @@ export function parseOnboardingData(raw: string | null | undefined): OnboardingD
       domain: { ...base.domain, ...parsed.domain },
       email: { ...base.email, ...parsed.email },
       gbp: { ...base.gbp, ...parsed.gbp },
+      checkout: { ...base.checkout, ...parsed.checkout },
     };
   } catch {
     return base;

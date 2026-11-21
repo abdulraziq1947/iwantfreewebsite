@@ -36,7 +36,7 @@ export default function Home() {
               </span>
             </p>
             <div className="iwfw-hero__ctas">
-              <Link to="/signup" className="iwfw-btn iwfw-btn--green">
+              <Link to="/get-started" className="iwfw-btn iwfw-btn--green">
                 Get My Website Today
                 <ArrowIcon />
               </Link>
@@ -106,7 +106,7 @@ export default function Home() {
             <p className="iwfw-price-panel__amount">
               £39.99 <span>/month</span>
             </p>
-            <Link to="/signup" className="iwfw-btn iwfw-btn--green iwfw-btn--block">
+            <Link to="/get-started" className="iwfw-btn iwfw-btn--green iwfw-btn--block">
               Get Started
             </Link>
           </div>
@@ -227,7 +227,7 @@ export default function Home() {
           <h2>Ready for a website that works for your business?</h2>
           <p>£39.99/month. No upfront website fee. Cancel anytime.</p>
           <div className="iwfw-close__actions">
-            <Link to="/signup" className="iwfw-btn iwfw-btn--green">
+            <Link to="/get-started" className="iwfw-btn iwfw-btn--green">
               Get My Website Today
             </Link>
             <a className="iwfw-btn iwfw-btn--outline" href="tel:08008527267">

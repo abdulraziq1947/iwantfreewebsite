@@ -59,7 +59,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
             website fee. You can complete onboarding now so we’re ready to build.
           </p>
           <div className="iwfw-dash-callout__actions">
-            <Link to="/pricing" className="iwfw-btn iwfw-btn--green">
+            <Link to="/get-started" className="iwfw-btn iwfw-btn--green">
               See £39.99 plan
             </Link>
             <Link to="/dashboard/onboarding" className="iwfw-btn iwfw-btn--outline">

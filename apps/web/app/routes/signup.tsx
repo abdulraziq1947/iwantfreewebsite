@@ -1,21 +1,9 @@
 import { Form, Link, redirect, useNavigation } from "react-router";
 import { Button, Input, Panel } from "@iwfw/ui";
-import { createAuth } from "@iwfw/auth";
-import {
-  createDb,
-  organisations,
-  memberships,
-  platformRoles,
-  eq,
-} from "@iwfw/db";
 import { getConfig, getEnv } from "../lib/env.server";
 import { getOptionalAuth } from "../lib/session.server";
-import {
-  readAuthJson,
-  redirectWithAuthCookies,
-} from "../lib/auth-response.server";
-import { newId } from "../lib/ids";
-import { log } from "../lib/logger";
+import { redirectWithAuthCookies } from "../lib/auth-response.server";
+import { registerCustomer } from "../lib/register-customer.server";
 import type { Route } from "./+types/signup";
 
 export function meta(_args: Route.MetaArgs) {
@@ -25,85 +13,26 @@ export function meta(_args: Route.MetaArgs) {
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await getOptionalAuth(request, context);
   if (auth) throw redirect("/dashboard");
+  // Prefer the conversion funnel; keep this route working for bookmarks.
+  const url = new URL(request.url);
+  if (!url.searchParams.has("legacy")) {
+    throw redirect("/get-started/account");
+  }
   return null;
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
   const form = await request.formData();
-  const name = String(form.get("name") ?? "").trim();
-  const email = String(form.get("email") ?? "").trim().toLowerCase();
-  const password = String(form.get("password") ?? "");
-  const tradingName = String(form.get("tradingName") ?? "").trim();
-
-  if (!name || !email || !password || !tradingName) {
-    return { error: "Please complete all fields." };
+  const result = await registerCustomer(getEnv(context), getConfig(context), {
+    name: String(form.get("name") ?? ""),
+    email: String(form.get("email") ?? ""),
+    password: String(form.get("password") ?? ""),
+    tradingName: String(form.get("tradingName") ?? ""),
+  });
+  if (!result.ok) {
+    return { error: result.error };
   }
-  if (password.length < 10) {
-    return { error: "Password must be at least 10 characters." };
-  }
-
-  try {
-    const env = getEnv(context);
-    const config = getConfig(context);
-    const auth = createAuth(env.DB, config);
-
-    const signUp = await auth.api.signUpEmail({
-      body: { name, email, password },
-      asResponse: true,
-    });
-
-    if (!signUp.ok) {
-      const text = await signUp.text();
-      log("warn", "signup_rejected", { body: text.slice(0, 200) });
-      return { error: "Could not create account. Email may already be in use." };
-    }
-
-    const payload = await readAuthJson<{ user?: { id: string } }>(signUp);
-    const userId = payload?.user?.id;
-    if (!userId) {
-      return { error: "Account created but user id missing. Please log in." };
-    }
-
-    const db = createDb(env.DB);
-    const orgId = newId("org");
-    await db.insert(organisations).values({
-      id: orgId,
-      tradingName,
-      status: "prospect",
-    });
-    await db.insert(memberships).values({
-      id: newId("mem"),
-      organisationId: orgId,
-      userId,
-      role: "customer",
-    });
-
-    if (
-      config.BOOTSTRAP_OWNER_EMAIL &&
-      config.BOOTSTRAP_OWNER_EMAIL.toLowerCase() === email
-    ) {
-      const existing = await db
-        .select()
-        .from(platformRoles)
-        .where(eq(platformRoles.userId, userId))
-        .get();
-      if (!existing) {
-        await db.insert(platformRoles).values({
-          id: newId("role"),
-          userId,
-          role: "platform_owner",
-        });
-        log("info", "bootstrap_owner_granted", { userId });
-      }
-    }
-
-    return redirectWithAuthCookies(signUp, "/dashboard/onboarding");
-  } catch (error) {
-    log("error", "signup_failed", {
-      error: error instanceof Error ? error.message : "unknown",
-    });
-    return { error: "Unable to sign up. Please try again." };
-  }
+  return redirectWithAuthCookies(result.response, "/get-started/review");
 }
 
 export default function Signup({ actionData }: Route.ComponentProps) {
@@ -114,7 +43,7 @@ export default function Signup({ actionData }: Route.ComponentProps) {
     <main className="mx-auto flex max-w-md flex-col gap-6 px-4 py-16">
       <h1 className="text-3xl font-bold">Create your account</h1>
       <p className="text-[var(--iwfw-muted)]">
-        £39.99/month after checkout (Phase 2). No minimum contract.
+        £39.99/month. £0 upfront website design fee. Cancel anytime.
       </p>
       <Panel>
         <Form method="post" className="space-y-4">
@@ -156,8 +85,15 @@ export default function Signup({ actionData }: Route.ComponentProps) {
         </Form>
       </Panel>
       <p className="text-sm text-[var(--iwfw-muted)]">
-        Already have an account?{" "}
-        <Link className="font-semibold text-[var(--iwfw-accent)]" to="/login">
+        Prefer the full package overview?{" "}
+        <Link className="font-semibold text-[var(--iwfw-accent)]" to="/get-started">
+          Get started
+        </Link>
+        . Already have an account?{" "}
+        <Link
+          className="font-semibold text-[var(--iwfw-accent)]"
+          to="/get-started/account?mode=login"
+        >
           Log in
         </Link>
       </p>

@@ -11,6 +11,14 @@ export default [
     route("login", "routes/login.tsx"),
     route("signup", "routes/signup.tsx"),
     route("pricing", "routes/pricing.tsx"),
+    route("terms", "routes/terms.tsx"),
+    route("privacy", "routes/privacy.tsx"),
+    layout("routes/get-started._layout.tsx", [
+      route("get-started", "routes/get-started.tsx"),
+      route("get-started/account", "routes/get-started.account.tsx"),
+      route("get-started/review", "routes/get-started.review.tsx"),
+      route("get-started/confirmation", "routes/get-started.confirmation.tsx"),
+    ]),
   ]),
   route("logout", "routes/logout.tsx"),
   layout("routes/customer-layout.tsx", [
