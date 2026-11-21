@@ -13,10 +13,11 @@
 
 5. The customer **retains ownership** of website and domain assets, subject to the Terms.
 6. Transfers are **manual** — do **not** build automated asset transfer.
-7. When cancellation is scheduled, **automatically create an internal asset transfer task**.
-8. Notify the **admin team** and show transfer status in the **customer dashboard**.
+7. When the subscription **actually ends** (`customer.subscription.deleted`), create **one** internal asset transfer task (no duplicates). Do **not** create the task merely because cancel-at-period-end was scheduled.
+8. Notify the **admin team** (when email is wired) and show transfer status in the **customer dashboard**.
 9. Transfer progress: `pending` → `in_progress` → `completed`.
 10. On completion: record **completion date** and **notify the customer**.
+11. Customers may **reverse** a scheduled cancellation before the period ends (`cancel_at_period_end=false`).
 
 ## Preservation
 

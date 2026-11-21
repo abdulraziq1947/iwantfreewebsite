@@ -1,9 +1,11 @@
 import { Form, Link, redirect, useNavigation } from "react-router";
 import { Button } from "@iwfw/ui";
+import { isStripeCheckoutConfigured } from "@iwfw/config";
 import { createDb, eq, onboardingProfiles } from "@iwfw/db";
-import { getEnv } from "../lib/env.server";
+import { getConfig, getEnv } from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
 import { getCustomerWorkspace } from "../lib/customer-org.server";
+import { createCheckoutSessionForOrg } from "../lib/billing.server";
 import {
   PACKAGE_INCLUDES,
   PACKAGE_NAME,
@@ -18,6 +20,7 @@ export function meta(_args: Route.MetaArgs) {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
+  const config = getConfig(context);
   const db = createDb(getEnv(context).DB);
   const workspace = await getCustomerWorkspace(db, auth);
 
@@ -34,12 +37,15 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     termsVersion: TERMS_VERSION,
     marketingOptIn: Boolean(workspace.onboarding?.data.checkout.marketingOptIn),
     termsAcceptedAt: workspace.onboarding?.data.checkout.termsAcceptedAt || "",
+    stripeConfigured: isStripeCheckoutConfigured(config),
   };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
   const auth = await requireAuth(request, context);
-  const db = createDb(getEnv(context).DB);
+  const env = getEnv(context);
+  const config = getConfig(context);
+  const db = createDb(env.DB);
   const workspace = await getCustomerWorkspace(db, auth);
   if (!workspace.primary || !workspace.onboarding) {
     return { error: "No organisation found. Please create an account first." };
@@ -73,13 +79,19 @@ export async function action({ request, context }: Route.ActionArgs) {
     })
     .where(eq(onboardingProfiles.id, workspace.onboarding.id));
 
-  // Stage D will create a Stripe Checkout Session here.
-  // Do not fake payment success.
-  return {
-    error:
-      "Secure Stripe checkout is not connected yet. Once test secrets are configured (see docs/STRIPE_TEST_SETUP.md), this button will open Stripe-hosted payment. No charge was made.",
-    termsSaved: true,
-  };
+  const checkout = await createCheckoutSessionForOrg({
+    db,
+    config,
+    organisationId: workspace.primary.id,
+    tradingName: workspace.primary.tradingName,
+    email: auth.email,
+  });
+
+  if ("error" in checkout) {
+    return { error: checkout.error, termsSaved: true };
+  }
+
+  throw redirect(checkout.url);
 }
 
 export default function GetStartedReview({
@@ -95,8 +107,8 @@ export default function GetStartedReview({
         <p className="iwfw-start__kicker">Step 3 of 3</p>
         <h1>Review &amp; pay</h1>
         <p className="iwfw-start__lead">
-          Confirm your package and terms, then pay securely. Business details
-          and website preferences come next in your dashboard.
+          Confirm your package and terms, then pay securely with Stripe. Business
+          details and website preferences come next in your dashboard.
         </p>
       </header>
 
@@ -144,25 +156,15 @@ export default function GetStartedReview({
             </li>
             <li>
               Access continues until the end of the current paid billing period.
-              Stripe will not renew after that date.
+              Billing will not renew after that date.
             </li>
             <li>
               You retain ownership of your website and domain assets, subject to
-              the Terms.
-            </li>
-            <li>
-              After cancellation is scheduled, our team creates a manual transfer
-              task and transfers your website and domain. Status appears in your
-              dashboard (Pending → In progress → Completed).
+              the Terms. Transfers are manual after the subscription ends.
             </li>
             <li>
               We do not auto-delete websites, domains, email or files when a
-              subscription ends. Assets are preserved until manual transfer is
-              completed.
-            </li>
-            <li>
-              We do not promise an exact transfer timeframe until an operational
-              SLA is published.
+              subscription ends.
             </li>
           </ul>
 
@@ -174,11 +176,11 @@ export default function GetStartedReview({
                 <Link to="/terms" target="_blank" rel="noreferrer">
                   Terms &amp; Conditions
                 </Link>{" "}
-                (draft for review) and{" "}
+                and{" "}
                 <Link to="/privacy" target="_blank" rel="noreferrer">
                   Privacy Policy
-                </Link>{" "}
-                (draft for review). *
+                </Link>
+                . *
               </span>
             </label>
             <label className="iwfw-check">
@@ -193,10 +195,9 @@ export default function GetStartedReview({
               </span>
             </label>
 
-            {actionData?.termsSaved && (
+            {actionData?.termsSaved && actionData?.error && (
               <p className="iwfw-start__ok" role="status">
-                Terms acceptance saved
-                {loaderData.termsAcceptedAt ? " (updated)" : ""}.
+                Terms acceptance saved.
               </p>
             )}
             {actionData?.error && (
@@ -204,13 +205,24 @@ export default function GetStartedReview({
                 {actionData.error}
               </p>
             )}
+            {!loaderData.stripeConfigured && (
+              <p className="iwfw-start__error" role="status">
+                Stripe test Checkout is not configured in this environment yet
+                (needs STRIPE_SECRET_KEY and STRIPE_PRICE_ID).
+              </p>
+            )}
 
-            <Button type="submit" disabled={busy} className="w-full">
-              {busy ? "Saving…" : "Pay £39.99/month securely"}
+            <Button
+              type="submit"
+              disabled={busy || !loaderData.stripeConfigured}
+              className="w-full"
+            >
+              {busy ? "Redirecting to Stripe…" : "Pay £39.99/month securely"}
             </Button>
             <p className="iwfw-start__fine">
-              Stripe test checkout wires up next. No live charges without your
-              approval. <Link to="/get-started/account">← Account</Link>
+              You will complete payment on Stripe&apos;s secure checkout page.
+              Test mode only until live payments are approved.{" "}
+              <Link to="/get-started/account">← Account</Link>
             </p>
           </Form>
         </section>

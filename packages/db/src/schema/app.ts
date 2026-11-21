@@ -137,3 +137,100 @@ export const auditLogs = sqliteTable(
     index("audit_logs_actor_user_id_idx").on(t.actorUserId),
   ],
 );
+
+export const checkoutSessions = sqliteTable(
+  "checkout_sessions",
+  {
+    id: text("id").primaryKey(),
+    organisationId: text("organisation_id")
+      .notNull()
+      .references(() => organisations.id, { onDelete: "cascade" }),
+    stripeSessionId: text("stripe_session_id").notNull(),
+    stripePriceId: text("stripe_price_id").notNull(),
+    status: text("status", {
+      enum: ["open", "complete", "expired"],
+    })
+      .notNull()
+      .default("open"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+  },
+  (t) => [
+    uniqueIndex("checkout_sessions_stripe_session_uidx").on(t.stripeSessionId),
+    index("checkout_sessions_org_id_idx").on(t.organisationId),
+  ],
+);
+
+export const subscriptions = sqliteTable(
+  "subscriptions",
+  {
+    id: text("id").primaryKey(),
+    organisationId: text("organisation_id")
+      .notNull()
+      .references(() => organisations.id, { onDelete: "cascade" }),
+    stripeSubscriptionId: text("stripe_subscription_id").notNull(),
+    stripeCustomerId: text("stripe_customer_id").notNull(),
+    stripePriceId: text("stripe_price_id").notNull(),
+    status: text("status").notNull(),
+    cancelAtPeriodEnd: integer("cancel_at_period_end", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    currentPeriodStart: integer("current_period_start", {
+      mode: "timestamp_ms",
+    }),
+    currentPeriodEnd: integer("current_period_end", { mode: "timestamp_ms" }),
+    canceledAt: integer("canceled_at", { mode: "timestamp_ms" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+  },
+  (t) => [
+    uniqueIndex("subscriptions_stripe_subscription_uidx").on(
+      t.stripeSubscriptionId,
+    ),
+    index("subscriptions_org_id_idx").on(t.organisationId),
+  ],
+);
+
+export const stripeEvents = sqliteTable("stripe_events", {
+  stripeEventId: text("stripe_event_id").primaryKey(),
+  type: text("type").notNull(),
+  processedAt: integer("processed_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+});
+
+export const assetTransferTasks = sqliteTable(
+  "asset_transfer_tasks",
+  {
+    id: text("id").primaryKey(),
+    organisationId: text("organisation_id")
+      .notNull()
+      .references(() => organisations.id, { onDelete: "cascade" }),
+    subscriptionId: text("subscription_id").references(() => subscriptions.id, {
+      onDelete: "set null",
+    }),
+    status: text("status", {
+      enum: ["pending", "in_progress", "completed"],
+    })
+      .notNull()
+      .default("pending"),
+    scheduledAt: integer("scheduled_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+    periodEndAt: integer("period_end_at", { mode: "timestamp_ms" }),
+    completedAt: integer("completed_at", { mode: "timestamp_ms" }),
+    adminNotes: text("admin_notes"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+  },
+  (t) => [index("asset_transfer_tasks_org_id_idx").on(t.organisationId)],
+);

@@ -3,11 +3,13 @@ import {
   eq,
   organisations,
   onboardingProfiles,
+  subscriptions,
   inArray,
 } from "@iwfw/db";
 import type { AuthContext } from "@iwfw/auth";
 import { newId } from "./ids";
 import { parseOnboardingData } from "./onboarding";
+import { isBlockingSubscriptionStatus } from "./stripe.server";
 
 export async function getCustomerWorkspace(
   db: ReturnType<typeof createDb>,
@@ -56,6 +58,20 @@ export async function getCustomerWorkspace(
   const data = parseOnboardingData(profile?.dataJson);
   const completed = Boolean(profile?.completedAt);
 
+  const subscriptionRows = await db
+    .select()
+    .from(subscriptions)
+    .where(eq(subscriptions.organisationId, primary.id))
+    .all();
+  const subscription =
+    subscriptionRows.find((row) => isBlockingSubscriptionStatus(row.status)) ??
+    null;
+
+  const hasPaidAccess =
+    primary.status === "active" ||
+    primary.status === "cancelling" ||
+    Boolean(subscription);
+
   return {
     orgs: orgs.map((o) => ({
       id: o.id,
@@ -79,6 +95,6 @@ export async function getCustomerWorkspace(
           data,
         }
       : null,
-    needsSubscription: primary.status === "prospect",
+    needsSubscription: !hasPaidAccess,
   };
 }

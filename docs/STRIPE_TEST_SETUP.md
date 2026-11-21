@@ -2,96 +2,65 @@
 
 Use **test mode only**. Do not enable live payments or change production billing until approved.
 
-## 1. Create a Stripe test account / switch to test mode
+## Environment variables
 
-1. Open [https://dashboard.stripe.com](https://dashboard.stripe.com) and sign in.
-2. Toggle **Test mode** ON (switch in the Dashboard header).
+| Name | Kind | Purpose |
+| --- | --- | --- |
+| `STRIPE_SECRET_KEY` | **Secret** | `sk_test_…` API key |
+| `STRIPE_PRICE_ID` | **Non-secret var** | Canonical £39.99/month Price ID (`price_…`) |
+| `STRIPE_WEBHOOK_SECRET` | **Secret** | `whsec_…` signing secret |
+| `APP_URL` | Var | Success/cancel + webhook origin |
 
-## 2. Create the product and £39.99 monthly price
+Production Worker already has `STRIPE_SECRET_KEY` (secret) and `STRIPE_PRICE_ID` (plain-text var). You still need `STRIPE_WEBHOOK_SECRET` after creating the endpoint.
 
-1. Go to **Product catalogue → Products → Add product**.
-2. Name: `Professional Business Website` (or similar).
-3. Description: managed business website; £0 upfront website design fee.
-4. Pricing:
-   - Model: **Recurring**
-   - Price: **39.99**
-   - Currency: **GBP**
-   - Billing period: **Monthly**
-5. Save the product.
-6. Open the price and copy the **Price ID** (`price_...`).  
-   You will store this as `STRIPE_PRICE_WEBSITE_MONTHLY`.
+Local development does **not** inherit Cloudflare secrets — put test values in `apps/web/.dev.vars` (never commit).
 
-Do **not** create a separate upfront design fee. Rank tracking (£9.99) stays disabled — do not add it to Checkout yet.
+## 1. Product & price
 
-## 3. API keys (test)
+1. Stripe Dashboard → **Test mode ON**
+2. Product: Professional Business Website
+3. Recurring price: **£39.99 GBP / month**
+4. Copy Price ID → `STRIPE_PRICE_ID`
 
-1. Go to **Developers → API keys**.
-2. Copy the **Secret key** (`sk_test_...`) → `STRIPE_SECRET_KEY`.
-3. Never commit this value. Prefer Wrangler secrets / Cursor secrets UI.
+## 2. Webhook endpoint (required for Stage D)
 
-## 4. Webhook endpoint (after Stage D code lands)
+After this code is running somewhere Stripe can reach (staging or `stripe listen`):
 
-When Checkout + webhook routes exist:
-
-1. **Developers → Webhooks → Add endpoint**.
-2. Endpoint URL (local via Stripe CLI, or staging Worker URL):  
-   `https://<your-app>/api/stripe/webhook`
-3. Events to send (minimum):
+1. **Developers → Webhooks → Add endpoint**
+2. URL: `https://<your-host>/api/stripe/webhook`
+3. Events:
    - `checkout.session.completed`
    - `customer.subscription.created`
    - `customer.subscription.updated`
    - `customer.subscription.deleted`
    - `invoice.paid`
    - `invoice.payment_failed`
-4. Copy the webhook **Signing secret** (`whsec_...`) → `STRIPE_WEBHOOK_SECRET`.
+4. Copy signing secret → `STRIPE_WEBHOOK_SECRET`
 
-### Local forwarding (optional)
+### Local
 
 ```bash
 stripe listen --forward-to localhost:5173/api/stripe/webhook
 ```
 
-Use the CLI-printed `whsec_...` for local `.dev.vars`.
+Put the CLI `whsec_…` into `apps/web/.dev.vars`.
 
-## 5. Where to put secrets
-
-### Local (`apps/web/.dev.vars` — never commit)
-
-```bash
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-STRIPE_PRICE_WEBSITE_MONTHLY=price_...
-```
-
-### Staging / production (Wrangler / Cloudflare dashboard)
+### Staging / production secret (after approval only for production)
 
 ```bash
 cd apps/web
-CLOUDFLARE_ENV=staging pnpm exec wrangler secret put STRIPE_SECRET_KEY
 CLOUDFLARE_ENV=staging pnpm exec wrangler secret put STRIPE_WEBHOOK_SECRET
-CLOUDFLARE_ENV=staging pnpm exec wrangler secret put STRIPE_PRICE_WEBSITE_MONTHLY
 ```
 
-Repeat for production **only after written approval**.
+## 3. Behaviour summary
 
-Stage B does not yet read these secrets. Stage D will extend Zod config and wire Checkout.
+- Checkout: Stripe-hosted subscription; server uses `STRIPE_PRICE_ID` only
+- Webhooks: source of truth for subscription + org status
+- Cancel: `cancel_at_period_end=true`; resume clears the flag
+- Asset transfer task: created once when subscription **ends** (`customer.subscription.deleted`), not when cancel is merely scheduled
+- No auto-delete / auto-transfer of assets
+- Rank tracking Checkout stays disabled
 
-## 6. Cancellation behaviour (product policy)
+## 4. D1 migration
 
-When a customer cancels:
-
-1. Set Stripe subscription to cancel at period end (`cancel_at_period_end=true`) so **no further renewals** occur after the paid period.
-2. Do **not** immediately revoke access before `current_period_end`.
-3. Create an **internal asset transfer task** (manual website + domain transfer).
-4. Never auto-delete websites, domains, email or files on subscription end.
-
-## 7. VAT note
-
-Advertised price is **£39.99 inclusive of VAT where applicable**. Confirm Stripe Tax / VAT treatment with your accountant before enabling **live** billing. Test mode can proceed with inclusive pricing copy.
-
-## 8. Checklist before asking the agent to continue Stage D
-
-- [ ] Test product + monthly GBP price created  
-- [ ] `price_...` ID copied  
-- [ ] `sk_test_...` available to add as a secret (not pasted into chat if avoidable)  
-- [ ] You understand live mode is **off-limits** until you approve  
+`packages/db/migrations/0003_billing.sql` — apply to **local/staging** when ready. **Do not** apply to production D1 until approved.

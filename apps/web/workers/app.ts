@@ -6,6 +6,7 @@ import { createAuth } from "@iwfw/auth";
 import { parseWorkerEnv } from "@iwfw/config";
 import { cloudflareContext } from "../app/lib/cloudflare-context";
 import { log } from "../app/lib/logger";
+import { handleStripeWebhookRequest } from "../app/lib/stripe-webhook.server";
 
 const requestHandler = createRequestHandler(
   () => import("virtual:react-router/server-build"),
@@ -20,9 +21,31 @@ export default {
       return handleHealth(env);
     }
 
+    if (url.pathname === "/api/stripe/webhook") {
+      if (request.method !== "POST") {
+        return new Response("Method Not Allowed", { status: 405 });
+      }
+      try {
+        const config = parseWorkerEnv(
+          env as unknown as Record<string, unknown>,
+        );
+        return await handleStripeWebhookRequest(request, env, config);
+      } catch (error) {
+        log("error", "stripe_webhook_misconfigured", {
+          error: error instanceof Error ? error.message : "unknown",
+        });
+        return Response.json(
+          { error: "Webhook misconfigured" },
+          { status: 500 },
+        );
+      }
+    }
+
     if (url.pathname.startsWith("/api/auth")) {
       try {
-        const config = parseWorkerEnv(env as unknown as Record<string, unknown>);
+        const config = parseWorkerEnv(
+          env as unknown as Record<string, unknown>,
+        );
         const auth = createAuth(env.DB, config);
         return auth.handler(request);
       } catch (error) {

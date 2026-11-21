@@ -7,7 +7,7 @@
 | `website_monthly` | £39.99 / month | Mandatory core |
 | `rank_tracking_monthly` | £9.99 / month | Optional add-on |
 
-Store Stripe Price IDs in Worker secrets / env — never accept client-submitted amounts or price IDs without allowlist check.
+Canonical config name for the £39.99 website plan: **`STRIPE_PRICE_ID`** (non-secret Wrangler var). Secrets: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`. Never accept client-submitted amounts or price IDs.
 
 ## Feature gate — rank tracking
 

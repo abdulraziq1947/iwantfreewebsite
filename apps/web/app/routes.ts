@@ -17,6 +17,7 @@ export default [
       route("get-started", "routes/get-started.tsx"),
       route("get-started/account", "routes/get-started.account.tsx"),
       route("get-started/review", "routes/get-started.review.tsx"),
+      route("get-started/confirmation", "routes/get-started.confirmation.tsx"),
     ]),
   ]),
   route("logout", "routes/logout.tsx"),
