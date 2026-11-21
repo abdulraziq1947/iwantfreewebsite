@@ -45,7 +45,7 @@ export default function BillingPage({ loaderData }: Route.ComponentProps) {
             <li>Review reply help</li>
           </ul>
           {status === "prospect" ? (
-            <Link to="/pricing" className="iwfw-btn iwfw-btn--green iwfw-btn--block">
+            <Link to="/get-started" className="iwfw-btn iwfw-btn--green iwfw-btn--block">
               Subscribe
             </Link>
           ) : (
@@ -59,17 +59,29 @@ export default function BillingPage({ loaderData }: Route.ComponentProps) {
         <Panel>
           <h2>Cancel anytime</h2>
           <p className="iwfw-dash-copy">
-            There is no minimum contract. If you cancel, service continues until
-            the end of the period you have already paid for. Domain transfer,
-            email migration, and hosting options are explained before you
-            confirm.
+            No minimum term and no cancellation penalty. If you cancel, your
+            subscription stays active until the end of the current paid billing
+            period, and billing will not renew after that date.
+          </p>
+          <p className="iwfw-dash-copy">
+            You retain ownership of your website and domain assets (subject to
+            the Terms). Our team manually transfers them after cancellation —
+            transfers are not automated. We create an internal transfer task,
+            show status here (Pending → In progress → Completed), and notify you
+            when complete. We do not auto-delete websites, domains, email or
+            files when the subscription ends.
+          </p>
+          <p className="iwfw-dash-fine">
+            Transfer status will appear here once Stripe billing is connected.
+            We do not promise an exact transfer timeframe until an operational
+            SLA is published.
           </p>
           <button type="button" className="iwfw-btn iwfw-btn--outline" disabled>
             Cancel subscription (coming soon)
           </button>
           <p className="iwfw-dash-fine">
-            Optional Google Rank Tracking (£9.99/month) is not sold until that
-            feature is operational.
+            Optional Google Rank Tracking (£9.99/month) remains disabled until
+            that feature is operational.
           </p>
         </Panel>
       </div>

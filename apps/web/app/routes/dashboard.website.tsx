@@ -92,8 +92,8 @@ export default function WebsitePage({ loaderData }: Route.ComponentProps) {
                 start onboarding now so we’re ready.
               </p>
               <div className="iwfw-dash-inline-actions">
-                <Link to="/pricing" className="iwfw-btn iwfw-btn--green">
-                  View pricing
+                <Link to="/get-started" className="iwfw-btn iwfw-btn--green">
+                  View package
                 </Link>
                 <Link to="/dashboard/onboarding" className="iwfw-btn iwfw-btn--outline">
                   Start onboarding

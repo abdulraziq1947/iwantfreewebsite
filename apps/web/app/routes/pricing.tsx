@@ -37,7 +37,7 @@ export default function Pricing() {
           that feature is operational.
         </p>
         <div className="iwfw-pricing__cta">
-          <Link to="/signup" className="iwfw-btn iwfw-btn--green">
+          <Link to="/get-started" className="iwfw-btn iwfw-btn--green">
             Get My Website Today
           </Link>
         </div>
