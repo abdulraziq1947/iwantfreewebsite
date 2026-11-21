@@ -234,3 +234,132 @@ export const assetTransferTasks = sqliteTable(
   },
   (t) => [index("asset_transfer_tasks_org_id_idx").on(t.organisationId)],
 );
+
+/** Pre-payment website order (questionnaire + domain) before account exists. */
+export const pendingOrders = sqliteTable(
+  "pending_orders",
+  {
+    id: text("id").primaryKey(),
+    resumeToken: text("resume_token").notNull(),
+    status: text("status", {
+      enum: [
+        "draft",
+        "ready_for_checkout",
+        "checkout_open",
+        "paid",
+        "expired",
+        "abandoned",
+        "failed",
+      ],
+    })
+      .notNull()
+      .default("draft"),
+    email: text("email"),
+    fullName: text("full_name"),
+    phone: text("phone"),
+    tradingName: text("trading_name"),
+    questionnaireJson: text("questionnaire_json").notNull().default("{}"),
+    questionnaireStep: integer("questionnaire_step").notNull().default(0),
+    domainMode: text("domain_mode", { enum: ["new", "existing"] }),
+    domainName: text("domain_name"),
+    domainAcknowledged: integer("domain_acknowledged", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    domainLastCheckedAt: integer("domain_last_checked_at", {
+      mode: "timestamp_ms",
+    }),
+    domainLastAvailable: integer("domain_last_available", { mode: "boolean" }),
+    termsVersion: text("terms_version"),
+    termsAcceptedAt: integer("terms_accepted_at", { mode: "timestamp_ms" }),
+    marketingOptIn: integer("marketing_opt_in", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    stripeCustomerId: text("stripe_customer_id"),
+    stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+    stripePriceId: text("stripe_price_id"),
+    organisationId: text("organisation_id").references(() => organisations.id, {
+      onDelete: "set null",
+    }),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    paidAt: integer("paid_at", { mode: "timestamp_ms" }),
+    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+  },
+  (t) => [
+    uniqueIndex("pending_orders_resume_token_uidx").on(t.resumeToken),
+    index("pending_orders_email_idx").on(t.email),
+    uniqueIndex("pending_orders_stripe_session_uidx").on(
+      t.stripeCheckoutSessionId,
+    ),
+  ],
+);
+
+export const domainRegistrationTasks = sqliteTable(
+  "domain_registration_tasks",
+  {
+    id: text("id").primaryKey(),
+    organisationId: text("organisation_id")
+      .notNull()
+      .references(() => organisations.id, { onDelete: "cascade" }),
+    pendingOrderId: text("pending_order_id").references(() => pendingOrders.id, {
+      onDelete: "set null",
+    }),
+    domainName: text("domain_name").notNull(),
+    domainMode: text("domain_mode", { enum: ["new", "existing"] }).notNull(),
+    status: text("status", {
+      enum: [
+        "pending",
+        "in_progress",
+        "registered",
+        "connected",
+        "unavailable",
+        "cancelled",
+      ],
+    })
+      .notNull()
+      .default("pending"),
+    adminNotes: text("admin_notes"),
+    registeredAt: integer("registered_at", { mode: "timestamp_ms" }),
+    connectedAt: integer("connected_at", { mode: "timestamp_ms" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+  },
+  (t) => [
+    index("domain_registration_tasks_org_id_idx").on(t.organisationId),
+  ],
+);
+
+export const accountActivationTokens = sqliteTable(
+  "account_activation_tokens",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    organisationId: text("organisation_id")
+      .notNull()
+      .references(() => organisations.id, { onDelete: "cascade" }),
+    pendingOrderId: text("pending_order_id").references(() => pendingOrders.id, {
+      onDelete: "set null",
+    }),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+    usedAt: integer("used_at", { mode: "timestamp_ms" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+  },
+  (t) => [
+    uniqueIndex("account_activation_tokens_hash_uidx").on(t.tokenHash),
+    index("account_activation_tokens_user_id_idx").on(t.userId),
+  ],
+);

@@ -8,6 +8,7 @@ import {
   checkoutSessions,
   assetTransferTasks,
   stripeEvents,
+  pendingOrders,
 } from "@iwfw/db";
 import type { WorkerEnvConfig } from "@iwfw/config";
 import type Stripe from "stripe";
@@ -181,6 +182,109 @@ export async function createCheckoutSessionForOrg(options: {
   return { url: session.url };
 }
 
+/**
+ * Pre-account Checkout: bind Stripe session to pending_order id only.
+ * Server uses STRIPE_PRICE_ID — never client prices.
+ */
+export async function createCheckoutForPendingOrder(options: {
+  db: Db;
+  config: WorkerEnvConfig;
+  pendingOrderId: string;
+}): Promise<{ url: string } | { error: string }> {
+  const configured = assertCheckoutConfigured(options.config);
+  if (!configured.ok) return { error: configured.error };
+  const { stripe, priceId } = configured;
+
+  const priceCheck = await verifyConfiguredWebsitePrice(stripe, priceId);
+  if (!priceCheck.ok) return { error: priceCheck.error };
+
+  const order = await options.db
+    .select()
+    .from(pendingOrders)
+    .where(eq(pendingOrders.id, options.pendingOrderId))
+    .get();
+  if (!order) return { error: "Order not found." };
+  if (order.status === "paid") {
+    return { error: "This order is already paid. Please log in to your dashboard." };
+  }
+  if (order.status === "expired") {
+    return { error: "This order has expired. Please start again." };
+  }
+  if (!order.email || !order.tradingName || !order.domainName || !order.domainMode) {
+    return { error: "Please complete the questionnaire and domain selection first." };
+  }
+  if (!order.domainAcknowledged) {
+    return { error: "Please acknowledge the domain availability disclaimer." };
+  }
+  if (!order.termsAcceptedAt) {
+    return { error: "Please accept the Terms and Privacy Policy." };
+  }
+
+  if (order.stripeCheckoutSessionId) {
+    try {
+      const prior = await stripe.checkout.sessions.retrieve(
+        order.stripeCheckoutSessionId,
+      );
+      if (prior.status === "open" && prior.url) {
+        return { url: prior.url };
+      }
+    } catch {
+      // create a fresh session below
+    }
+  }
+
+  let customerId = order.stripeCustomerId;
+  if (!customerId) {
+    const customer = await stripe.customers.create(
+      {
+        email: order.email,
+        name: order.tradingName,
+        metadata: { pending_order_id: order.id },
+      },
+      { idempotencyKey: `pending_cust_${order.id}` },
+    );
+    customerId = customer.id;
+  }
+
+  const appUrl = options.config.APP_URL.replace(/\/$/, "");
+  const session = await stripe.checkout.sessions.create(
+    {
+      mode: "subscription",
+      customer: customerId,
+      client_reference_id: order.id,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${appUrl}/get-started/confirmation?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${appUrl}/get-started/review`,
+      metadata: {
+        pending_order_id: order.id,
+      },
+      subscription_data: {
+        metadata: { pending_order_id: order.id },
+      },
+    },
+    {
+      idempotencyKey: `pending_checkout_${order.id}_${priceId}`,
+    },
+  );
+
+  if (!session.url) {
+    return { error: "Stripe did not return a Checkout URL." };
+  }
+
+  await options.db
+    .update(pendingOrders)
+    .set({
+      status: "checkout_open",
+      stripeCustomerId: customerId,
+      stripeCheckoutSessionId: session.id,
+      stripePriceId: priceId,
+      updatedAt: new Date(),
+    })
+    .where(eq(pendingOrders.id, order.id));
+
+  return { url: session.url };
+}
+
 export async function recordStripeEventOnce(
   db: Db,
   eventId: string,
@@ -336,6 +440,16 @@ export async function resolveOrganisationIdForSubscription(
 ): Promise<string | null> {
   const fromMeta = stripeSubscription.metadata?.organisation_id;
   if (fromMeta) return fromMeta;
+
+  const pendingOrderId = stripeSubscription.metadata?.pending_order_id;
+  if (pendingOrderId) {
+    const order = await db
+      .select()
+      .from(pendingOrders)
+      .where(eq(pendingOrders.id, pendingOrderId))
+      .get();
+    if (order?.organisationId) return order.organisationId;
+  }
 
   const bySub = await db
     .select()

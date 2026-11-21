@@ -35,18 +35,14 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export default function GetStartedPackage({ loaderData }: Route.ComponentProps) {
-  const next = loaderData.signedIn
-    ? "/get-started/review"
-    : "/get-started/account";
-
   return (
     <div className="iwfw-start">
       <header className="iwfw-start__intro">
         <p className="iwfw-start__kicker">Your website package</p>
         <h1>{PACKAGE_NAME}</h1>
         <p className="iwfw-start__lead">
-          A fully managed business website for UK businesses. You focus on the
-          work — we handle the website.
+          Tell us about your business, choose a domain, then pay — we create your
+          account automatically after Stripe confirms payment.
         </p>
       </header>
 
@@ -63,46 +59,43 @@ export default function GetStartedPackage({ loaderData }: Route.ComponentProps) 
         </ul>
 
         <div className="iwfw-start__terms-box">
-          <h2>Pricing, cancellation &amp; ownership</h2>
+          <h2>How ordering works</h2>
           <ul>
             <li>
-              <strong>£39.99/month</strong> inclusive of VAT where applicable.
+              <strong>No signup before payment.</strong> Complete the website
+              questionnaire and domain selection first.
             </li>
             <li>
-              <strong>£0</strong> upfront website design fee.
+              <strong>£39.99/month</strong> · <strong>£0</strong> upfront website
+              fee · cancel anytime.
             </li>
             <li>
-              <strong>No minimum contract.</strong> Cancel anytime from your
-              dashboard — no cancellation penalty.
+              Domains are checked live, then registered <strong>manually</strong>{" "}
+              by our team after payment — never auto-purchased.
             </li>
             <li>
-              Cancellation takes effect at the{" "}
-              <strong>end of the current paid billing period</strong>. Billing
-              does not renew after that date.
-            </li>
-            <li>
-              You retain ownership of your website and domain assets (subject to
-              the Terms). Our team <strong>manually transfers</strong> them
-              after cancellation — transfers are not automated, and we do not
-              promise an exact timeframe until an SLA is published.
-            </li>
-            <li>
-              We do not automatically delete your website, domain, email or
-              files when the subscription ends.
+              After payment, we create your organisation and send an account
+              activation link (no plaintext passwords).
             </li>
           </ul>
         </div>
 
-        <Link to={next} className="iwfw-btn iwfw-btn--green iwfw-btn--block">
+        <Link
+          to="/get-started/website"
+          className="iwfw-btn iwfw-btn--green iwfw-btn--block"
+        >
           Continue — Get My Website
         </Link>
         <p className="iwfw-start__fine">
           {loaderData.signedIn ? (
-            <>You&apos;re signed in. Next: review and pay.</>
+            <>
+              You&apos;re signed in. You can still place a new order, or{" "}
+              <Link to="/dashboard">open your dashboard</Link>.
+            </>
           ) : (
             <>
-              Already have an account?{" "}
-              <Link to="/get-started/account?mode=login">Log in</Link>
+              Already paid?{" "}
+              <Link to="/login">Log in</Link>
             </>
           )}
         </p>
