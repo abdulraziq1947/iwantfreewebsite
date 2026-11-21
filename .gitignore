@@ -17,3 +17,7 @@ apps/web/worker-configuration.d.ts
 **/test-results
 .vscode/*
 !.vscode/extensions.json
+
+# Ephemeral shim written by apps/web/scripts/workers-ci-prepare.mjs on Workers CI
+# when the preview cwd is the repository root. Real config lives in apps/web/.
+/wrangler.jsonc

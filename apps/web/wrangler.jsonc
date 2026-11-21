@@ -22,8 +22,9 @@
     "enabled": true
   },
   "upload_source_maps": true,
-  // Required for Workers Builds preview command (`npx wrangler preview`).
-  // Empty block inherits top-level settings when no preview-specific overrides are needed.
+  // Required for Workers Builds preview (`npx wrangler preview`). Empty object is valid.
+  // Vite also copies this into build/server/wrangler.json; see workers-ci-prepare.mjs when
+  // the Preview build_command is skipped and only `pnpm install` + wrangler preview run.
   "previews": {},
   "vars": {
     "APP_URL": "http://localhost:5173",

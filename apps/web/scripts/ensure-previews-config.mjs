@@ -1,8 +1,11 @@
 /**
- * Cloudflare Vite builds emit build/server/wrangler.json without a `previews`
- * block. Workers Builds then runs `npx wrangler preview`, which redirects to
- * that generated file via .wrangler/deploy/config.json and fails unless
- * `previews` is present (empty object is valid).
+ * Vite/Cloudflare may emit build/server/wrangler.json without copying the
+ * source `previews` block in older plugin/tooling combinations. `wrangler
+ * preview` redirects to that file via `.wrangler/deploy/config.json` and
+ * requires `previews` (empty object is valid).
+ *
+ * This runs after `react-router build`. Preview CI that skips the app build
+ * never reaches this script — see `workers-ci-prepare.mjs`.
  */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
