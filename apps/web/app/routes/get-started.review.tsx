@@ -1,12 +1,17 @@
 import { Form, Link, redirect, useNavigation } from "react-router";
 import { Button } from "@iwfw/ui";
 import { isStripeCheckoutConfigured } from "@iwfw/config";
-import { createDb, eq, onboardingProfiles } from "@iwfw/db";
+import { createDb, eq, pendingOrders } from "@iwfw/db";
 import { getConfig, getEnv } from "../lib/env.server";
-import { requireAuth } from "../lib/session.server";
-import { getCustomerWorkspace } from "../lib/customer-org.server";
-import { createCheckoutSessionForOrg } from "../lib/billing.server";
 import {
+  getOrCreateDraftOrder,
+  orderQuestionnaire,
+} from "../lib/pending-order.server";
+import { createCheckoutForPendingOrder } from "../lib/billing.server";
+import { checkDomainAvailability } from "../lib/domain-lookup.server";
+import { questionnaireSummary } from "../lib/order-questionnaire";
+import {
+  DOMAIN_DISCLAIMER,
   PACKAGE_INCLUDES,
   PACKAGE_NAME,
   PACKAGE_PRICE_LABEL,
@@ -19,78 +24,93 @@ export function meta(_args: Route.MetaArgs) {
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-  const auth = await requireAuth(request, context);
   const config = getConfig(context);
   const db = createDb(getEnv(context).DB);
-  const workspace = await getCustomerWorkspace(db, auth);
+  const { order } = await getOrCreateDraftOrder(db, request);
+  const q = orderQuestionnaire(order);
 
-  if (!workspace.primary) {
-    throw redirect("/get-started/account");
+  if (!q.contact.email || !q.business.tradingName) {
+    throw redirect("/get-started/website");
   }
-  if (!workspace.needsSubscription) {
-    throw redirect("/dashboard");
+  if (!order.domainName || !order.domainMode || !order.domainAcknowledged) {
+    throw redirect("/get-started/domain");
+  }
+
+  let domainRecheck: {
+    availability: string;
+    message: string;
+  } | null = null;
+  if (order.domainMode === "new") {
+    const result = await checkDomainAvailability(order.domainName);
+    domainRecheck = {
+      availability: result.availability,
+      message: result.message,
+    };
+    await db
+      .update(pendingOrders)
+      .set({
+        domainLastCheckedAt: new Date(),
+        domainLastAvailable: result.availability === "available",
+        updatedAt: new Date(),
+      })
+      .where(eq(pendingOrders.id, order.id));
   }
 
   return {
-    tradingName: workspace.primary.tradingName,
-    email: auth.email,
-    termsVersion: TERMS_VERSION,
-    marketingOptIn: Boolean(workspace.onboarding?.data.checkout.marketingOptIn),
-    termsAcceptedAt: workspace.onboarding?.data.checkout.termsAcceptedAt || "",
+    tradingName: order.tradingName || q.business.tradingName,
+    email: order.email || q.contact.email,
+    domainName: order.domainName,
+    domainMode: order.domainMode,
+    summary: questionnaireSummary(q),
+    domainRecheck,
+    disclaimer: DOMAIN_DISCLAIMER,
     stripeConfigured: isStripeCheckoutConfigured(config),
+    termsVersion: TERMS_VERSION,
   };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
-  const auth = await requireAuth(request, context);
-  const env = getEnv(context);
   const config = getConfig(context);
-  const db = createDb(env.DB);
-  const workspace = await getCustomerWorkspace(db, auth);
-  if (!workspace.primary || !workspace.onboarding) {
-    return { error: "No organisation found. Please create an account first." };
-  }
-
+  const db = createDb(getEnv(context).DB);
+  const { order } = await getOrCreateDraftOrder(db, request);
   const form = await request.formData();
   const termsAccepted = form.get("termsAccepted") === "on";
   const marketingOptIn = form.get("marketingOptIn") === "on";
 
   if (!termsAccepted) {
     return {
-      error:
-        "Please accept the Terms & Conditions and Privacy Policy to continue.",
+      error: "Please accept the Terms & Conditions and Privacy Policy.",
     };
   }
 
-  const data = {
-    ...workspace.onboarding.data,
-    checkout: {
-      termsVersion: TERMS_VERSION,
-      termsAcceptedAt: new Date().toISOString(),
-      marketingOptIn,
-    },
-  };
-
-  await db
-    .update(onboardingProfiles)
-    .set({
-      dataJson: JSON.stringify(data),
-      updatedAt: new Date(),
-    })
-    .where(eq(onboardingProfiles.id, workspace.onboarding.id));
-
-  const checkout = await createCheckoutSessionForOrg({
-    db,
-    config,
-    organisationId: workspace.primary.id,
-    tradingName: workspace.primary.tradingName,
-    email: auth.email,
-  });
-
-  if ("error" in checkout) {
-    return { error: checkout.error, termsSaved: true };
+  if (order.domainMode === "new" && order.domainName) {
+    const recheck = await checkDomainAvailability(order.domainName);
+    if (recheck.availability === "unavailable") {
+      return {
+        error:
+          "Your selected domain now appears unavailable. Please go back and choose another.",
+      };
+    }
   }
 
+  await db
+    .update(pendingOrders)
+    .set({
+      termsVersion: TERMS_VERSION,
+      termsAcceptedAt: new Date(),
+      marketingOptIn,
+      updatedAt: new Date(),
+    })
+    .where(eq(pendingOrders.id, order.id));
+
+  const checkout = await createCheckoutForPendingOrder({
+    db,
+    config,
+    pendingOrderId: order.id,
+  });
+  if ("error" in checkout) {
+    return { error: checkout.error };
+  }
   throw redirect(checkout.url);
 }
 
@@ -104,11 +124,11 @@ export default function GetStartedReview({
   return (
     <div className="iwfw-start">
       <header className="iwfw-start__intro">
-        <p className="iwfw-start__kicker">Step 3 of 3</p>
+        <p className="iwfw-start__kicker">Order review</p>
         <h1>Review &amp; pay</h1>
         <p className="iwfw-start__lead">
-          Confirm your package and terms, then pay securely with Stripe. Business
-          details and website preferences come next in your dashboard.
+          Confirm your website order, then pay securely with Stripe. Your account
+          is created automatically after payment is confirmed.
         </p>
       </header>
 
@@ -121,8 +141,17 @@ export default function GetStartedReview({
               <dd>{loaderData.tradingName}</dd>
             </div>
             <div>
-              <dt>Account email</dt>
+              <dt>Email</dt>
               <dd>{loaderData.email}</dd>
+            </div>
+            <div>
+              <dt>Domain</dt>
+              <dd>
+                {loaderData.domainName}{" "}
+                <span className="iwfw-start__fine">
+                  ({loaderData.domainMode === "existing" ? "owned by you" : "new — manual registration"})
+                </span>
+              </dd>
             </div>
             <div>
               <dt>Package</dt>
@@ -130,42 +159,37 @@ export default function GetStartedReview({
             </div>
             <div>
               <dt>Monthly price</dt>
-              <dd>
-                {PACKAGE_PRICE_LABEL}/month (inclusive of VAT where applicable)
-              </dd>
-            </div>
-            <div>
-              <dt>Upfront website design fee</dt>
-              <dd>£0</dd>
+              <dd>{PACKAGE_PRICE_LABEL}/month · £0 upfront website fee</dd>
             </div>
           </dl>
-
+          <h3 className="iwfw-start__subhead">Website requirements</h3>
+          <ul className="iwfw-start__includes iwfw-start__includes--compact">
+            {loaderData.summary.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
           <h3 className="iwfw-start__subhead">Included</h3>
           <ul className="iwfw-start__includes iwfw-start__includes--compact">
             {PACKAGE_INCLUDES.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
+          {loaderData.domainRecheck && (
+            <p className="iwfw-start__fine">
+              Domain recheck: {loaderData.domainRecheck.availability} —{" "}
+              {loaderData.domainRecheck.message}
+            </p>
+          )}
+          <p className="iwfw-start__fine">{loaderData.disclaimer}</p>
         </section>
 
         <section className="iwfw-start__card">
-          <h2>Cancellation &amp; ownership</h2>
+          <h2>Cancel anytime</h2>
           <ul className="iwfw-start__policy">
-            <li>
-              Cancel anytime from your dashboard — no minimum term, no penalty.
-            </li>
-            <li>
-              Access continues until the end of the current paid billing period.
-              Billing will not renew after that date.
-            </li>
-            <li>
-              You retain ownership of your website and domain assets, subject to
-              the Terms. Transfers are manual after the subscription ends.
-            </li>
-            <li>
-              We do not auto-delete websites, domains, email or files when a
-              subscription ends.
-            </li>
+            <li>No minimum term and no cancellation penalty.</li>
+            <li>Access continues until the end of the current paid period.</li>
+            <li>Website and domain transfers stay manual after cancellation.</li>
+            <li>No account is created until Stripe confirms payment.</li>
           </ul>
 
           <Form method="post" className="iwfw-start__form">
@@ -184,22 +208,10 @@ export default function GetStartedReview({
               </span>
             </label>
             <label className="iwfw-check">
-              <input
-                type="checkbox"
-                name="marketingOptIn"
-                defaultChecked={loaderData.marketingOptIn}
-              />
-              <span>
-                Optional: send me product tips and offers by email (you can
-                unsubscribe anytime).
-              </span>
+              <input type="checkbox" name="marketingOptIn" />
+              <span>Optional: product tips and offers by email.</span>
             </label>
 
-            {actionData?.termsSaved && actionData?.error && (
-              <p className="iwfw-start__ok" role="status">
-                Terms acceptance saved.
-              </p>
-            )}
             {actionData?.error && (
               <p className="iwfw-start__error" role="alert">
                 {actionData.error}
@@ -207,8 +219,8 @@ export default function GetStartedReview({
             )}
             {!loaderData.stripeConfigured && (
               <p className="iwfw-start__error" role="status">
-                Stripe test Checkout is not configured in this environment yet
-                (needs STRIPE_SECRET_KEY and STRIPE_PRICE_ID).
+                Stripe test Checkout is not configured (needs sk_test_ key and
+                STRIPE_PRICE_ID).
               </p>
             )}
 
@@ -220,9 +232,9 @@ export default function GetStartedReview({
               {busy ? "Redirecting to Stripe…" : "Pay £39.99/month securely"}
             </Button>
             <p className="iwfw-start__fine">
-              You will complete payment on Stripe&apos;s secure checkout page.
-              Test mode only until live payments are approved.{" "}
-              <Link to="/get-started/account">← Account</Link>
+              Test mode only. Success page is not proof of payment — webhooks
+              confirm your order.{" "}
+              <Link to="/get-started/domain">← Domain</Link>
             </p>
           </Form>
         </section>

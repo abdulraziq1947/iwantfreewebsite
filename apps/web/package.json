@@ -3,9 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "react-router build",
-    "build:staging": "CLOUDFLARE_ENV=staging react-router build",
-    "build:production": "CLOUDFLARE_ENV=production react-router build",
+    "prepare": "node ./scripts/workers-ci-prepare.mjs",
+    "build": "react-router build && node ./scripts/ensure-previews-config.mjs",
+    "build:staging": "CLOUDFLARE_ENV=staging react-router build && node ./scripts/ensure-previews-config.mjs",
+    "build:production": "CLOUDFLARE_ENV=production react-router build && node ./scripts/ensure-previews-config.mjs",
     "dev": "react-router dev",
     "typecheck": "wrangler types && react-router typegen && tsc -b",
     "cf-typegen": "wrangler types",
@@ -42,6 +43,6 @@
     "typescript": "^5.9.3",
     "vite": "^8.0.3",
     "vitest": "^4.1.12",
-    "wrangler": "^4.166.0"
+    "wrangler": "4.166.0"
   }
 }

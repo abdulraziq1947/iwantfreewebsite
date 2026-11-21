@@ -15,9 +15,12 @@ export default [
     route("privacy", "routes/privacy.tsx"),
     layout("routes/get-started._layout.tsx", [
       route("get-started", "routes/get-started.tsx"),
-      route("get-started/account", "routes/get-started.account.tsx"),
+      route("get-started/website", "routes/get-started.website.tsx"),
+      route("get-started/domain", "routes/get-started.domain.tsx"),
       route("get-started/review", "routes/get-started.review.tsx"),
       route("get-started/confirmation", "routes/get-started.confirmation.tsx"),
+      route("get-started/activate", "routes/get-started.activate.tsx"),
+      route("get-started/account", "routes/get-started.account.tsx"),
     ]),
   ]),
   route("logout", "routes/logout.tsx"),
@@ -25,6 +28,7 @@ export default [
     route("dashboard", "routes/dashboard.tsx"),
     route("dashboard/onboarding", "routes/dashboard.onboarding.tsx"),
     route("dashboard/website", "routes/dashboard.website.tsx"),
+    route("dashboard/media", "routes/dashboard.media.tsx"),
     route("dashboard/billing", "routes/dashboard.billing.tsx"),
     route("dashboard/domain", "routes/dashboard.domain.tsx"),
     route("dashboard/email", "routes/dashboard.email.tsx"),
@@ -34,5 +38,6 @@ export default [
   ]),
   layout("routes/admin-layout.tsx", [
     route("admin", "routes/admin._index.tsx"),
+    route("admin/media", "routes/admin.media.tsx"),
   ]),
 ] satisfies RouteConfig;

@@ -1,6 +1,6 @@
-import { Link } from "react-router";
-import { Panel } from "@iwfw/ui";
-import { createDb } from "@iwfw/db";
+import { Form, Link } from "react-router";
+import { Panel, Badge } from "@iwfw/ui";
+import { createDb, desc, eq, domainRegistrationTasks } from "@iwfw/db";
 import { getEnv } from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
 import { getCustomerWorkspace } from "../lib/customer-org.server";
@@ -13,11 +13,21 @@ export function meta(_args: Route.MetaArgs) {
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
   const db = createDb(getEnv(context).DB);
-  return getCustomerWorkspace(db, auth);
+  const workspace = await getCustomerWorkspace(db, auth);
+  const task = workspace.primary
+    ? await db
+        .select()
+        .from(domainRegistrationTasks)
+        .where(eq(domainRegistrationTasks.organisationId, workspace.primary.id))
+        .orderBy(desc(domainRegistrationTasks.createdAt))
+        .get()
+    : null;
+  return { workspace, task };
 }
 
 export default function DomainPage({ loaderData }: Route.ComponentProps) {
-  const domain = loaderData.onboarding?.data.domain;
+  const domain = loaderData.workspace.onboarding?.data.domain;
+  const task = loaderData.task;
 
   return (
     <div className="iwfw-dash-page">
@@ -25,13 +35,11 @@ export default function DomainPage({ loaderData }: Route.ComponentProps) {
         <div>
           <h1>Domain</h1>
           <p>
-            Choose a domain in onboarding. We purchase and renew it manually —
-            nothing is bought automatically.
+            We purchase and connect domains manually after payment. Nothing is
+            bought automatically.
           </p>
         </div>
-        <Link to="/dashboard/onboarding?step=4" className="iwfw-btn iwfw-btn--outline">
-          Edit in onboarding
-        </Link>
+        {task && <Badge>{task.status.replaceAll("_", " ")}</Badge>}
       </header>
 
       <Panel>
@@ -43,26 +51,45 @@ export default function DomainPage({ loaderData }: Route.ComponentProps) {
                 ? "Use existing domain"
                 : domain?.mode === "new"
                   ? "Register a new domain"
-                  : "Not set yet"}
+                  : task
+                    ? task.domainMode === "existing"
+                      ? "Use existing domain"
+                      : "Register a new domain"
+                    : "Not set yet"}
             </dd>
           </div>
           <div>
-            <dt>Requested name</dt>
+            <dt>Domain</dt>
+            <dd>{task?.domainName || domain?.preferredDomain || domain?.existingDomain || "—"}</dd>
+          </div>
+          <div>
+            <dt>Registration task</dt>
+            <dd>{task ? task.status.replaceAll("_", " ") : "None yet"}</dd>
+          </div>
+          <div>
+            <dt>Registered</dt>
             <dd>
-              {domain?.mode === "existing"
-                ? domain.existingDomain || "—"
-                : domain?.preferredDomain || "—"}
+              {task?.registeredAt
+                ? new Date(task.registeredAt).toLocaleDateString("en-GB")
+                : "—"}
             </dd>
           </div>
           <div>
-            <dt>No-guarantee acknowledged</dt>
-            <dd>{domain?.acknowledgedNoGuarantee ? "Yes" : "Not yet"}</dd>
-          </div>
-          <div>
-            <dt>Purchase status</dt>
-            <dd>Awaiting team action after payment &amp; request</dd>
+            <dt>Connected</dt>
+            <dd>
+              {task?.connectedAt
+                ? new Date(task.connectedAt).toLocaleDateString("en-GB")
+                : "—"}
+            </dd>
           </div>
         </dl>
+        <p className="iwfw-dash-fine">
+          Availability at checkout was provisional. Our team completes registrar
+          purchase and DNS setup — you will see status updates here.
+        </p>
+        <Link to="/dashboard/support" className="iwfw-btn iwfw-btn--outline">
+          Contact support
+        </Link>
       </Panel>
     </div>
   );

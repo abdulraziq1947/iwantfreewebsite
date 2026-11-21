@@ -1,11 +1,16 @@
 type LogLevel = "debug" | "info" | "warn" | "error";
 
-/** Redact Stripe credentials / webhook secrets from log strings. */
+/** Redact credentials / secrets / activation tokens from log strings. */
 export function redactSecrets(value: string): string {
   return value
     .replace(/\bsk_(?:test|live)_[A-Za-z0-9]+/g, "sk_[REDACTED]")
     .replace(/\bwhsec_[A-Za-z0-9]+/g, "whsec_[REDACTED]")
-    .replace(/\brk_(?:test|live)_[A-Za-z0-9]+/g, "rk_[REDACTED]");
+    .replace(/\brk_(?:test|live)_[A-Za-z0-9]+/g, "rk_[REDACTED]")
+    .replace(/\bre_[A-Za-z0-9_]+/g, "re_[REDACTED]")
+    .replace(
+      /([?&]token=)[^&\s"']+/gi,
+      "$1[REDACTED]",
+    );
 }
 
 function sanitizeFields(
@@ -18,8 +23,16 @@ function sanitizeFields(
       lower.includes("secret") ||
       lower.includes("password") ||
       lower.includes("authorization") ||
+      lower.includes("api_key") ||
+      lower.includes("apikey") ||
       lower === "stripe_secret_key" ||
-      lower === "stripe_webhook_secret"
+      lower === "stripe_webhook_secret" ||
+      lower === "resend_api_key" ||
+      lower === "rawtoken" ||
+      lower === "raw_token" ||
+      lower === "activationtoken" ||
+      lower === "activation_token" ||
+      lower === "token"
     ) {
       out[key] = "[REDACTED]";
       continue;

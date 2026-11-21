@@ -7,6 +7,7 @@ import { parseWorkerEnv } from "@iwfw/config";
 import { cloudflareContext } from "../app/lib/cloudflare-context";
 import { log } from "../app/lib/logger";
 import { handleStripeWebhookRequest } from "../app/lib/stripe-webhook.server";
+import { handleUploadsApiRequest } from "../app/lib/uploads-http.server";
 
 const requestHandler = createRequestHandler(
   () => import("virtual:react-router/server-build"),
@@ -20,6 +21,9 @@ export default {
     if (url.pathname === "/api/health" || url.pathname === "/healthz") {
       return handleHealth(env);
     }
+
+    const uploadResponse = await handleUploadsApiRequest(request, env);
+    if (uploadResponse) return uploadResponse;
 
     if (url.pathname === "/api/stripe/webhook") {
       if (request.method !== "POST") {

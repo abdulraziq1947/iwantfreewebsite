@@ -35,9 +35,20 @@ export const workerEnvSchema = z.object({
   STRIPE_PRICE_ID: z.string().min(1).optional(),
   /** Webhook signing secret (whsec_…). */
   STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
+  /**
+   * Resend API key for transactional activation emails.
+   * Dashboard/Wrangler secret only — never commit.
+   */
+  RESEND_API_KEY: z.string().min(1).optional(),
+  /**
+   * Optional From address override. Defaults to accounts@iwantfreewebsite.com.
+   */
+  RESEND_FROM_EMAIL: z.string().email().optional(),
 });
 
 export type WorkerEnvConfig = z.infer<typeof workerEnvSchema>;
+
+export const DEFAULT_RESEND_FROM_EMAIL = "accounts@iwantfreewebsite.com";
 
 export function isStripeTestSecretKey(
   key: string | null | undefined,
@@ -57,7 +68,13 @@ export function parseWorkerEnv(
     STRIPE_SECRET_KEY: env.STRIPE_SECRET_KEY || undefined,
     STRIPE_PRICE_ID: env.STRIPE_PRICE_ID || undefined,
     STRIPE_WEBHOOK_SECRET: env.STRIPE_WEBHOOK_SECRET || undefined,
+    RESEND_API_KEY: env.RESEND_API_KEY || undefined,
+    RESEND_FROM_EMAIL: env.RESEND_FROM_EMAIL || undefined,
   });
+}
+
+export function isResendConfigured(config: WorkerEnvConfig): boolean {
+  return Boolean(config.RESEND_API_KEY);
 }
 
 /**

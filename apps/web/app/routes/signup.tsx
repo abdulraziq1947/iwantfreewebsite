@@ -16,7 +16,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   // Prefer the conversion funnel; keep this route working for bookmarks.
   const url = new URL(request.url);
   if (!url.searchParams.has("legacy")) {
-    throw redirect("/get-started/account");
+    throw redirect("/get-started");
   }
   return null;
 }

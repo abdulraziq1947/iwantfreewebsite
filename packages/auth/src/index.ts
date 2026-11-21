@@ -1,5 +1,10 @@
 export { createAuth, type AppAuth } from "./create-auth";
 export {
+  hashPassword,
+  verifyPassword,
+  generateRandomString,
+} from "./password";
+export {
   loadAuthContext,
   requireStaff,
   requireOrgMember,

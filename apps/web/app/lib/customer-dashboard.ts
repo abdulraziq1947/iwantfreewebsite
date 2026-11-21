@@ -36,6 +36,7 @@ export const CUSTOMER_NAV = [
   { to: "/dashboard", label: "Overview", end: true },
   { to: "/dashboard/onboarding", label: "Onboarding" },
   { to: "/dashboard/website", label: "Website" },
+  { to: "/dashboard/media", label: "Images" },
   { to: "/dashboard/billing", label: "Billing" },
   { to: "/dashboard/domain", label: "Domain" },
   { to: "/dashboard/email", label: "Email" },
