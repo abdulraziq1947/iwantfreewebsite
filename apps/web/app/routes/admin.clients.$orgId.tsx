@@ -13,6 +13,8 @@ import {
   updateOrganisationStatus,
 } from "../lib/admin-ops.server";
 import { notifyCustomerNeedsAttention } from "../lib/notifications.server";
+import { upsertOrganisationMailbox } from "../lib/mailbox.server";
+import { mailboxStatusLabel } from "../lib/mailbox";
 import { listOrganisationInvoices } from "../lib/billing.server";
 import { AttentionBoardCard } from "../components/attention-board";
 import type { Route } from "./+types/admin.clients.$orgId";
@@ -20,6 +22,7 @@ import type { Route } from "./+types/admin.clients.$orgId";
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "brief", label: "Project brief" },
+  { id: "email", label: "Email" },
   { id: "images", label: "Images" },
   { id: "billing", label: "Billing" },
   { id: "tasks", label: "Tasks" },
@@ -101,6 +104,12 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     throw redirect(`/admin/clients/${params.orgId}?tab=${tab}`);
   }
 
+  if (intent === "save_mailbox") {
+    const result = await upsertOrganisationMailbox(db, params.orgId, form);
+    if ("error" in result) return result;
+    throw redirect(`/admin/clients/${params.orgId}?tab=email`);
+  }
+
   return { error: "Unknown action." };
 }
 
@@ -172,6 +181,9 @@ export default function AdminClientDetailPage({
           >
             {t.label}
             {t.id === "images" ? ` (${client.uploads.length})` : null}
+            {t.id === "email" && client.mailbox
+              ? ` · ${mailboxStatusLabel(client.mailbox.status)}`
+              : null}
             {t.id === "tasks"
               ? ` (${client.domainTasks.length + client.transfers.length})`
               : null}
@@ -501,6 +513,253 @@ export default function AdminClientDetailPage({
               ["Media notes", data.branding.mediaNotes],
             ]}
           />
+        </div>
+      ) : null}
+
+      {tab === "email" ? (
+        <div className="iwfw-admin-grid">
+          <section className="iwfw-admin-panel">
+            <div className="iwfw-admin-panel__head">
+              <h2>Customer preference</h2>
+            </div>
+            <dl className="iwfw-admin-dl">
+              <div>
+                <dt>Preferred local part</dt>
+                <dd>{data.email.localPart || "info"}</dd>
+              </div>
+              <div>
+                <dt>Existing provider</dt>
+                <dd>{data.email.existingProvider || "—"}</dd>
+              </div>
+              <div>
+                <dt>Migration needed</dt>
+                <dd>{data.email.migrationRequired ? "Yes" : "No"}</dd>
+              </div>
+              <div>
+                <dt>MX overwrite approved</dt>
+                <dd>{data.email.mxOverwriteApproved ? "Yes" : "No"}</dd>
+              </div>
+            </dl>
+            <p className="iwfw-admin-muted" style={{ marginTop: "0.75rem" }}>
+              Enter the real mailbox details below once you’ve created the
+              account with the provider. The customer sees them on Email in
+              their dashboard (password stays off the page — use customer notes
+              for how you shared it).
+            </p>
+          </section>
+
+          <section className="iwfw-admin-panel iwfw-admin-panel--wide">
+            <div className="iwfw-admin-panel__head">
+              <h2>Mailbox details</h2>
+              {client.mailbox ? (
+                <Badge
+                  tone={
+                    client.mailbox.status === "active"
+                      ? "success"
+                      : client.mailbox.status === "suspended"
+                        ? "danger"
+                        : "warning"
+                  }
+                >
+                  {mailboxStatusLabel(client.mailbox.status)}
+                </Badge>
+              ) : (
+                <Badge tone="neutral">Not set</Badge>
+              )}
+            </div>
+            {actionData && "error" in actionData && actionData.error ? (
+              <p className="iwfw-start__error" role="alert">
+                {actionData.error}
+              </p>
+            ) : null}
+            <Form method="post" className="iwfw-start__form">
+              <input type="hidden" name="intent" value="save_mailbox" />
+              <input type="hidden" name="tab" value="email" />
+              <div className="iwfw-field-grid iwfw-field-grid--2">
+                <label className="iwfw-field">
+                  <span>Email address</span>
+                  <input
+                    className="iwfw-control"
+                    name="emailAddress"
+                    type="email"
+                    required
+                    defaultValue={client.mailbox?.emailAddress ?? ""}
+                    placeholder="info@example.co.uk"
+                  />
+                </label>
+                <label className="iwfw-field">
+                  <span>Username</span>
+                  <input
+                    className="iwfw-control"
+                    name="username"
+                    defaultValue={client.mailbox?.username ?? ""}
+                    placeholder="Usually the full email address"
+                  />
+                </label>
+                <label className="iwfw-field">
+                  <span>Webmail URL</span>
+                  <input
+                    className="iwfw-control"
+                    name="webmailUrl"
+                    type="url"
+                    defaultValue={client.mailbox?.webmailUrl ?? ""}
+                    placeholder="https://…"
+                  />
+                </label>
+                <label className="iwfw-field">
+                  <span>Status</span>
+                  <select
+                    className="iwfw-control"
+                    name="status"
+                    defaultValue={client.mailbox?.status ?? "pending"}
+                  >
+                    <option value="pending">Being set up</option>
+                    <option value="active">Ready to use</option>
+                    <option value="suspended">Suspended</option>
+                  </select>
+                </label>
+              </div>
+
+              <fieldset className="iwfw-fieldset">
+                <legend>IMAP (incoming)</legend>
+                <div className="iwfw-field-grid iwfw-field-grid--2">
+                  <label className="iwfw-field">
+                    <span>Host</span>
+                    <input
+                      className="iwfw-control"
+                      name="imapHost"
+                      defaultValue={client.mailbox?.imapHost ?? ""}
+                      placeholder="mail.example.com"
+                    />
+                  </label>
+                  <label className="iwfw-field">
+                    <span>Port</span>
+                    <input
+                      className="iwfw-control"
+                      name="imapPort"
+                      type="number"
+                      defaultValue={client.mailbox?.imapPort ?? 993}
+                    />
+                  </label>
+                  <label className="iwfw-field">
+                    <span>Security</span>
+                    <select
+                      className="iwfw-control"
+                      name="imapSecurity"
+                      defaultValue={client.mailbox?.imapSecurity ?? "ssl"}
+                    >
+                      <option value="ssl">SSL/TLS</option>
+                      <option value="starttls">STARTTLS</option>
+                      <option value="none">None</option>
+                    </select>
+                  </label>
+                </div>
+              </fieldset>
+
+              <fieldset className="iwfw-fieldset">
+                <legend>SMTP (outgoing)</legend>
+                <div className="iwfw-field-grid iwfw-field-grid--2">
+                  <label className="iwfw-field">
+                    <span>Host</span>
+                    <input
+                      className="iwfw-control"
+                      name="smtpHost"
+                      defaultValue={client.mailbox?.smtpHost ?? ""}
+                      placeholder="mail.example.com"
+                    />
+                  </label>
+                  <label className="iwfw-field">
+                    <span>Port</span>
+                    <input
+                      className="iwfw-control"
+                      name="smtpPort"
+                      type="number"
+                      defaultValue={client.mailbox?.smtpPort ?? 465}
+                    />
+                  </label>
+                  <label className="iwfw-field">
+                    <span>Security</span>
+                    <select
+                      className="iwfw-control"
+                      name="smtpSecurity"
+                      defaultValue={client.mailbox?.smtpSecurity ?? "ssl"}
+                    >
+                      <option value="ssl">SSL/TLS</option>
+                      <option value="starttls">STARTTLS</option>
+                      <option value="none">None</option>
+                    </select>
+                  </label>
+                </div>
+              </fieldset>
+
+              <fieldset className="iwfw-fieldset">
+                <legend>POP3 (optional)</legend>
+                <div className="iwfw-field-grid iwfw-field-grid--2">
+                  <label className="iwfw-field">
+                    <span>Host</span>
+                    <input
+                      className="iwfw-control"
+                      name="popHost"
+                      defaultValue={client.mailbox?.popHost ?? ""}
+                      placeholder="Leave blank if unused"
+                    />
+                  </label>
+                  <label className="iwfw-field">
+                    <span>Port</span>
+                    <input
+                      className="iwfw-control"
+                      name="popPort"
+                      type="number"
+                      defaultValue={client.mailbox?.popPort ?? 995}
+                    />
+                  </label>
+                  <label className="iwfw-field">
+                    <span>Security</span>
+                    <select
+                      className="iwfw-control"
+                      name="popSecurity"
+                      defaultValue={client.mailbox?.popSecurity ?? "ssl"}
+                    >
+                      <option value="ssl">SSL/TLS</option>
+                      <option value="starttls">STARTTLS</option>
+                      <option value="none">None</option>
+                    </select>
+                  </label>
+                </div>
+              </fieldset>
+
+              <label className="iwfw-field">
+                <span>Customer notes</span>
+                <textarea
+                  className="iwfw-control"
+                  name="customerNotes"
+                  rows={3}
+                  defaultValue={client.mailbox?.customerNotes ?? ""}
+                  placeholder="e.g. Password sent by SMS / check your welcome email"
+                />
+              </label>
+              <label className="iwfw-field">
+                <span>Admin notes (internal)</span>
+                <textarea
+                  className="iwfw-control"
+                  name="adminNotes"
+                  rows={2}
+                  defaultValue={client.mailbox?.adminNotes ?? ""}
+                />
+              </label>
+              <label className="iwfw-check">
+                <input type="checkbox" name="notifyCustomer" defaultChecked />
+                <span>Notify customer that email details were updated</span>
+              </label>
+              <button
+                type="submit"
+                className="iwfw-btn iwfw-btn--green"
+                disabled={busy}
+              >
+                {busy ? "Saving…" : "Save mailbox details"}
+              </button>
+            </Form>
+          </section>
         </div>
       ) : null}
 

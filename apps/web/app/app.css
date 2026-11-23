@@ -4660,3 +4660,71 @@ h3 {
 .iwfw-invoice-list li:last-child {
   border-bottom: 0;
 }
+
+.iwfw-mail-servers {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 720px) {
+  .iwfw-mail-servers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .iwfw-mail-servers > :nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+
+.iwfw-mail-servers h3 {
+  margin: 0 0 0.55rem;
+  font-size: 0.95rem;
+}
+
+.iwfw-mail-access .iwfw-dash-dl {
+  margin-bottom: 0.75rem;
+}
+
+.iwfw-mail-guides {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.iwfw-mail-guides > li {
+  padding: 0.85rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--iwfw-border) 75%, transparent);
+}
+
+.iwfw-mail-guides > li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.iwfw-mail-guides > li:first-child {
+  padding-top: 0;
+}
+
+.iwfw-mail-guides strong {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.iwfw-mail-guides p {
+  margin: 0;
+  color: var(--iwfw-muted);
+  line-height: 1.45;
+}
+
+.iwfw-mail-guides ol {
+  margin: 0.35rem 0 0;
+  padding-left: 1.15rem;
+  color: var(--iwfw-muted);
+  line-height: 1.5;
+}
+
+.iwfw-mail-guides ol li + li {
+  margin-top: 0.25rem;
+}
