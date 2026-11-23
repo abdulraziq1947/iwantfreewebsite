@@ -24,26 +24,34 @@ export function meta(_args: Route.MetaArgs) {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await getOptionalAuth(request, context);
-  if (auth) {
+  const url = new URL(request.url);
+  const addingSite = url.searchParams.get("new") === "1";
+  if (auth && !addingSite) {
     const db = createDb(getEnv(context).DB);
     const workspace = await getCustomerWorkspace(db, auth);
     if (workspace.primary && !workspace.needsSubscription) {
       throw redirect("/dashboard");
     }
   }
-  return { signedIn: Boolean(auth) };
+  return { signedIn: Boolean(auth), addingSite };
 }
 
 export default function GetStartedPackage({ loaderData }: Route.ComponentProps) {
+  const continueTo = loaderData.addingSite
+    ? "/get-started/personal?new=1"
+    : "/get-started/personal";
+
   return (
     <div className="iwfw-start">
       <header className="iwfw-start__intro">
-        <p className="iwfw-start__kicker">Your website package</p>
+        <p className="iwfw-start__kicker">
+          {loaderData.addingSite ? "Add another website" : "Your website package"}
+        </p>
         <h1>{PACKAGE_NAME}</h1>
         <p className="iwfw-start__lead">
-          Answer a short questionnaire, choose a domain, then pay securely. We
-          create your account automatically after Stripe confirms payment — no
-          signup first.
+          {loaderData.addingSite
+            ? "Start a fresh brief for another business or brand. You’ll get a separate site and subscription after payment."
+            : "Answer a short questionnaire, choose a domain, then pay securely. We create your account automatically after Stripe confirms payment — no signup first."}
         </p>
       </header>
 
@@ -82,16 +90,28 @@ export default function GetStartedPackage({ loaderData }: Route.ComponentProps) 
         </div>
 
         <Link
-          to="/get-started/personal"
+          to={continueTo}
           className="iwfw-btn iwfw-btn--green iwfw-btn--block"
         >
-          Continue — Get My Website
+          {loaderData.addingSite
+            ? "Continue — Add another site"
+            : "Continue — Get My Website"}
         </Link>
         <p className="iwfw-start__fine">
           {loaderData.signedIn ? (
             <>
-              You&apos;re signed in. You can still place a new order, or{" "}
-              <Link to="/dashboard">open your dashboard</Link>.
+              You&apos;re signed in.{" "}
+              {loaderData.addingSite ? (
+                <>
+                  This starts a new order, or{" "}
+                  <Link to="/dashboard">return to your dashboard</Link>.
+                </>
+              ) : (
+                <>
+                  You can still place a new order, or{" "}
+                  <Link to="/dashboard">open your dashboard</Link>.
+                </>
+              )}
             </>
           ) : (
             <>

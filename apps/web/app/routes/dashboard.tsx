@@ -5,7 +5,12 @@ import { getEnv } from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
 import { getCustomerWorkspace } from "../lib/customer-org.server";
 import { orgStatusLabel, orgStatusTone } from "../lib/customer-dashboard";
-import { onboardingProgress } from "../lib/onboarding";
+import {
+  buildCustomerActions,
+  buildJourneyStages,
+  currentFocusCopy,
+  websiteStageLabel,
+} from "../lib/customer-progress";
 import type { Route } from "./+types/dashboard";
 
 export function meta(_args: Route.MetaArgs) {
@@ -24,11 +29,24 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 export default function Dashboard({ loaderData }: Route.ComponentProps) {
   const { workspace } = loaderData;
-  const onboarding = workspace.onboarding;
-  const progress = onboarding
-    ? onboardingProgress(onboarding.currentStep, onboarding.completed)
-    : 0;
   const firstName = loaderData.userName?.split(" ")[0] ?? "";
+  const stages = buildJourneyStages({
+    needsSubscription: workspace.needsSubscription,
+    briefReady: workspace.briefReady,
+    domainTask: workspace.domainTask,
+  });
+  const focus = currentFocusCopy(stages);
+  const actions = buildCustomerActions({
+    needsSubscription: workspace.needsSubscription,
+    briefReady: workspace.briefReady,
+    domainTask: workspace.domainTask,
+    data: workspace.onboarding?.data,
+  });
+  const stageLabel = websiteStageLabel({
+    needsSubscription: workspace.needsSubscription,
+    domainStatus: workspace.domainTask?.status,
+    briefReady: workspace.briefReady,
+  });
 
   return (
     <div className="iwfw-dash-page">
@@ -36,57 +54,124 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
         <div>
           <h1>Welcome back{firstName ? `, ${firstName}` : ""}</h1>
           <p>
-            Your website, onboarding, billing, domain, email, and Google
-            Business tools in one place.
+            Here’s where your website is, what happens next, and anything we
+            still need from you — not the same questions you already answered.
           </p>
         </div>
-        {onboarding?.completed ? (
-          <Link to="/dashboard/website" className="iwfw-btn iwfw-btn--blue">
-            View website
+        <div className="iwfw-dash-inline-actions">
+          <Link to="/dashboard/onboarding" className="iwfw-btn iwfw-btn--blue">
+            See progress
           </Link>
-        ) : (
-          <Link to="/dashboard/onboarding" className="iwfw-btn iwfw-btn--green">
-            Continue onboarding
+          <Link to="/get-started?new=1" className="iwfw-btn iwfw-btn--outline">
+            Add another site
           </Link>
-        )}
+        </div>
       </header>
 
-      {workspace.needsSubscription && (
+      {workspace.needsSubscription ? (
         <Panel className="iwfw-dash-callout">
           <h2>Finish setup</h2>
           <p>
-            Your account is ready. Subscribe for £39.99/month with no upfront
-            website fee. You can complete onboarding now so we’re ready to build.
+            Your account is ready. Choose the £39.99/month plan to start domain
+            registration and website build.
           </p>
           <div className="iwfw-dash-callout__actions">
             <Link to="/get-started" className="iwfw-btn iwfw-btn--green">
               See £39.99 plan
             </Link>
-            <Link to="/dashboard/onboarding" className="iwfw-btn iwfw-btn--outline">
-              Start onboarding
-            </Link>
           </div>
+        </Panel>
+      ) : (
+        <Panel className="iwfw-dash-focus">
+          <p className="iwfw-dash-focus__kicker">What’s happening now</p>
+          <h2>{focus.title}</h2>
+          <p>{focus.body}</p>
+          <p className="iwfw-dash-focus__meta">
+            {workspace.primary?.tradingName ?? "Your business"} · {stageLabel}
+          </p>
         </Panel>
       )}
 
+      <section className="iwfw-dash-journey" aria-label="Website journey">
+        <div className="iwfw-dash-panel-head">
+          <h2>Your journey</h2>
+          <Badge tone={workspace.needsSubscription ? "warning" : "success"}>
+            {stageLabel}
+          </Badge>
+        </div>
+        <ol className="iwfw-dash-timeline">
+          {stages.map((stage) => (
+            <li
+              key={stage.id}
+              className={`iwfw-dash-timeline__item is-${stage.state}`}
+            >
+              <span className="iwfw-dash-timeline__marker" aria-hidden />
+              <div>
+                <strong>{stage.title}</strong>
+                <p>{stage.detail}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <p className="iwfw-dash-fine">
+          Domain purchase, hosting, email mailbox and go-live are handled by our
+          team — never auto-purchased at checkout.
+        </p>
+      </section>
+
+      <section aria-label="Helpful next steps">
+        <div className="iwfw-dash-panel-head">
+          <h2>Helpful next steps</h2>
+        </div>
+        <div className="iwfw-dash-actions">
+          {actions.map((action) => (
+            <article
+              key={action.id}
+              className={`iwfw-dash-action iwfw-dash-action--${action.tone}`}
+            >
+              <strong>{action.title}</strong>
+              <p>{action.body}</p>
+              <Link
+                to={action.to}
+                className={
+                  action.tone === "primary"
+                    ? "iwfw-btn iwfw-btn--green"
+                    : "iwfw-btn iwfw-btn--outline"
+                }
+              >
+                {action.cta}
+              </Link>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <section className="iwfw-dash-grid" aria-label="Quick links">
         <DashCard
-          title="Onboarding"
-          body="Business details, services, domain, email, and Google Business invite."
-          to="/dashboard/onboarding"
-          status={onboarding?.completed ? "Submitted" : `${progress}% complete`}
+          title="Website"
+          body="Build stage, preview and go-live status."
+          to="/dashboard/website"
+          status={stageLabel}
         />
         <DashCard
-          title="Website"
-          body="Track build progress, preview, and go-live status."
-          to="/dashboard/website"
+          title="Domain"
+          body="Manual registration and DNS connection status."
+          to="/dashboard/domain"
           status={
-            onboarding?.completed ? "Ready for production" : "Waiting on onboarding"
+            workspace.domainTask
+              ? workspace.domainTask.status.replaceAll("_", " ")
+              : "Queued after payment"
           }
         />
         <DashCard
+          title="Images"
+          body="Logos, business photos and project images."
+          to="/dashboard/media"
+          status="Private uploads"
+        />
+        <DashCard
           title="Billing"
-          body="£39.99/month plan, invoices, and cancel anytime."
+          body="£39.99/month plan, invoices, cancel anytime."
           to="/dashboard/billing"
           status={
             workspace.primary
@@ -95,36 +180,14 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
           }
         />
         <DashCard
-          title="Domain"
-          body="Preferred domain and manual purchase status."
-          to="/dashboard/domain"
-          status="Managed with your plan"
-        />
-        <DashCard
-          title="Email"
-          body="Business mailbox preference and provisioning status."
-          to="/dashboard/email"
-          status="Included in plan"
-        />
-        <DashCard
-          title="Google Business"
-          body="Manager invite, weekly posts, and review replies."
-          to="/dashboard/google-business"
-          status={
-            onboarding?.data.gbp.outcome === "invitation_sent"
-              ? "Invitation sent"
-              : "Action may be needed"
-          }
-        />
-        <DashCard
           title="Support"
-          body="Call or email the team whenever you need help."
+          body="Call or email whenever you need help."
           to="/dashboard/support"
           status="We’re here"
         />
         <DashCard
           title="Account"
-          body="Your login details and logout."
+          body="Login details and security."
           to="/dashboard/account"
           status={loaderData.userName}
         />
@@ -132,15 +195,21 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
 
       <Panel>
         <div className="iwfw-dash-panel-head">
-          <h2>Your business</h2>
-          <Badge tone="neutral">{workspace.orgs.length}</Badge>
+          <h2>Your websites</h2>
+          <Link to="/get-started?new=1" className="iwfw-btn iwfw-btn--outline">
+            Add another site
+          </Link>
         </div>
         <ul className="iwfw-dash-orgs">
           {workspace.orgs.map((org) => (
             <li key={org.id}>
               <div>
                 <p className="iwfw-dash-orgs__name">{org.tradingName}</p>
-                <p className="iwfw-dash-orgs__meta">Account status</p>
+                <p className="iwfw-dash-orgs__meta">
+                  {org.id === workspace.primary?.id
+                    ? "Current dashboard site"
+                    : "Additional site"}
+                </p>
               </div>
               <Badge tone={orgStatusTone(org.status)}>
                 {orgStatusLabel(org.status)}
@@ -149,7 +218,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
           ))}
           {workspace.orgs.length === 0 && (
             <li className="iwfw-dash-orgs__empty">
-              No business profile yet. Contact support if this looks wrong.
+              No website yet. Start the package to create your first one.
             </li>
           )}
         </ul>

@@ -17,9 +17,12 @@ export function meta(_args: Route.MetaArgs) {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const db = createDb(getEnv(context).DB);
-  const { order, setCookie } = await getOrCreateDraftOrder(db, request);
+  const forceNew = new URL(request.url).searchParams.get("new") === "1";
+  const { order, setCookie } = await getOrCreateDraftOrder(db, request, {
+    forceNew,
+  });
   return data(
-    { data: orderQuestionnaire(order) },
+    { data: orderQuestionnaire(order), addingSite: forceNew },
     setCookie ? { headers: { "Set-Cookie": setCookie } } : undefined,
   );
 }
@@ -65,7 +68,11 @@ export default function GetStartedPersonal({
   return (
     <div className="iwfw-start">
       <header className="iwfw-start__intro">
-        <p className="iwfw-start__kicker">Step 1 of 5 · Personal details</p>
+        <p className="iwfw-start__kicker">
+          {loaderData.addingSite
+            ? "Add another site · Step 1 of 5 · Personal details"
+            : "Step 1 of 5 · Personal details"}
+        </p>
         <h1>Personal details</h1>
         <p className="iwfw-start__lead">
           How we should reach you about this website order.

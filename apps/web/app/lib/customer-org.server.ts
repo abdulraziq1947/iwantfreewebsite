@@ -1,15 +1,21 @@
 import {
   createDb,
   eq,
+  desc,
   organisations,
   onboardingProfiles,
   subscriptions,
+  domainRegistrationTasks,
   inArray,
 } from "@iwfw/db";
 import type { AuthContext } from "@iwfw/auth";
 import { newId } from "./ids";
 import { parseOnboardingData } from "./onboarding";
 import { isBlockingSubscriptionStatus } from "./stripe.server";
+import {
+  isBriefReady,
+  type DomainTaskSnapshot,
+} from "./customer-progress";
 
 export async function getCustomerWorkspace(
   db: ReturnType<typeof createDb>,
@@ -30,7 +36,9 @@ export async function getCustomerWorkspace(
       orgs: [],
       primary: null,
       onboarding: null,
+      domainTask: null as DomainTaskSnapshot,
       needsSubscription: true,
+      briefReady: false,
     };
   }
 
@@ -57,6 +65,7 @@ export async function getCustomerWorkspace(
 
   const data = parseOnboardingData(profile?.dataJson);
   const completed = Boolean(profile?.completedAt);
+  const briefReady = isBriefReady(data, completed);
 
   const subscriptionRows = await db
     .select()
@@ -71,6 +80,27 @@ export async function getCustomerWorkspace(
     primary.status === "active" ||
     primary.status === "cancelling" ||
     Boolean(subscription);
+
+  const taskRow = await db
+    .select()
+    .from(domainRegistrationTasks)
+    .where(eq(domainRegistrationTasks.organisationId, primary.id))
+    .orderBy(desc(domainRegistrationTasks.createdAt))
+    .get();
+
+  const domainTask: DomainTaskSnapshot = taskRow
+    ? {
+        domainName: taskRow.domainName,
+        domainMode: taskRow.domainMode,
+        status: taskRow.status,
+        registeredAt: taskRow.registeredAt
+          ? new Date(taskRow.registeredAt).toISOString()
+          : null,
+        connectedAt: taskRow.connectedAt
+          ? new Date(taskRow.connectedAt).toISOString()
+          : null,
+      }
+    : null;
 
   return {
     orgs: orgs.map((o) => ({
@@ -95,6 +125,8 @@ export async function getCustomerWorkspace(
           data,
         }
       : null,
+    domainTask,
     needsSubscription: !hasPaidAccess,
+    briefReady,
   };
 }
