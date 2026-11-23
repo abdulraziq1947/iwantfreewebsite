@@ -1,4 +1,4 @@
-import { Form, Link, redirect, useNavigation, data } from "react-router";
+import { Form, redirect, useNavigation, data } from "react-router";
 import { createDb } from "@iwfw/db";
 import { MediaUploader } from "../components/media-uploader";
 import { QuestionnaireField } from "../components/questionnaire-field";
@@ -39,6 +39,10 @@ export async function action({ request, context }: Route.ActionArgs) {
   const intent = String(form.get("intent") ?? "next");
   const current = orderQuestionnaire(order);
   const nextData = readMediaForm(form, current);
+  // Notes fields removed from the form — keep stored values empty going forward.
+  nextData.media.logoNotes = "";
+  nextData.media.imageNotes = "";
+  nextData.media.uploadNotes = "";
 
   if (intent === "back") {
     await saveQuestionnaireProgress({
@@ -83,7 +87,8 @@ export default function GetStartedMedia({
         <p className="iwfw-start__kicker">Step 3 of 5 · Media &amp; logos</p>
         <h1>Media, logo &amp; photos</h1>
         <p className="iwfw-start__lead">
-          Upload logos and photos, then add any notes for our designers.
+          Upload your logo, business photos and project images separately. Files
+          stay private and carry over when you resume or after payment.
         </p>
         <div className="iwfw-order-progress" aria-hidden>
           <span style={{ width: "60%" }} />
@@ -93,35 +98,24 @@ export default function GetStartedMedia({
       <Form method="post" className="iwfw-start__card iwfw-start__form">
         <MediaUploader
           mode="order"
-          title="Upload your brand images"
-          description="Drag in logos, business photos, team shots or portfolio images. Files stay private and carry over when you resume or after payment."
+          fixedCategory="logo"
+          title="Business logo"
+          description="Your main logo — JPG, PNG or WebP · max 10 MB each."
         />
-        <div className="iwfw-field-grid iwfw-field-grid--2">
-          <QuestionnaireField
-            label="Logo notes"
-            name="logoNotes"
-            multiline
-            rows={2}
-            defaultValue={data.media.logoNotes}
-            placeholder="Which logo version to use"
-          />
-          <QuestionnaireField
-            label="Business image notes"
-            name="imageNotes"
-            multiline
-            rows={2}
-            defaultValue={data.media.imageNotes}
-            placeholder="Preferred photos for Home / About"
-          />
-        </div>
-        <QuestionnaireField
-          label="Anything else about your images?"
-          name="uploadNotes"
-          multiline
-          rows={2}
-          defaultValue={data.media.uploadNotes}
-          placeholder="e.g. use the navy logo on light backgrounds"
+        <MediaUploader
+          mode="order"
+          fixedCategory="business_photo"
+          title="Business photographs"
+          description="Photos of your premises, team at work, vehicles or shop front."
         />
+        <MediaUploader
+          mode="order"
+          fixedCategory="portfolio"
+          title="Project images"
+          description="Before/after shots, completed jobs or portfolio examples."
+        />
+
+        <h2 className="iwfw-start__subhead">Online profiles</h2>
         <QuestionnaireField
           label="Social media links"
           name="socialLinks"

@@ -161,19 +161,21 @@ export function validateQuestionnaireStep(
     if (!data.about.introduction.trim()) {
       return "Please add a short business introduction.";
     }
-    if (!data.website.preferredPages.trim()) {
-      return "Please list the pages you want.";
-    }
   }
   // Media step has no required fields — uploads are optional.
   return null;
 }
 
 export function questionnaireSummary(data: OrderQuestionnaire): string[] {
-  return [
+  const lines = [
     `Contact: ${data.contact.fullName} · ${data.contact.email}`,
     `Business: ${data.business.tradingName} (${data.business.industry})`,
     `Services: ${data.services.list.slice(0, 120)}${data.services.list.length > 120 ? "…" : ""}`,
-    `Pages: ${data.website.preferredPages.slice(0, 120)}${data.website.preferredPages.length > 120 ? "…" : ""}`,
   ];
+  if (data.website.preferredPages.trim()) {
+    lines.push(
+      `Pages: ${data.website.preferredPages.slice(0, 120)}${data.website.preferredPages.length > 120 ? "…" : ""}`,
+    );
+  }
+  return lines;
 }
