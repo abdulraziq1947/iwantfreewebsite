@@ -39,6 +39,7 @@ import {
   notifyWebsiteNotLive,
 } from "./notifications.server";
 import { buildAttentionBoard } from "./attention";
+import type { WorkerEnvConfig } from "@iwfw/config";
 import { getOrganisationMailbox } from "./mailbox.server";
 
 export const ORG_STATUSES = [
@@ -647,7 +648,11 @@ export async function unmarkClientWebsiteLive(
   return { ok: true as const };
 }
 
-export async function getAdminClientDetail(db: Db, organisationId: string) {
+export async function getAdminClientDetail(
+  db: Db,
+  organisationId: string,
+  config: WorkerEnvConfig,
+) {
   const org = await db
     .select()
     .from(organisations)
@@ -815,7 +820,7 @@ export async function getAdminClientDetail(db: Db, organisationId: string) {
     openDomainCount,
     openTransferCount,
   });
-  const mailbox = await getOrganisationMailbox(db, organisationId);
+  const mailbox = await getOrganisationMailbox(db, organisationId, config);
   const required = [
     ...attention.staff
       .filter((i) => i.severity === "action")

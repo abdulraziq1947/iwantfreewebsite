@@ -7,6 +7,7 @@ describe("organisationIdsForCustomer", () => {
       userId: "u1",
       email: "a@b.com",
       name: "A",
+      twoFactorEnabled: false,
       staffRoles: [],
       memberships: [
         { organisationId: "org1", role: "customer" },

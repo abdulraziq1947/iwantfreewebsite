@@ -35,7 +35,11 @@ export function meta(_args: Route.MetaArgs) {
 export async function loader({ request, context, params }: Route.LoaderArgs) {
   await requireStaffSession(request, context);
   const db = createDb(getEnv(context).DB);
-  const client = await getAdminClientDetail(db, params.orgId);
+  const client = await getAdminClientDetail(
+    db,
+    params.orgId,
+    getConfig(context),
+  );
   if (!client) {
     throw new Response("Client not found", { status: 404 });
   }
@@ -105,7 +109,12 @@ export async function action({ request, context, params }: Route.ActionArgs) {
   }
 
   if (intent === "save_mailbox") {
-    const result = await upsertOrganisationMailbox(db, params.orgId, form);
+    const result = await upsertOrganisationMailbox(
+      db,
+      params.orgId,
+      form,
+      getConfig(context),
+    );
     if ("error" in result) return result;
     throw redirect(`/admin/clients/${params.orgId}?tab=email`);
   }
@@ -543,8 +552,8 @@ export default function AdminClientDetailPage({
             <p className="iwfw-admin-muted" style={{ marginTop: "0.75rem" }}>
               Enter the real mailbox details below once you’ve created the
               account with the provider. The customer sees them on Email in
-              their dashboard (password stays off the page — use customer notes
-              for how you shared it).
+              their dashboard (password is encrypted at rest and shown with
+              Show/Hide).
             </p>
           </section>
 

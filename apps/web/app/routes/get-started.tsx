@@ -1,7 +1,7 @@
 import { Link, redirect } from "react-router";
 import { getOptionalAuth } from "../lib/session.server";
 import { createDb } from "@iwfw/db";
-import { getEnv } from "../lib/env.server";
+import {getEnv, getConfig} from "../lib/env.server";
 import { getCustomerWorkspace } from "../lib/customer-org.server";
 import {
   PACKAGE_INCLUDES,
@@ -28,7 +28,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const addingSite = url.searchParams.get("new") === "1";
   if (auth && !addingSite) {
     const db = createDb(getEnv(context).DB);
-    const workspace = await getCustomerWorkspace(db, auth);
+    const workspace = await getCustomerWorkspace(db, auth, getConfig(context));
     if (workspace.primary && !workspace.needsSubscription) {
       throw redirect("/dashboard");
     }

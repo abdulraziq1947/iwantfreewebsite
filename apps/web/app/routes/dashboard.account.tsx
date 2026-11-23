@@ -2,7 +2,7 @@ import { Form } from "react-router";
 import { Panel } from "@iwfw/ui";
 import { requireAuth } from "../lib/session.server";
 import { createDb } from "@iwfw/db";
-import { getEnv } from "../lib/env.server";
+import {getEnv, getConfig} from "../lib/env.server";
 import { getCustomerWorkspace } from "../lib/customer-org.server";
 import type { Route } from "./+types/dashboard.account";
 
@@ -13,7 +13,7 @@ export function meta(_args: Route.MetaArgs) {
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
   const db = createDb(getEnv(context).DB);
-  const workspace = await getCustomerWorkspace(db, auth);
+  const workspace = await getCustomerWorkspace(db, auth, getConfig(context));
   return {
     user: { name: auth.name, email: auth.email },
     workspace,

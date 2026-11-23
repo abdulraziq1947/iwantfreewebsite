@@ -20,7 +20,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
   const config = getConfig(context);
   const db = createDb(getEnv(context).DB);
-  const workspace = await getCustomerWorkspace(db, auth);
+  const workspace = await getCustomerWorkspace(db, auth, getConfig(context));
   const subscription = workspace.primary
     ? await getOrganisationSubscription(db, workspace.primary.id)
     : null;
@@ -56,7 +56,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const auth = await requireAuth(request, context);
   const config = getConfig(context);
   const db = createDb(getEnv(context).DB);
-  const workspace = await getCustomerWorkspace(db, auth);
+  const workspace = await getCustomerWorkspace(db, auth, getConfig(context));
   if (!workspace.primary) {
     return { error: "No website account found." };
   }

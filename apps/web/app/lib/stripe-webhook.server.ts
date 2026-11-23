@@ -3,7 +3,7 @@ import { createDb, eq, organisations, pendingOrders } from "@iwfw/db";
 import type Stripe from "stripe";
 import { log } from "./logger";
 import {
-  assertTestModeEvent,
+  assertStripeEventMode,
   assertWebhookConfigured,
   msFromStripeSeconds,
 } from "./stripe.server";
@@ -52,11 +52,15 @@ export async function handleStripeWebhookRequest(
     return Response.json({ error: "Invalid signature." }, { status: 400 });
   }
 
-  const modeCheck = assertTestModeEvent(event);
+  const modeCheck = assertStripeEventMode(
+    event,
+    Boolean(config.STRIPE_ALLOW_LIVE),
+  );
   if (!modeCheck.ok) {
     log("warn", "stripe_webhook_livemode_rejected", {
       eventId: event.id,
       type: event.type,
+      allowLive: Boolean(config.STRIPE_ALLOW_LIVE),
     });
     return Response.json({ error: modeCheck.error }, { status: 400 });
   }

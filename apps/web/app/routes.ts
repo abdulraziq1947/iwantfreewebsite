@@ -51,6 +51,7 @@ export default [
   ]),
   layout("routes/admin-layout.tsx", [
     route("admin", "routes/admin._index.tsx"),
+    route("admin/security/mfa", "routes/admin.security.mfa.tsx"),
     route("admin/clients", "routes/admin.clients.tsx"),
     route("admin/clients/:orgId", "routes/admin.clients.$orgId.tsx"),
     route(

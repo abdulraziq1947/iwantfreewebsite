@@ -26,7 +26,10 @@ export const workerEnvSchema = z.object({
   BOOTSTRAP_OWNER_EMAIL: z.string().email().optional(),
   /** Google Business Profile Manager invite address shown in onboarding. */
   GBP_MANAGER_EMAIL: z.string().email().optional(),
-  /** Stripe secret key — test mode only (`sk_test_…`) until live payments approved. */
+  /**
+   * Stripe secret key. Test (`sk_test_…`) always allowed.
+   * Live (`sk_live_…`) only when STRIPE_ALLOW_LIVE=true (explicit approval).
+   */
   STRIPE_SECRET_KEY: z.string().min(1).optional(),
   /**
    * Canonical Stripe Price ID for the £39.99/month website plan.
@@ -36,6 +39,19 @@ export const workerEnvSchema = z.object({
   /** Webhook signing secret (whsec_…). */
   STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
   /**
+   * When "true", allow sk_live_… secrets and livemode webhooks.
+   * Default false — live billing stays off until credentials are verified.
+   */
+  STRIPE_ALLOW_LIVE: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((v) => v === "true"),
+  /**
+   * Optional 32-byte key (base64) for mailbox password encryption at rest.
+   * Falls back to a key derived from BETTER_AUTH_SECRET when unset.
+   */
+  MAILBOX_ENCRYPTION_KEY: z.string().min(1).optional(),
+  /**
    * Resend API key for transactional activation emails.
    * Dashboard/Wrangler secret only — never commit.
    */
@@ -44,16 +60,38 @@ export const workerEnvSchema = z.object({
    * Optional From address override. Defaults to accounts@iwantfreewebsite.com.
    */
   RESEND_FROM_EMAIL: z.string().email().optional(),
+  /**
+   * Customer-facing expected go-live window copy (working days).
+   * Defaults to "5–10 working days" when unset.
+   */
+  GO_LIVE_SLA_LABEL: z.string().min(1).optional(),
 });
 
 export type WorkerEnvConfig = z.infer<typeof workerEnvSchema>;
 
 export const DEFAULT_RESEND_FROM_EMAIL = "accounts@iwantfreewebsite.com";
+export const DEFAULT_GO_LIVE_SLA_LABEL = "5–10 working days";
 
 export function isStripeTestSecretKey(
   key: string | null | undefined,
 ): boolean {
   return typeof key === "string" && key.startsWith("sk_test_");
+}
+
+export function isStripeLiveSecretKey(
+  key: string | null | undefined,
+): boolean {
+  return typeof key === "string" && key.startsWith("sk_live_");
+}
+
+/** True when the secret key is allowed for the current STRIPE_ALLOW_LIVE setting. */
+export function isStripeSecretKeyAllowed(
+  key: string | null | undefined,
+  allowLive: boolean,
+): boolean {
+  if (isStripeTestSecretKey(key)) return true;
+  if (allowLive && isStripeLiveSecretKey(key)) return true;
+  return false;
 }
 
 export function parseWorkerEnv(
@@ -68,8 +106,11 @@ export function parseWorkerEnv(
     STRIPE_SECRET_KEY: env.STRIPE_SECRET_KEY || undefined,
     STRIPE_PRICE_ID: env.STRIPE_PRICE_ID || undefined,
     STRIPE_WEBHOOK_SECRET: env.STRIPE_WEBHOOK_SECRET || undefined,
+    STRIPE_ALLOW_LIVE: env.STRIPE_ALLOW_LIVE || undefined,
+    MAILBOX_ENCRYPTION_KEY: env.MAILBOX_ENCRYPTION_KEY || undefined,
     RESEND_API_KEY: env.RESEND_API_KEY || undefined,
     RESEND_FROM_EMAIL: env.RESEND_FROM_EMAIL || undefined,
+    GO_LIVE_SLA_LABEL: env.GO_LIVE_SLA_LABEL || undefined,
   });
 }
 
@@ -78,19 +119,24 @@ export function isResendConfigured(config: WorkerEnvConfig): boolean {
 }
 
 /**
- * True when Checkout can be created in test mode
- * (sk_test_… secret + STRIPE_PRICE_ID present).
+ * True when Checkout can be created
+ * (allowed secret + STRIPE_PRICE_ID present).
  */
 export function isStripeCheckoutConfigured(config: WorkerEnvConfig): boolean {
   return Boolean(
-    isStripeTestSecretKey(config.STRIPE_SECRET_KEY) && config.STRIPE_PRICE_ID,
+    isStripeSecretKeyAllowed(
+      config.STRIPE_SECRET_KEY,
+      Boolean(config.STRIPE_ALLOW_LIVE),
+    ) && config.STRIPE_PRICE_ID,
   );
 }
 
 export function isStripeWebhookConfigured(config: WorkerEnvConfig): boolean {
   return Boolean(
-    isStripeTestSecretKey(config.STRIPE_SECRET_KEY) &&
-      config.STRIPE_WEBHOOK_SECRET,
+    isStripeSecretKeyAllowed(
+      config.STRIPE_SECRET_KEY,
+      Boolean(config.STRIPE_ALLOW_LIVE),
+    ) && config.STRIPE_WEBHOOK_SECRET,
   );
 }
 

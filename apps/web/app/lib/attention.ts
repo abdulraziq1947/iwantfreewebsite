@@ -61,7 +61,7 @@ export function gbpAccessSummary(
       label: "Google Business access confirmed",
       detail: profileUrl
         ? `Manager access is active · ${profileUrl}`
-        : "Manager access is active for weekly posts and review help.",
+        : "Manager access is active for Google Business help.",
       granted: true,
       awaitingCustomer: false,
       awaitingStaff: false,
@@ -112,9 +112,9 @@ export function gbpAccessSummary(
 
   return {
     state: "not_started",
-    label: "Google Business Manager access needed",
+    label: "Google Business Manager access (optional)",
     detail:
-      "Invite us as Manager so we can handle weekly posts and review replies.",
+      "Invite us as Manager when you’re ready — we guide posting and review replies.",
     granted: false,
     awaitingCustomer: true,
     awaitingStaff: false,
@@ -205,11 +205,12 @@ export function buildAttentionBoard(options: {
     });
   }
 
-  if (gbp.awaitingCustomer && !options.needsSubscription) {
+  // FB-12: don’t push GBP as Action required until the website is live.
+  if (gbp.awaitingCustomer && !options.needsSubscription && isLive) {
     customer.push({
       id: "gbp-invite",
       title: "Google Business Manager access",
-      body: "Invite us as Manager (not Owner) so we can handle weekly posts and reviews.",
+      body: "Invite us as Manager (not Owner) so we can help with posts and reviews.",
       owner: "customer",
       severity: "action",
       to: "/dashboard/google-business",

@@ -50,6 +50,17 @@ export async function requireStaffSession(
       headers: { Location: "/dashboard" },
     });
   }
+  // FB-15: staff must enroll MFA before using ops (except the enroll page).
+  const path = new URL(request.url).pathname;
+  if (
+    !ctx.twoFactorEnabled &&
+    !path.startsWith("/admin/security")
+  ) {
+    throw new Response(null, {
+      status: 302,
+      headers: { Location: "/admin/security/mfa" },
+    });
+  }
   return ctx;
 }
 

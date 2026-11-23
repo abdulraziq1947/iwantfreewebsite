@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Form, Link, useNavigation } from "react-router";
 import { Badge, Panel } from "@iwfw/ui";
 import { createDb, eq, onboardingProfiles } from "@iwfw/db";
-import { getEnv } from "../lib/env.server";
+import {getEnv, getConfig} from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
 import { getCustomerWorkspace } from "../lib/customer-org.server";
 import { QuestionnaireField } from "../components/questionnaire-field";
@@ -20,13 +20,13 @@ export function meta(_args: Route.MetaArgs) {
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
   const db = createDb(getEnv(context).DB);
-  return getCustomerWorkspace(db, auth);
+  return getCustomerWorkspace(db, auth, getConfig(context));
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
   const auth = await requireAuth(request, context);
   const db = createDb(getEnv(context).DB);
-  const workspace = await getCustomerWorkspace(db, auth);
+  const workspace = await getCustomerWorkspace(db, auth, getConfig(context));
   if (!workspace.primary || !workspace.onboarding) {
     return { error: "No website account found." };
   }

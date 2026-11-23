@@ -87,7 +87,7 @@ export default function Home() {
           </div>
           <div className="iwfw-trust__item">
             <TrustIcon kind="trusted" />
-            <span>Trusted by Businesses</span>
+            <span>Built for local businesses</span>
           </div>
         </div>
       </section>
@@ -100,8 +100,11 @@ export default function Home() {
               <IncludeItem icon="globe" label="Professional business website" />
               <IncludeItem icon="domain" label="Domain name & hosting" />
               <IncludeItem icon="mail" label="Business email address" />
-              <IncludeItem icon="shop" label="Weekly Google Business Profile post" />
-              <IncludeItem icon="star" label="Google review replies" />
+              <IncludeItem
+                icon="shop"
+                label="Google Business Profile help"
+              />
+              <IncludeItem icon="star" label="Review reply guidance" />
             </ul>
           </div>
           <div className="iwfw-price-panel">
@@ -120,8 +123,8 @@ export default function Home() {
         <div className="iwfw-band__inner">
           <h2>Some of the sites we&apos;ve built</h2>
           <p className="iwfw-band__lead">
-            Live examples from real customers — preview below, or open the full
-            site.
+            Live examples of the kind of sites we build — preview below, or open
+            the full site.
           </p>
           <ul className="iwfw-examples">
             {BUILT_SITES.map((site) => (
@@ -168,22 +171,28 @@ export default function Home() {
         <div className="iwfw-band__inner">
           <h2>How It Works</h2>
           <p className="iwfw-band__lead">
-            Three simple steps from signup to a live business website.
+            Three simple steps from brief to a live business website.
           </p>
           <ol className="iwfw-how">
             <li>
-              <strong>1. Get started</strong>
-              <p>Create your account and subscribe for £39.99/month. No upfront website fee.</p>
+              <strong>1. Tell us about your business</strong>
+              <p>
+                Share your details, photos and preferred domain in a short
+                questionnaire — no account needed yet.
+              </p>
             </li>
             <li>
-              <strong>2. Tell us about your business</strong>
-              <p>Send your services, photos, contact details, and preferred domain.</p>
+              <strong>2. Pay securely</strong>
+              <p>
+                Subscribe for £39.99/month with Stripe. No upfront website fee.
+                We email your account activation link after payment.
+              </p>
             </li>
             <li>
               <strong>3. We build and manage it</strong>
               <p>
-                We launch your site and keep hosting, email, and Google Business
-                Profile support running.
+                We register your domain, launch your site, set up business email,
+                and help with Google Business Profile access.
               </p>
             </li>
           </ol>
@@ -211,8 +220,8 @@ export default function Home() {
             <summary>What do I get for £39.99/month?</summary>
             <p>
               A managed business website, hosting, domain help, one business
-              email mailbox, weekly Google Business Profile posts, and review
-              replies.
+              email mailbox, and Google Business Profile help (Manager access
+              and posting guidance).
             </p>
           </details>
           <details>

@@ -64,7 +64,7 @@ describe("stripe test-mode key hardening", () => {
     expect(isStripeTestSecretKey(undefined)).toBe(false);
   });
 
-  it("rejects missing and live keys for Checkout", () => {
+  it("rejects missing and live keys for Checkout unless STRIPE_ALLOW_LIVE", () => {
     expect(assertStripeTestSecretKey(undefined).ok).toBe(false);
     expect(assertStripeTestSecretKey("sk_live_dangerous").ok).toBe(false);
     expect(assertStripeTestSecretKey("sk_test_ok").ok).toBe(true);
@@ -78,6 +78,17 @@ describe("stripe test-mode key hardening", () => {
         }),
       ).ok,
     ).toBe(false);
+
+    expect(
+      assertCheckoutConfigured(
+        parseWorkerEnv({
+          ...baseEnv,
+          STRIPE_SECRET_KEY: "sk_live_x",
+          STRIPE_PRICE_ID: "price_1UeFSMDyQBgE8h6RPqVRtzDo",
+          STRIPE_ALLOW_LIVE: "true",
+        }),
+      ).ok,
+    ).toBe(true);
 
     expect(
       assertCheckoutConfigured(

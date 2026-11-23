@@ -10,6 +10,7 @@ import {
   inArray,
 } from "@iwfw/db";
 import type { AuthContext } from "@iwfw/auth";
+import type { WorkerEnvConfig } from "@iwfw/config";
 import { newId } from "./ids";
 import { parseOnboardingData } from "./onboarding";
 import { isBlockingSubscriptionStatus } from "./stripe.server";
@@ -23,6 +24,7 @@ import { getOrganisationMailbox } from "./mailbox.server";
 export async function getCustomerWorkspace(
   db: ReturnType<typeof createDb>,
   auth: AuthContext,
+  config: WorkerEnvConfig,
 ) {
   const orgIds = auth.memberships.map((m) => m.organisationId);
   const orgs =
@@ -130,7 +132,7 @@ export async function getCustomerWorkspace(
     uploadCount,
   });
 
-  const mailbox = await getOrganisationMailbox(db, primary.id);
+  const mailbox = await getOrganisationMailbox(db, primary.id, config);
 
   return {
     orgs: orgs.map((o) => ({

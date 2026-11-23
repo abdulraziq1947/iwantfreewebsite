@@ -79,13 +79,46 @@ async function handleHealth(env: Env): Promise<Response> {
     dbOk = false;
   }
 
+  let schema: {
+    ok: boolean;
+    missingTables: string[];
+    migrationCount: number | null;
+  } | null = null;
+  if (dbOk) {
+    try {
+      const { checkD1SchemaHealth } = await import(
+        "../app/lib/schema-health.server"
+      );
+      schema = await checkD1SchemaHealth(env.DB);
+      if (!schema.ok) {
+        log("error", "health_schema_incomplete", {
+          missingTables: schema.missingTables,
+          migrationCount: schema.migrationCount,
+        });
+      }
+    } catch (error) {
+      log("error", "health_schema_check_failed", {
+        error: error instanceof Error ? error.message : "unknown",
+      });
+      schema = { ok: false, missingTables: ["(check failed)"], migrationCount: null };
+    }
+  }
+
+  const ok = dbOk && (schema?.ok ?? false);
   const body = {
-    ok: dbOk,
+    ok,
     service: "iwfw-web",
     env: env.APP_ENV ?? "unknown",
     db: dbOk ? "up" : "down",
+    schema: schema
+      ? {
+          ok: schema.ok,
+          missingTables: schema.missingTables,
+          migrationCount: schema.migrationCount,
+        }
+      : null,
     durationMs: Date.now() - started,
   };
 
-  return Response.json(body, { status: dbOk ? 200 : 503 });
+  return Response.json(body, { status: ok ? 200 : 503 });
 }

@@ -1,4 +1,4 @@
-import { and, createDb, eq, memberships, platformRoles } from "@iwfw/db";
+import { and, createDb, eq, memberships, platformRoles, user } from "@iwfw/db";
 import {
   isStaffRole,
   type PlatformRole,
@@ -8,30 +8,39 @@ export type AuthContext = {
   userId: string;
   email: string;
   name: string;
+  /** Better Auth two-factor enrollment flag (staff MFA gate). */
+  twoFactorEnabled: boolean;
   staffRoles: PlatformRole[];
   memberships: Array<{ organisationId: string; role: "customer" }>;
 };
 
 export async function loadAuthContext(
   d1: D1Database,
-  user: { id: string; email: string; name: string },
+  sessionUser: { id: string; email: string; name: string },
 ): Promise<AuthContext> {
   const db = createDb(d1);
 
   const roles = await db
     .select()
     .from(platformRoles)
-    .where(eq(platformRoles.userId, user.id));
+    .where(eq(platformRoles.userId, sessionUser.id));
 
   const orgs = await db
     .select()
     .from(memberships)
-    .where(eq(memberships.userId, user.id));
+    .where(eq(memberships.userId, sessionUser.id));
+
+  const row = await db
+    .select({ twoFactorEnabled: user.twoFactorEnabled })
+    .from(user)
+    .where(eq(user.id, sessionUser.id))
+    .get();
 
   return {
-    userId: user.id,
-    email: user.email,
-    name: user.name,
+    userId: sessionUser.id,
+    email: sessionUser.email,
+    name: sessionUser.name,
+    twoFactorEnabled: Boolean(row?.twoFactorEnabled),
     staffRoles: roles
       .map((r) => r.role)
       .filter((r): r is PlatformRole => isStaffRole(r)),
