@@ -268,6 +268,18 @@ Branch: `cursor/saas-improvements-18f7` · Europe/London
 **Tests:** `@iwfw/web` 79 unit tests pass; typecheck green.  
 **Deps:** Resend for reset emails; Stripe Portal configuration in Stripe Dashboard.
 
+### Batch 3 — Operational automation (completed in code)
+
+| ID | Status | Notes |
+| --- | --- | --- |
+| FB-13 | Done | Client search + live/attention filters; attention badge |
+| FB-20 | Done | `/admin/ops` GBP weekly post/review tasks (generate, track; no auto-publish) |
+| FB-21 | Done | `renews_at` on domain tasks + renewal ops tasks (no auto-purchase) |
+| FB-28 | Done | `writeAuditLog` on mark-live, preview, mailbox, org status, ops |
+
+**Tests:** `@iwfw/web` 84 unit tests pass; typecheck green.  
+**Migration:** `0012_ops_tasks` must be applied before deploy (health check requires `ops_tasks`).
+
 ---
 
 ## Related artefacts

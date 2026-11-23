@@ -328,6 +328,8 @@ export const domainRegistrationTasks = sqliteTable(
     previewUrl: text("preview_url"),
     /** Public URL shown to the customer once the site is live. */
     liveUrl: text("live_url"),
+    /** Domain renewal date (staff-set; used for reminder tasks). */
+    renewsAt: integer("renews_at", { mode: "timestamp_ms" }),
     registeredAt: integer("registered_at", { mode: "timestamp_ms" }),
     connectedAt: integer("connected_at", { mode: "timestamp_ms" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
@@ -339,6 +341,49 @@ export const domainRegistrationTasks = sqliteTable(
   },
   (t) => [
     index("domain_registration_tasks_org_id_idx").on(t.organisationId),
+  ],
+);
+
+/**
+ * Staff operational tasks (GBP weekly posts, review replies, domain renewals).
+ * No auto-purchase or auto-publish — status tracking only.
+ */
+export const opsTasks = sqliteTable(
+  "ops_tasks",
+  {
+    id: text("id").primaryKey(),
+    organisationId: text("organisation_id")
+      .notNull()
+      .references(() => organisations.id, { onDelete: "cascade" }),
+    kind: text("kind", {
+      enum: [
+        "gbp_weekly_post",
+        "gbp_review_reply",
+        "domain_renewal",
+        "website_overdue",
+        "other",
+      ],
+    }).notNull(),
+    status: text("status", {
+      enum: ["pending", "in_progress", "done", "cancelled"],
+    })
+      .notNull()
+      .default("pending"),
+    title: text("title").notNull(),
+    notes: text("notes"),
+    dueAt: integer("due_at", { mode: "timestamp_ms" }),
+    completedAt: integer("completed_at", { mode: "timestamp_ms" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+  },
+  (t) => [
+    index("ops_tasks_org_id_idx").on(t.organisationId),
+    index("ops_tasks_kind_status_idx").on(t.kind, t.status),
+    index("ops_tasks_due_at_idx").on(t.dueAt),
   ],
 );
 

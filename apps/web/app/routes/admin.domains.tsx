@@ -1,4 +1,4 @@
-import { Form } from "react-router";
+import { Form, Link } from "react-router";
 import { Badge } from "@iwfw/ui";
 import { createDb } from "@iwfw/db";
 import { getEnv } from "../lib/env.server";
@@ -8,6 +8,8 @@ import {
   listAdminDomainTasks,
   updateDomainTaskStatus,
 } from "../lib/admin-ops.server";
+import { setDomainRenewsAt } from "../lib/ops-tasks.server";
+import { writeAuditLog, clientIpFromRequest } from "../lib/audit-log.server";
 import type { Route } from "./+types/admin.domains";
 
 export function meta(_args: Route.MetaArgs) {
@@ -21,7 +23,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
-  await requireStaffSession(request, context);
+  const staff = await requireStaffSession(request, context);
   const form = await request.formData();
   const taskId = String(form.get("taskId") ?? "");
   const intent = String(form.get("intent") ?? "");
@@ -29,7 +31,37 @@ export async function action({ request, context }: Route.ActionArgs) {
     return { error: "Missing task or action." };
   }
   const db = createDb(getEnv(context).DB);
-  return updateDomainTaskStatus(db, taskId, intent);
+  const ip = clientIpFromRequest(request);
+
+  if (intent === "set_renews_at") {
+    const raw = String(form.get("renewsAt") ?? "").trim();
+    const renewsAt = raw ? new Date(`${raw}T00:00:00.000Z`) : null;
+    if (raw && Number.isNaN(renewsAt?.getTime())) {
+      return { error: "Invalid renewal date." };
+    }
+    await setDomainRenewsAt(db, taskId, renewsAt);
+    await writeAuditLog(db, {
+      actorUserId: staff.userId,
+      action: "domain.set_renews_at",
+      entityType: "domain_registration_tasks",
+      entityId: taskId,
+      diff: { renewsAt: renewsAt?.toISOString() ?? null },
+      ip,
+    });
+    return { ok: true as const };
+  }
+
+  const result = await updateDomainTaskStatus(db, taskId, intent);
+  if ("ok" in result) {
+    await writeAuditLog(db, {
+      actorUserId: staff.userId,
+      action: `domain.${intent}`,
+      entityType: "domain_registration_tasks",
+      entityId: taskId,
+      ip,
+    });
+  }
+  return result;
 }
 
 function domainTone(status: string): "success" | "warning" | "danger" | "neutral" {
@@ -71,7 +103,8 @@ export default function AdminDomainsPage({ loaderData }: Route.ComponentProps) {
           <h1>Domain registration</h1>
           <p>
             Manual domain work queue. Domains are never purchased automatically —
-            update status as you progress each request.
+            update status as you progress each request. Set renews-at so Ops
+            tasks can remind you before expiry.
           </p>
         </div>
         <p className="iwfw-admin-page__count">{loaderData.tasks.length} total</p>
@@ -89,6 +122,7 @@ export default function AdminDomainsPage({ loaderData }: Route.ComponentProps) {
                   <th>Client</th>
                   <th>Mode</th>
                   <th>Status</th>
+                  <th>Renews</th>
                   <th>Created</th>
                   <th>Actions</th>
                 </tr>
@@ -104,7 +138,11 @@ export default function AdminDomainsPage({ loaderData }: Route.ComponentProps) {
                         </span>
                       ) : null}
                     </td>
-                    <td>{t.tradingName}</td>
+                    <td>
+                      <Link to={`/admin/clients/${t.organisationId}`}>
+                        {t.tradingName}
+                      </Link>
+                    </td>
                     <td>{t.domainMode}</td>
                     <td>
                       <Badge tone={domainTone(t.status)}>{t.status}</Badge>
@@ -118,6 +156,26 @@ export default function AdminDomainsPage({ loaderData }: Route.ComponentProps) {
                           Conn {formatAdminDate(t.connectedAt)}
                         </span>
                       ) : null}
+                    </td>
+                    <td>
+                      <Form method="post" className="iwfw-admin-inline-form">
+                        <input type="hidden" name="taskId" value={t.id} />
+                        <input type="hidden" name="intent" value="set_renews_at" />
+                        <input
+                          className="iwfw-control"
+                          type="date"
+                          name="renewsAt"
+                          defaultValue={
+                            t.renewsAt ? t.renewsAt.slice(0, 10) : undefined
+                          }
+                        />
+                        <button
+                          type="submit"
+                          className="iwfw-btn iwfw-btn--outline iwfw-btn--sm"
+                        >
+                          Save
+                        </button>
+                      </Form>
                     </td>
                     <td>{formatAdminDate(t.createdAt)}</td>
                     <td>

@@ -1,4 +1,4 @@
-/** Tables the running Worker expects after migrations through 0010. */
+/** Tables the running Worker expects after migrations through 0012. */
 export const REQUIRED_D1_TABLES = [
   "organisations",
   "memberships",
@@ -6,8 +6,10 @@ export const REQUIRED_D1_TABLES = [
   "pending_orders",
   "domain_registration_tasks",
   "organisation_mailboxes",
+  "ops_tasks",
   "support_tickets",
   "notifications",
+  "audit_logs",
   "d1_migrations",
 ] as const;
 

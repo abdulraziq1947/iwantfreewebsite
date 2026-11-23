@@ -4184,6 +4184,24 @@ h3 {
   word-break: break-all;
 }
 
+.iwfw-admin-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: flex-end;
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--iwfw-border);
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.iwfw-admin-filters .iwfw-field {
+  margin: 0;
+  min-width: 10rem;
+  flex: 1 1 10rem;
+}
+
 .iwfw-admin-actions {
   display: flex;
   flex-wrap: wrap;

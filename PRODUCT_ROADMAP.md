@@ -77,11 +77,12 @@ Do not conflate the two in metrics or UX.
 
 | Backlog | Outcome |
 | --- | --- |
-| FB-13 | Client list search / attention filters |
-| FB-15, FB-16, FB-28 | Staff MFA, mailbox handling, audit logs |
-| FB-22 | Staging parity |
-| FB-05, FB-14 | Multi-org switcher; limited profile edit |
-| FB-25 | Shorter get-started Business step (conversion) |
+| FB-13 | ✅ Client list search / attention filters |
+| FB-15, FB-16, FB-28 | ✅ Staff MFA, mailbox crypto, audit logs |
+| FB-20, FB-21 | ✅ GBP + domain renewal ops task board |
+| FB-22 | ✅ Staging migrate habit / health gate |
+| FB-05, FB-14 | Deferred unless usage justifies |
+| FB-25 | Deferred unless funnel drop-off justifies |
 
 **Exit criteria:** New staff can triage clients from list; sensitive actions audited; multi-site customers not stuck on wrong org.
 

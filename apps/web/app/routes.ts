@@ -56,6 +56,7 @@ export default [
     route("admin/security/mfa", "routes/admin.security.mfa.tsx"),
     route("admin/clients", "routes/admin.clients.tsx"),
     route("admin/clients/:orgId", "routes/admin.clients.$orgId.tsx"),
+    route("admin/ops", "routes/admin.ops.tsx"),
     route(
       "admin/clients/:orgId/invoice/:invoiceId.pdf",
       "routes/admin.clients.$orgId.invoice.$invoiceId[.]pdf.ts",

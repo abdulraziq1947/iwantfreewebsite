@@ -19,6 +19,7 @@ export function formatAdminDate(value: Date | string | null | undefined): string
 export const ADMIN_NAV = [
   { to: "/admin", label: "Overview", end: true },
   { to: "/admin/clients", label: "Clients" },
+  { to: "/admin/ops", label: "Ops tasks" },
   { to: "/admin/subscriptions", label: "Subscriptions" },
   { to: "/admin/orders", label: "Orders" },
   { to: "/admin/domains", label: "Domains" },

@@ -17,6 +17,7 @@ import { notifyCustomerNeedsAttention } from "../lib/notifications.server";
 import { upsertOrganisationMailbox } from "../lib/mailbox.server";
 import { mailboxStatusLabel } from "../lib/mailbox";
 import { listOrganisationInvoices } from "../lib/billing.server";
+import { writeAuditLog, clientIpFromRequest } from "../lib/audit-log.server";
 import { AttentionBoardCard } from "../components/attention-board";
 import type { Route } from "./+types/admin.clients.$orgId";
 
@@ -53,17 +54,27 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
 }
 
 export async function action({ request, context, params }: Route.ActionArgs) {
-  await requireStaffSession(request, context);
+  const staff = await requireStaffSession(request, context);
   const db = createDb(getEnv(context).DB);
   const form = await request.formData();
   const intent = String(form.get("intent") ?? "");
   const tab = String(form.get("tab") ?? "overview");
+  const ip = clientIpFromRequest(request);
 
   if (intent === "update_org_status") {
     const status = String(form.get("status") ?? "");
     if (!isOrgStatus(status)) return { error: "Invalid organisation status." };
     const result = await updateOrganisationStatus(db, params.orgId, status);
     if ("error" in result) return result;
+    await writeAuditLog(db, {
+      actorUserId: staff.userId,
+      organisationId: params.orgId,
+      action: "org.status_update",
+      entityType: "organisations",
+      entityId: params.orgId,
+      diff: { status },
+      ip,
+    });
     throw redirect(`/admin/clients/${params.orgId}?tab=${tab}`);
   }
 
@@ -73,12 +84,29 @@ export async function action({ request, context, params }: Route.ActionArgs) {
       liveUrl: liveUrl || null,
     });
     if ("error" in result) return result;
+    await writeAuditLog(db, {
+      actorUserId: staff.userId,
+      organisationId: params.orgId,
+      action: "website.mark_live",
+      entityType: "domain_registration_tasks",
+      entityId: params.orgId,
+      diff: { liveUrl: result.liveUrl },
+      ip,
+    });
     throw redirect(`/admin/clients/${params.orgId}?tab=${tab}`);
   }
 
   if (intent === "unmark_live") {
     const result = await unmarkClientWebsiteLive(db, params.orgId);
     if ("error" in result) return result;
+    await writeAuditLog(db, {
+      actorUserId: staff.userId,
+      organisationId: params.orgId,
+      action: "website.unmark_live",
+      entityType: "domain_registration_tasks",
+      entityId: params.orgId,
+      ip,
+    });
     throw redirect(`/admin/clients/${params.orgId}?tab=${tab}`);
   }
 
@@ -88,6 +116,15 @@ export async function action({ request, context, params }: Route.ActionArgs) {
       previewUrl: previewUrl || null,
     });
     if ("error" in result) return result;
+    await writeAuditLog(db, {
+      actorUserId: staff.userId,
+      organisationId: params.orgId,
+      action: "website.set_preview",
+      entityType: "domain_registration_tasks",
+      entityId: params.orgId,
+      diff: { previewUrl: result.previewUrl },
+      ip,
+    });
     throw redirect(`/admin/clients/${params.orgId}?tab=${tab}`);
   }
 
@@ -126,6 +163,19 @@ export async function action({ request, context, params }: Route.ActionArgs) {
       getConfig(context),
     );
     if ("error" in result) return result;
+    await writeAuditLog(db, {
+      actorUserId: staff.userId,
+      organisationId: params.orgId,
+      action: "mailbox.upsert",
+      entityType: "organisation_mailboxes",
+      entityId: params.orgId,
+      diff: {
+        emailAddress: String(form.get("emailAddress") ?? ""),
+        status: String(form.get("status") ?? ""),
+        password: form.get("password") ? "[set]" : undefined,
+      },
+      ip,
+    });
     throw redirect(`/admin/clients/${params.orgId}?tab=email`);
   }
 

@@ -109,5 +109,9 @@ Every item includes **acceptance criteria**. Items marked `[verified]` are groun
 | FB-11 Collapse Progress into Overview (redirect) | Done |
 | FB-17 Mailbox Copy buttons | Done |
 | FB-24 Desktop Log in in topbar | Done |
+| FB-13 Admin clients search / live / attention filter | Done |
+| FB-20 GBP weekly ops task board (manual generate, no auto-publish) | Done |
+| FB-21 Domain renews-at + renewal reminder tasks (no auto-purchase) | Done |
+| FB-28 Audit logs for mark-live / mailbox / org status / ops | Done |
 
 When closing a backlog item, move it here with PR/date.
