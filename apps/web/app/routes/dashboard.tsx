@@ -68,7 +68,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
     <div className="iwfw-dash-page iwfw-dash-home">
       <header className="iwfw-dash-home__hero">
         <div className="iwfw-dash-home__hero-copy">
-          <p className="iwfw-dash-home__eyebrow">Customer dashboard</p>
+          <p className="iwfw-dash-home__eyebrow">Overview</p>
           <h1>Welcome back{firstName ? `, ${firstName}` : ""}</h1>
           <p className="iwfw-dash-home__lead">
             {isLive
@@ -142,7 +142,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
               to="/dashboard/google-business"
               className="iwfw-btn iwfw-btn--outline"
             >
-              {showGbp && gbpAction ? gbpAction.cta : "Update GMB"}
+              {showGbp && gbpAction ? gbpAction.cta : "Update Google Business"}
             </Link>
           }
         />

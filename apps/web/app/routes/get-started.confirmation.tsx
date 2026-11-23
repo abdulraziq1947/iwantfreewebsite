@@ -40,7 +40,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
   }
 
-  // Best-effort read from Stripe — webhook remains source of truth.
   if (pending && sessionId && config.STRIPE_SECRET_KEY) {
     const stripe = getStripe(config);
     if (stripe) {
@@ -61,7 +60,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
               pending = false;
               activationHint = true;
             } else if (session.status === "complete") {
-              // Still waiting for webhook fulfillment
               pending = true;
             }
           }
@@ -95,8 +93,8 @@ export default function GetStartedConfirmation({
         </h1>
         <p className="iwfw-start__lead">
           {loaderData.pending
-            ? "We’re waiting for Stripe to confirm your subscription. This page is not proof of payment — please refresh in a few seconds."
-            : `Thanks${loaderData.tradingName ? ` ${loaderData.tradingName}` : ""} — your order is active. Check your email for an account activation link, or log in if you already have a password.`}
+            ? "We’re confirming your payment. This usually takes a few seconds — refresh this page if it hasn’t updated yet."
+            : `Thanks${loaderData.tradingName ? `, ${loaderData.tradingName}` : ""} — your order is active. Check your email for an activation link, or log in if you already have a password.`}
         </p>
       </header>
 
@@ -112,26 +110,29 @@ export default function GetStartedConfirmation({
             <dt>Status</dt>
             <dd>
               {loaderData.pending
-                ? "Awaiting webhook confirmation"
-                : "Paid · account provisioning complete"}
+                ? "Confirming payment…"
+                : "Paid — ready to activate your account"}
             </dd>
           </div>
           <div>
             <dt>Next</dt>
             <dd>
-              Domain registration is queued for our team. Transfers stay manual
-              after any future cancellation.
+              {loaderData.pending
+                ? "Hang tight while we finish confirming your subscription."
+                : "Set your password, then open your dashboard. We’ll handle your domain and website build from there."}
             </dd>
           </div>
         </dl>
 
         {!loaderData.pending && (
-          <div className="iwfw-start__form" style={{ marginTop: "1rem" }}>
+          <div className="iwfw-start__form iwfw-start__form--spaced">
             <Link
               to="/get-started/activate"
               className="iwfw-btn iwfw-btn--green iwfw-btn--block"
             >
-              Open activation / resend email
+              {loaderData.activationHint
+                ? "Set your password"
+                : "Set your password / resend email"}
             </Link>
             <Link to="/login" className="iwfw-btn iwfw-btn--outline iwfw-btn--block">
               Go to login

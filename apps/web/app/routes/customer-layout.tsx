@@ -38,7 +38,7 @@ export default function CustomerLayout({ loaderData }: Route.ComponentProps) {
             <Link to="/dashboard" className="iwfw-dash__logo" aria-label="Dashboard home">
               <BrandLogo size={28} withWordmark />
             </Link>
-            <span className="iwfw-dash__eyebrow">Customer area</span>
+            <span className="iwfw-dash__eyebrow">Your account</span>
           </div>
 
           <div className="iwfw-dash__user">
@@ -98,9 +98,6 @@ export default function CustomerLayout({ loaderData }: Route.ComponentProps) {
               Log out
             </button>
           </Form>
-          <Link to="/" className="iwfw-dash__nav-link iwfw-dash__nav-link--muted">
-            Marketing site
-          </Link>
         </aside>
 
         <div className="iwfw-dash__mobile-nav" aria-label="Customer sections">

@@ -108,7 +108,7 @@ export default function SupportPage({
           </div>
           {!loaderData.primaryOrgId ? (
             <p className="iwfw-admin-empty">
-              No organisation on your account yet.
+              No website account yet — finish checkout first.
             </p>
           ) : (
             <Form method="post" className="iwfw-start__form">

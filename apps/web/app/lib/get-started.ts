@@ -4,7 +4,7 @@ export const PACKAGE_PRICE_LABEL = "£39.99";
 export const PACKAGE_PRICE_PERIOD = "/month";
 export const PACKAGE_NAME = "Professional Business Website";
 
-export const TERMS_VERSION = "2026-11-21-draft";
+export const TERMS_VERSION = "2026-11-23";
 
 export const PACKAGE_INCLUDES = [
   "Professionally built business website",

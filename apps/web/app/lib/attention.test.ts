@@ -36,7 +36,7 @@ describe("attention board", () => {
     expect(board.customer.some((i) => i.id === "gbp-invite")).toBe(true);
     expect(board.staff.some((i) => i.id === "domain-task")).toBe(true);
     expect(board.staff.some((i) => i.id === "build-live")).toBe(true);
-    expect(board.gbp.label).toMatch(/not granted/i);
+    expect(board.gbp.label).toMatch(/manager access needed|not confirmed/i);
     expect(board.customerPendingCount).toBeGreaterThan(0);
     expect(board.staffPendingCount).toBeGreaterThan(0);
   });

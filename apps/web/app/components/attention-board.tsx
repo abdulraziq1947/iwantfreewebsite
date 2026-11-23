@@ -93,20 +93,13 @@ export function AttentionBoardCard({
       ? board.customer.filter((i) => i.severity === "action")
       : board.staff;
   const secondary =
-    perspective === "customer"
-      ? board.staff.filter(
-          (i) =>
-            i.severity === "action" ||
-            i.id === "build-live" ||
-            i.id === "await-pay",
-        )
-      : board.customer.filter((i) => i.severity === "action");
+    perspective === "staff"
+      ? board.customer.filter((i) => i.severity === "action")
+      : [];
   const primaryLabel =
     perspective === "customer" ? "Your actions" : "Staff actions";
-  const secondaryLabel =
-    perspective === "customer"
-      ? "Pending on our side"
-      : "Waiting on customer";
+  const secondaryLabel = "Waiting on customer";
+  const showSecondary = perspective === "staff";
 
   return (
     <section
@@ -132,19 +125,21 @@ export function AttentionBoardCard({
 
       <div className="iwfw-attention__gbp">
         <div>
-          <p className="iwfw-attention__gbp-label">Google Business (GMB)</p>
+          <p className="iwfw-attention__gbp-label">Google Business Profile</p>
           <strong>{board.gbp.label}</strong>
           <p>{board.gbp.detail}</p>
         </div>
         <div className="iwfw-attention__gbp-side">
           <Badge tone={gbpTone(board.gbp.state)}>
-            {board.gbp.granted ? "Granted" : "Not granted"}
+            {board.gbp.granted ? "Confirmed" : "Not confirmed"}
           </Badge>
           {gbpActions}
         </div>
       </div>
 
-      <div className="iwfw-attention__columns">
+      <div
+        className={`iwfw-attention__columns${showSecondary ? "" : " is-single"}`}
+      >
         <div>
           <h3>{primaryLabel}</h3>
           <ItemList
@@ -156,17 +151,15 @@ export function AttentionBoardCard({
             }
           />
         </div>
-        <div>
-          <h3>{secondaryLabel}</h3>
-          <ItemList
-            items={secondary}
-            empty={
-              perspective === "customer"
-                ? "Nothing waiting on the team for you to track."
-                : "Customer has no open actions."
-            }
-          />
-        </div>
+        {showSecondary ? (
+          <div>
+            <h3>{secondaryLabel}</h3>
+            <ItemList
+              items={secondary}
+              empty="Customer has no open actions."
+            />
+          </div>
+        ) : null}
       </div>
     </section>
   );
