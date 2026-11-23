@@ -8,7 +8,7 @@ import type { Route } from "./+types/dashboard.billing.invoice.$invoiceId[.]pdf"
 export async function loader({ request, context, params }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
   const db = createDb(getEnv(context).DB);
-  const workspace = await getCustomerWorkspace(db, auth);
+  const workspace = await getCustomerWorkspace(db, auth, getConfig(context));
   if (!workspace.primary) {
     throw new Response("No organisation", { status: 404 });
   }

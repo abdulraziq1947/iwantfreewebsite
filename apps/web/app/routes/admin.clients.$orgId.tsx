@@ -8,6 +8,7 @@ import {
   getAdminClientDetail,
   isOrgStatus,
   markClientWebsiteLive,
+  setClientWebsitePreview,
   setGbpAccessGranted,
   unmarkClientWebsiteLive,
   updateOrganisationStatus,
@@ -16,6 +17,12 @@ import { notifyCustomerNeedsAttention } from "../lib/notifications.server";
 import { upsertOrganisationMailbox } from "../lib/mailbox.server";
 import { mailboxStatusLabel } from "../lib/mailbox";
 import { listOrganisationInvoices } from "../lib/billing.server";
+import { writeAuditLog, clientIpFromRequest } from "../lib/audit-log.server";
+import {
+  getOrganisationCostEstimate,
+  penceFromPoundsInput,
+  upsertOrganisationCosts,
+} from "../lib/org-costs.server";
 import { AttentionBoardCard } from "../components/attention-board";
 import type { Route } from "./+types/admin.clients.$orgId";
 
@@ -35,7 +42,11 @@ export function meta(_args: Route.MetaArgs) {
 export async function loader({ request, context, params }: Route.LoaderArgs) {
   await requireStaffSession(request, context);
   const db = createDb(getEnv(context).DB);
-  const client = await getAdminClientDetail(db, params.orgId);
+  const client = await getAdminClientDetail(
+    db,
+    params.orgId,
+    getConfig(context),
+  );
   if (!client) {
     throw new Response("Client not found", { status: 404 });
   }
@@ -44,21 +55,37 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
     db,
     organisationId: params.orgId,
   });
-  return { client, invoices: invoices.invoices, invoiceError: invoices.error };
+  const costs = await getOrganisationCostEstimate(db, params.orgId);
+  return {
+    client,
+    invoices: invoices.invoices,
+    invoiceError: invoices.error,
+    costs,
+  };
 }
 
 export async function action({ request, context, params }: Route.ActionArgs) {
-  await requireStaffSession(request, context);
+  const staff = await requireStaffSession(request, context);
   const db = createDb(getEnv(context).DB);
   const form = await request.formData();
   const intent = String(form.get("intent") ?? "");
   const tab = String(form.get("tab") ?? "overview");
+  const ip = clientIpFromRequest(request);
 
   if (intent === "update_org_status") {
     const status = String(form.get("status") ?? "");
     if (!isOrgStatus(status)) return { error: "Invalid organisation status." };
     const result = await updateOrganisationStatus(db, params.orgId, status);
     if ("error" in result) return result;
+    await writeAuditLog(db, {
+      actorUserId: staff.userId,
+      organisationId: params.orgId,
+      action: "org.status_update",
+      entityType: "organisations",
+      entityId: params.orgId,
+      diff: { status },
+      ip,
+    });
     throw redirect(`/admin/clients/${params.orgId}?tab=${tab}`);
   }
 
@@ -68,12 +95,47 @@ export async function action({ request, context, params }: Route.ActionArgs) {
       liveUrl: liveUrl || null,
     });
     if ("error" in result) return result;
+    await writeAuditLog(db, {
+      actorUserId: staff.userId,
+      organisationId: params.orgId,
+      action: "website.mark_live",
+      entityType: "domain_registration_tasks",
+      entityId: params.orgId,
+      diff: { liveUrl: result.liveUrl },
+      ip,
+    });
     throw redirect(`/admin/clients/${params.orgId}?tab=${tab}`);
   }
 
   if (intent === "unmark_live") {
     const result = await unmarkClientWebsiteLive(db, params.orgId);
     if ("error" in result) return result;
+    await writeAuditLog(db, {
+      actorUserId: staff.userId,
+      organisationId: params.orgId,
+      action: "website.unmark_live",
+      entityType: "domain_registration_tasks",
+      entityId: params.orgId,
+      ip,
+    });
+    throw redirect(`/admin/clients/${params.orgId}?tab=${tab}`);
+  }
+
+  if (intent === "set_preview") {
+    const previewUrl = String(form.get("previewUrl") ?? "").trim();
+    const result = await setClientWebsitePreview(db, params.orgId, {
+      previewUrl: previewUrl || null,
+    });
+    if ("error" in result) return result;
+    await writeAuditLog(db, {
+      actorUserId: staff.userId,
+      organisationId: params.orgId,
+      action: "website.set_preview",
+      entityType: "domain_registration_tasks",
+      entityId: params.orgId,
+      diff: { previewUrl: result.previewUrl },
+      ip,
+    });
     throw redirect(`/admin/clients/${params.orgId}?tab=${tab}`);
   }
 
@@ -105,9 +167,46 @@ export async function action({ request, context, params }: Route.ActionArgs) {
   }
 
   if (intent === "save_mailbox") {
-    const result = await upsertOrganisationMailbox(db, params.orgId, form);
+    const result = await upsertOrganisationMailbox(
+      db,
+      params.orgId,
+      form,
+      getConfig(context),
+    );
     if ("error" in result) return result;
+    await writeAuditLog(db, {
+      actorUserId: staff.userId,
+      organisationId: params.orgId,
+      action: "mailbox.upsert",
+      entityType: "organisation_mailboxes",
+      entityId: params.orgId,
+      diff: {
+        emailAddress: String(form.get("emailAddress") ?? ""),
+        status: String(form.get("status") ?? ""),
+        password: form.get("password") ? "[set]" : undefined,
+      },
+      ip,
+    });
     throw redirect(`/admin/clients/${params.orgId}?tab=email`);
+  }
+
+  if (intent === "save_costs") {
+    await upsertOrganisationCosts(db, params.orgId, {
+      domainAnnualPence: penceFromPoundsInput(form.get("domainAnnual")),
+      mailboxMonthlyPence: penceFromPoundsInput(form.get("mailboxMonthly")),
+      hostingMonthlyPence: penceFromPoundsInput(form.get("hostingMonthly")),
+      otherMonthlyPence: penceFromPoundsInput(form.get("otherMonthly")),
+      notes: String(form.get("costNotes") ?? ""),
+    });
+    await writeAuditLog(db, {
+      actorUserId: staff.userId,
+      organisationId: params.orgId,
+      action: "org.costs_update",
+      entityType: "organisation_costs",
+      entityId: params.orgId,
+      ip,
+    });
+    throw redirect(`/admin/clients/${params.orgId}?tab=billing`);
   }
 
   return { error: "Unknown action." };
@@ -233,37 +332,66 @@ export default function AdminClientDetailPage({
               </button>
             </Form>
             {!isLive ? (
-              <Form method="post" className="iwfw-start__form">
-                <input type="hidden" name="intent" value="mark_live" />
-                <input type="hidden" name="tab" value="overview" />
-                <label className="iwfw-field">
-                  <span>Live website URL</span>
-                  <input
-                    className="iwfw-control"
-                    type="url"
-                    name="liveUrl"
-                    placeholder={
-                      liveDomain
-                        ? `https://${liveDomain}`
-                        : "https://example.co.uk"
-                    }
-                    defaultValue={
-                      liveDomain ? `https://${liveDomain}` : undefined
-                    }
-                  />
-                </label>
-                <p className="iwfw-admin-muted">
-                  Customers see this link and get a congratulations
-                  notification.
-                </p>
-                <button
-                  type="submit"
-                  className="iwfw-btn iwfw-btn--green"
-                  disabled={busy}
-                >
-                  {busy ? "Updating…" : "Mark website live"}
-                </button>
-              </Form>
+              <>
+                <Form method="post" className="iwfw-start__form">
+                  <input type="hidden" name="intent" value="set_preview" />
+                  <input type="hidden" name="tab" value="overview" />
+                  <label className="iwfw-field">
+                    <span>Preview URL (before go-live)</span>
+                    <input
+                      className="iwfw-control"
+                      type="url"
+                      name="previewUrl"
+                      placeholder="https://preview.example.com/…"
+                      defaultValue={
+                        client.domainTasks[0]?.previewUrl ?? undefined
+                      }
+                    />
+                  </label>
+                  <p className="iwfw-admin-muted">
+                    Customers can open this while the site is still being
+                    finished. Clear the field and save to remove it.
+                  </p>
+                  <button
+                    type="submit"
+                    className="iwfw-btn iwfw-btn--outline"
+                    disabled={busy}
+                  >
+                    {busy ? "Saving…" : "Save preview URL"}
+                  </button>
+                </Form>
+                <Form method="post" className="iwfw-start__form">
+                  <input type="hidden" name="intent" value="mark_live" />
+                  <input type="hidden" name="tab" value="overview" />
+                  <label className="iwfw-field">
+                    <span>Live website URL</span>
+                    <input
+                      className="iwfw-control"
+                      type="url"
+                      name="liveUrl"
+                      placeholder={
+                        liveDomain
+                          ? `https://${liveDomain}`
+                          : "https://example.co.uk"
+                      }
+                      defaultValue={
+                        liveDomain ? `https://${liveDomain}` : undefined
+                      }
+                    />
+                  </label>
+                  <p className="iwfw-admin-muted">
+                    Customers see this link and get a congratulations
+                    notification. Mark live only when DNS and content are ready.
+                  </p>
+                  <button
+                    type="submit"
+                    className="iwfw-btn iwfw-btn--green"
+                    disabled={busy}
+                  >
+                    {busy ? "Updating…" : "Mark website live"}
+                  </button>
+                </Form>
+              </>
             ) : (
               <div className="iwfw-admin-actions">
                 {client.domainTasks.find((t) => t.status === "connected")
@@ -543,8 +671,8 @@ export default function AdminClientDetailPage({
             <p className="iwfw-admin-muted" style={{ marginTop: "0.75rem" }}>
               Enter the real mailbox details below once you’ve created the
               account with the provider. The customer sees them on Email in
-              their dashboard (password stays off the page — use customer notes
-              for how you shared it).
+              their dashboard (password is encrypted at rest and shown with
+              Show/Hide).
             </p>
           </section>
 
@@ -822,6 +950,88 @@ export default function AdminClientDetailPage({
 
       {tab === "billing" ? (
         <div className="iwfw-admin-grid">
+          <section className="iwfw-admin-panel">
+            <div className="iwfw-admin-panel__head">
+              <h2>Profitability estimate</h2>
+            </div>
+            <p className="iwfw-admin-muted">
+              Simple estimate from £39.99/mo revenue minus staff-entered
+              operating costs. Not accounting software.
+            </p>
+            <dl className="iwfw-dash-dl">
+              <div>
+                <dt>Revenue / month</dt>
+                <dd>{formatGbpFromPence(loaderData.costs.revenuePence)}</dd>
+              </div>
+              <div>
+                <dt>Est. costs / month</dt>
+                <dd>{formatGbpFromPence(loaderData.costs.costMonthlyPence)}</dd>
+              </div>
+              <div>
+                <dt>Est. profit / month</dt>
+                <dd>{formatGbpFromPence(loaderData.costs.profitMonthlyPence)}</dd>
+              </div>
+            </dl>
+            <Form method="post" className="iwfw-start__form">
+              <input type="hidden" name="intent" value="save_costs" />
+              <input type="hidden" name="tab" value="billing" />
+              <label className="iwfw-field">
+                <span>Domain cost £ / year</span>
+                <input
+                  className="iwfw-control"
+                  name="domainAnnual"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={(loaderData.costs.domainAnnualPence / 100).toFixed(2)}
+                />
+              </label>
+              <label className="iwfw-field">
+                <span>Mailbox £ / month</span>
+                <input
+                  className="iwfw-control"
+                  name="mailboxMonthly"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={(loaderData.costs.mailboxMonthlyPence / 100).toFixed(2)}
+                />
+              </label>
+              <label className="iwfw-field">
+                <span>Hosting £ / month</span>
+                <input
+                  className="iwfw-control"
+                  name="hostingMonthly"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={(loaderData.costs.hostingMonthlyPence / 100).toFixed(2)}
+                />
+              </label>
+              <label className="iwfw-field">
+                <span>Other £ / month</span>
+                <input
+                  className="iwfw-control"
+                  name="otherMonthly"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={(loaderData.costs.otherMonthlyPence / 100).toFixed(2)}
+                />
+              </label>
+              <label className="iwfw-field">
+                <span>Notes</span>
+                <input
+                  className="iwfw-control"
+                  name="costNotes"
+                  defaultValue={loaderData.costs.notes ?? ""}
+                />
+              </label>
+              <button type="submit" className="iwfw-btn iwfw-btn--outline" disabled={busy}>
+                {busy ? "Saving…" : "Save costs"}
+              </button>
+            </Form>
+          </section>
           <section className="iwfw-admin-panel">
             <div className="iwfw-admin-panel__head">
               <h2>Subscriptions</h2>

@@ -6,6 +6,7 @@ export type DomainTaskSnapshot = {
   status: string;
   registeredAt: string | null;
   connectedAt: string | null;
+  previewUrl?: string | null;
   liveUrl?: string | null;
 } | null;
 
@@ -54,6 +55,12 @@ export function normaliseLiveUrl(
 export function liveWebsiteUrl(task: DomainTaskSnapshot): string | null {
   if (!task || task.status !== "connected") return null;
   return normaliseLiveUrl(task.liveUrl, task.domainName);
+}
+
+/** Preview URL before go-live (never shown as the live site). */
+export function previewWebsiteUrl(task: DomainTaskSnapshot): string | null {
+  if (!task || task.status === "connected") return null;
+  return normaliseLiveUrl(task.previewUrl);
 }
 
 export function domainTaskLabel(status: string | undefined): string {
@@ -122,10 +129,14 @@ export function buildStatusBanner(options: {
   briefReady: boolean;
   domainTask: DomainTaskSnapshot;
   tradingName?: string | null;
+  /** Soft expected window, e.g. "5–10 working days". */
+  goLiveSlaLabel?: string | null;
 }): StatusBanner {
   const name = options.tradingName?.trim() || "Your business";
   const domain = options.domainTask?.domainName;
   const liveUrl = liveWebsiteUrl(options.domainTask);
+  const previewUrl = previewWebsiteUrl(options.domainTask);
+  const sla = options.goLiveSlaLabel?.trim();
 
   if (options.needsSubscription) {
     return {
@@ -168,12 +179,27 @@ export function buildStatusBanner(options: {
     };
   }
 
+  const timing = sla
+    ? ` Most sites go live within about ${sla} after we have everything we need — this is a typical timeframe, not a hard deadline.`
+    : "";
+  if (previewUrl) {
+    return {
+      kicker: "Preview ready",
+      title: "Your website preview is ready to review",
+      body: `Open the preview, tell us any tweaks, and we’ll publish when you’re happy.${timing}`,
+      meta: domain ? `${name} · ${domain}` : name,
+      href: previewUrl,
+      cta: "Open preview",
+      external: true,
+    };
+  }
+
   return {
     kicker: "You’re all set",
     title: "Nothing more for you to do right now",
     body: domain
-      ? `We’ve got everything we need for ${domain}. Our team is working on your website and will get back to you once it’s live.`
-      : "We’ve got everything we need. Our team is working on your website and will get back to you once it’s live.",
+      ? `We’ve got everything we need for ${domain}. Our team is working on your website and will get back to you once it’s live.${timing}`
+      : `We’ve got everything we need. Our team is working on your website and will get back to you once it’s live.${timing}`,
     meta: name,
   };
 }

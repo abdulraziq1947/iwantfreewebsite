@@ -29,9 +29,9 @@ export default function TermsPage() {
           <strong>£39.99 per month</strong> (inclusive of VAT where applicable),
           with a <strong>£0 upfront website design fee</strong>. The package
           typically includes a professionally built website, hosting, help with
-          domain registration and renewal, one business email mailbox, weekly
-          Google Business Profile posting support, help with Google review
-          replies, and UK-based support, as described at checkout.
+          domain registration and renewal, one business email mailbox, Google
+          Business Profile help (Manager access and posting guidance), help with
+          Google review replies, and UK-based support, as described at checkout.
         </p>
       </section>
 

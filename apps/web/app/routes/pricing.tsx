@@ -29,8 +29,8 @@ export default function Pricing() {
           <li>Professional business website</li>
           <li>Domain name &amp; hosting</li>
           <li>Business email address</li>
-          <li>Weekly Google Business Profile post</li>
-          <li>Google review replies</li>
+          <li>Google Business Profile help</li>
+          <li>Review reply guidance</li>
         </ul>
         <div className="iwfw-pricing__cta">
           <Link to="/get-started" className="iwfw-btn iwfw-btn--green">

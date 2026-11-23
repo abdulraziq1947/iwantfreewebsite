@@ -39,9 +39,17 @@ export default function PublicLayout({ loaderData }: Route.ComponentProps) {
                 Dashboard
               </Link>
             ) : (
-              <Link to="/get-started" className="iwfw-btn iwfw-btn--blue">
-                Get Started
-              </Link>
+              <>
+                <Link
+                  to="/get-started/account?mode=login"
+                  className="iwfw-topbar__login"
+                >
+                  Log in
+                </Link>
+                <Link to="/get-started" className="iwfw-btn iwfw-btn--blue">
+                  Get Started
+                </Link>
+              </>
             )}
             <details className="iwfw-topbar__menu">
               <summary aria-label="Open menu">
@@ -52,12 +60,12 @@ export default function PublicLayout({ loaderData }: Route.ComponentProps) {
                 {user ? (
                   <Link to="/dashboard">Dashboard</Link>
                 ) : (
-                  <Link to="/get-started">Get Started</Link>
+                  <>
+                    <Link to="/get-started">Get Started</Link>
+                    <Link to="/get-started/account?mode=login">Log in</Link>
+                  </>
                 )}
                 <a href="tel:08008527267">Call 0800 852 7267</a>
-                {!user && (
-                  <Link to="/get-started/account?mode=login">Log in</Link>
-                )}
               </nav>
             </details>
           </div>

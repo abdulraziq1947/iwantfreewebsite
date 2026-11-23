@@ -3,7 +3,7 @@ import { createDb, eq, organisations, pendingOrders } from "@iwfw/db";
 import type Stripe from "stripe";
 import { log } from "./logger";
 import {
-  assertTestModeEvent,
+  assertStripeEventMode,
   assertWebhookConfigured,
   msFromStripeSeconds,
 } from "./stripe.server";
@@ -52,11 +52,15 @@ export async function handleStripeWebhookRequest(
     return Response.json({ error: "Invalid signature." }, { status: 400 });
   }
 
-  const modeCheck = assertTestModeEvent(event);
+  const modeCheck = assertStripeEventMode(
+    event,
+    Boolean(config.STRIPE_ALLOW_LIVE),
+  );
   if (!modeCheck.ok) {
     log("warn", "stripe_webhook_livemode_rejected", {
       eventId: event.id,
       type: event.type,
+      allowLive: Boolean(config.STRIPE_ALLOW_LIVE),
     });
     return Response.json({ error: modeCheck.error }, { status: 400 });
   }
@@ -114,6 +118,16 @@ export async function handleStripeWebhookRequest(
             createdDomainTask: fulfilled.createdDomainTask,
             hasActivationToken: Boolean(fulfilled.activationToken),
           });
+          try {
+            const { trackProductEvent } = await import("./analytics.server");
+            await trackProductEvent(db, {
+              name: "checkout_completed",
+              organisationId: fulfilled.organisationId,
+              properties: { pendingOrderId },
+            });
+          } catch {
+            // Non-fatal
+          }
 
           // Activation email only after verified payment + first-time token mint.
           // Failures do not roll back the paid order; customer can use resend.
@@ -273,6 +287,60 @@ export async function handleStripeWebhookRequest(
             .update(pendingOrders)
             .set({ status: "failed", updatedAt: new Date() })
             .where(eq(pendingOrders.id, pendingOrderId));
+        }
+        // Recurring dunning: sync subscription + notify customer to update card.
+        const subRef = (
+          invoice as unknown as {
+            subscription?: string | { id?: string } | null;
+          }
+        ).subscription;
+        const subId =
+          typeof subRef === "string"
+            ? subRef
+            : subRef && typeof subRef === "object"
+              ? subRef.id
+              : null;
+        if (subId) {
+          try {
+            const sub = await stripe.subscriptions.retrieve(subId);
+            const organisationId = await resolveOrganisationIdForSubscription(
+              db,
+              sub,
+            );
+            if (organisationId) {
+              await upsertSubscriptionFromStripe({
+                db,
+                organisationId,
+                stripeSubscription: sub,
+              });
+              const org = await db
+                .select()
+                .from(organisations)
+                .where(eq(organisations.id, organisationId))
+                .get();
+              const { notifyPaymentFailed } = await import(
+                "./notifications.server"
+              );
+              await notifyPaymentFailed(db, {
+                organisationId,
+                tradingName: org?.tradingName,
+              });
+              const { trackProductEvent } = await import("./analytics.server");
+              await trackProductEvent(db, {
+                name: "payment_failed",
+                organisationId,
+                properties: { invoiceId: invoice.id },
+              });
+            }
+          } catch (dunningError) {
+            log("warn", "payment_failed_dunning_incomplete", {
+              invoiceId: invoice.id,
+              error:
+                dunningError instanceof Error
+                  ? dunningError.message
+                  : "unknown",
+            });
+          }
         }
         break;
       }

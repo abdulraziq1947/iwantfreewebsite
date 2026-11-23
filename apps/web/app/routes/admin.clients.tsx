@@ -1,10 +1,11 @@
-import { Link } from "react-router";
+import { Form, Link, useSearchParams } from "react-router";
 import { Badge } from "@iwfw/ui";
 import { createDb } from "@iwfw/db";
 import { getEnv } from "../lib/env.server";
 import { requireStaffSession } from "../lib/session.server";
 import { formatAdminDate } from "../lib/admin-ops";
 import { listAdminClients } from "../lib/admin-ops.server";
+import { filterAdminClients } from "../lib/admin-clients-filter";
 import type { Route } from "./+types/admin.clients";
 
 export function meta(_args: Route.MetaArgs) {
@@ -14,7 +15,22 @@ export function meta(_args: Route.MetaArgs) {
 export async function loader({ request, context }: Route.LoaderArgs) {
   await requireStaffSession(request, context);
   const db = createDb(getEnv(context).DB);
-  return { clients: await listAdminClients(db) };
+  const url = new URL(request.url);
+  const q = url.searchParams.get("q") ?? "";
+  const live = (url.searchParams.get("live") ?? "all") as
+    | "all"
+    | "live"
+    | "not_live";
+  const attention = (url.searchParams.get("attention") ?? "all") as
+    | "all"
+    | "needs";
+  const clients = await listAdminClients(db);
+  const filtered = filterAdminClients(clients, { q, live, attention });
+  return {
+    clients: filtered,
+    total: clients.length,
+    filters: { q, live, attention },
+  };
 }
 
 function statusTone(status: string): "success" | "warning" | "danger" | "neutral" {
@@ -25,6 +41,9 @@ function statusTone(status: string): "success" | "warning" | "danger" | "neutral
 }
 
 export default function AdminClientsPage({ loaderData }: Route.ComponentProps) {
+  const [params] = useSearchParams();
+  const { filters } = loaderData;
+
   return (
     <div className="iwfw-admin-page">
       <header className="iwfw-admin-page__header">
@@ -32,18 +51,62 @@ export default function AdminClientsPage({ loaderData }: Route.ComponentProps) {
           <p className="iwfw-admin-page__eyebrow">Clients</p>
           <h1>Client folders</h1>
           <p>
-            Open a client to see their progress, brief, images, billing and open
-            tasks.
+            Search and filter by live status or staff attention. Open a client
+            for brief, email, billing and launch controls.
           </p>
         </div>
         <p className="iwfw-admin-page__count">
-          {loaderData.clients.length} total
+          {loaderData.clients.length} shown · {loaderData.total} total
         </p>
       </header>
 
+      <Form method="get" className="iwfw-admin-filters">
+        <label className="iwfw-field">
+          <span>Search</span>
+          <input
+            className="iwfw-control"
+            type="search"
+            name="q"
+            placeholder="Business, email, name…"
+            defaultValue={filters.q}
+          />
+        </label>
+        <label className="iwfw-field">
+          <span>Website</span>
+          <select
+            className="iwfw-control"
+            name="live"
+            defaultValue={filters.live}
+          >
+            <option value="all">All</option>
+            <option value="live">Live</option>
+            <option value="not_live">Not live</option>
+          </select>
+        </label>
+        <label className="iwfw-field">
+          <span>Attention</span>
+          <select
+            className="iwfw-control"
+            name="attention"
+            defaultValue={filters.attention}
+          >
+            <option value="all">All</option>
+            <option value="needs">Needs attention</option>
+          </select>
+        </label>
+        <button type="submit" className="iwfw-btn iwfw-btn--outline">
+          Apply
+        </button>
+        {params.toString() ? (
+          <Link to="/admin/clients" className="iwfw-btn iwfw-btn--outline">
+            Clear
+          </Link>
+        ) : null}
+      </Form>
+
       <section className="iwfw-admin-panel">
         {loaderData.clients.length === 0 ? (
-          <p className="iwfw-admin-empty">No clients yet.</p>
+          <p className="iwfw-admin-empty">No clients match these filters.</p>
         ) : (
           <div className="iwfw-admin-table-wrap">
             <table className="iwfw-admin-table">
@@ -53,6 +116,7 @@ export default function AdminClientsPage({ loaderData }: Route.ComponentProps) {
                   <th>Contact</th>
                   <th>Org status</th>
                   <th>Website</th>
+                  <th>Attention</th>
                   <th>Subscription</th>
                   <th>Renews</th>
                   <th>Joined</th>
@@ -80,6 +144,13 @@ export default function AdminClientsPage({ loaderData }: Route.ComponentProps) {
                       <Badge tone={c.websiteLive ? "success" : "warning"}>
                         {c.websiteLive ? "Live" : "Not live"}
                       </Badge>
+                    </td>
+                    <td>
+                      {c.attentionCount > 0 ? (
+                        <Badge tone="warning">{c.attentionCount}</Badge>
+                      ) : (
+                        <span className="iwfw-admin-muted">Clear</span>
+                      )}
                     </td>
                     <td>
                       {c.subscriptionStatus ? (

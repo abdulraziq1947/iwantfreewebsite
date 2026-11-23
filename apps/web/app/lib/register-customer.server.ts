@@ -10,6 +10,7 @@ import type { WorkerEnvConfig } from "@iwfw/config";
 import { newId } from "./ids";
 import { log } from "./logger";
 import { readAuthJson } from "./auth-response.server";
+import { trackProductEvent } from "./analytics.server";
 
 type EnvWithDb = { DB: D1Database };
 
@@ -99,6 +100,12 @@ export async function registerCustomer(
         log("info", "bootstrap_owner_granted", { userId });
       }
     }
+
+    await trackProductEvent(db, {
+      name: "signup_completed",
+      organisationId,
+      userId,
+    });
 
     return { ok: true, response: signUp, userId, organisationId };
   } catch (error) {

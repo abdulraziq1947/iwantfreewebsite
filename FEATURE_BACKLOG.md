@@ -96,5 +96,29 @@ Every item includes **acceptance criteria**. Items marked `[verified]` are groun
 | Asset transfer tasks on cancel | Done |
 | Incoming/outgoing mail card alignment | Done |
 | Live-stage checkmark alignment | Done |
+| FB-01 Live Stripe gate (`STRIPE_ALLOW_LIVE`, default off) | Done — branch `cursor/saas-improvements-18f7` (activation still needs prod approval) |
+| FB-02 / FB-22 Migrate-before-deploy + `/api/health` schema check | Done |
+| FB-03 / FB-04 / FB-06 / FB-34 Copy + portfolio review | Done |
+| FB-12 Soften GBP attention pre-live | Done |
+| FB-15 Staff MFA enroll + gate | Done |
+| FB-16 Mailbox password AES-GCM at rest | Done |
+| FB-07 Preview URL (`preview_url` + admin set + customer CTA) | Done |
+| FB-08 Stripe Customer Portal (Update payment method) | Done |
+| FB-09 Self-serve password reset (Better Auth + Resend) | Done — needs `RESEND_API_KEY` in each env |
+| FB-10 Go-live SLA messaging (`GO_LIVE_SLA_LABEL`) | Done |
+| FB-11 Collapse Progress into Overview (redirect) | Done |
+| FB-17 Mailbox Copy buttons | Done |
+| FB-24 Desktop Log in in topbar | Done |
+| FB-13 Admin clients search / live / attention filter | Done |
+| FB-20 GBP weekly ops task board (manual generate, no auto-publish) | Done |
+| FB-21 Domain renews-at + renewal reminder tasks (no auto-purchase) | Done |
+| FB-28 Audit logs for mark-live / mailbox / org status / ops | Done |
+| FB-19 README + customer/admin dashboard docs synced | Done |
+| FB-33 Product events (signup/checkout/activation/cancel/payment_failed) | Done |
+| FB-05 / FB-14 / FB-25 | Deferred — no multi-org usage or confirmed funnel/edit pain yet |
+| Ops: payment_failed notify + portal CTA path | Done |
+| Ops: preview progress notify | Done |
+| Ops: overdue website flags | Done |
+| Ops: per-org cost → profit estimate | Done |
 
 When closing a backlog item, move it here with PR/date.

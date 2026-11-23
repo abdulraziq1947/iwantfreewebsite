@@ -16,7 +16,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
   const config = getConfig(context);
   const db = createDb(env.DB);
-  const workspace = await getCustomerWorkspace(db, auth);
+  const workspace = await getCustomerWorkspace(db, auth, getConfig(context));
   return {
     workspace,
     gbpManagerEmail: config.GBP_MANAGER_EMAIL ?? "manager@iwantfreewebsite.com",
@@ -26,7 +26,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 export async function action({ request, context }: Route.ActionArgs) {
   const auth = await requireAuth(request, context);
   const db = createDb(getEnv(context).DB);
-  const workspace = await getCustomerWorkspace(db, auth);
+  const workspace = await getCustomerWorkspace(db, auth, getConfig(context));
   if (!workspace.primary || !workspace.onboarding) {
     return { error: "No website account found." };
   }
@@ -188,8 +188,8 @@ export default function GoogleBusinessPage({
             Access is marked connected only after our team accepts the invite in
             Google.
           </p>
-          <Link to="/dashboard/onboarding" className="iwfw-btn iwfw-btn--outline">
-            Back to progress
+          <Link to="/dashboard" className="iwfw-btn iwfw-btn--outline">
+            Back to overview
           </Link>
         </Panel>
       </div>

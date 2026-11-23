@@ -235,6 +235,69 @@ Tokens in `@iwfw/ui` (accent blue, CTA green, Plus Jakarta). Drift: `iwfw-btn` v
 
 ---
 
+## Implementation progress (post-audit)
+
+Branch: `cursor/saas-improvements-18f7` · Europe/London
+
+### Batch 1 — Launch readiness (completed in code; live Stripe not activated)
+
+| ID | Status | Notes |
+| --- | --- | --- |
+| FB-01 | Done (gated) | `STRIPE_ALLOW_LIVE` required for live keys/webhooks; default off |
+| FB-02 / FB-22 | Done | `PRODUCTION_DEPLOYMENT.md` + `/api/health` required-table check |
+| FB-03 / FB-04 / FB-06 / FB-34 | Done | Package/homepage/GBP copy; `docs/PORTFOLIO_REVIEW.md` |
+| FB-15 | Done | Staff MFA page + `/admin` gate |
+| FB-16 | Done | AES-GCM mailbox passwords; decrypt for Show UI |
+| FB-12 | Done | GBP customer attention deferred until live |
+
+**Tests:** `@iwfw/web` 78+ unit tests pass; package typechecks green.  
+**Blockers:** Production migrate apply, live Stripe secrets/webhook, MFA enrollment for existing staff — need explicit approval.
+
+### Batch 2 — Customer experience (completed in code)
+
+| ID | Status | Notes |
+| --- | --- | --- |
+| FB-07 | Done | `preview_url` migration `0011`; admin set; customer preview CTA |
+| FB-08 | Done | Stripe Billing Portal from `/dashboard/billing` |
+| FB-09 | Done | `/forgot-password` + `/reset-password` via Better Auth + Resend |
+| FB-10 | Done | `GO_LIVE_SLA_LABEL` on Overview/Website banners |
+| FB-11 | Done | Progress nav removed; `/dashboard/onboarding` → `/dashboard` |
+| FB-17 | Done | Copy buttons on mailbox fields |
+| FB-24 | Done | Desktop topbar Log in |
+
+**Tests:** `@iwfw/web` 79 unit tests pass; typecheck green.  
+**Deps:** Resend for reset emails; Stripe Portal configuration in Stripe Dashboard.
+
+### Batch 3 — Operational automation (completed in code)
+
+| ID | Status | Notes |
+| --- | --- | --- |
+| FB-13 | Done | Client search + live/attention filters; attention badge |
+| FB-20 | Done | `/admin/ops` GBP weekly post/review tasks (generate, track; no auto-publish) |
+| FB-21 | Done | `renews_at` on domain tasks + renewal ops tasks (no auto-purchase) |
+| FB-28 | Done | `writeAuditLog` on mark-live, preview, mailbox, org status, ops |
+
+**Tests:** `@iwfw/web` 84 unit tests pass; typecheck green.  
+**Migration:** `0012_ops_tasks` must be applied before deploy (health check requires `ops_tasks`).
+
+### Batch 4 + ops extras (completed in code)
+
+| ID | Status | Notes |
+| --- | --- | --- |
+| FB-19 | Done | README + `docs/CUSTOMER_DASHBOARD.md` + `docs/ADMIN_DASHBOARD.md` |
+| FB-33 | Done | `product_events` + admin funnel KPIs (30d) |
+| FB-05 / FB-14 / FB-25 | Deferred | No confirmed multi-org usage / edit pain / funnel evidence |
+| Payment recovery | Done | `invoice.payment_failed` syncs sub + customer notify |
+| Preview notify | Done | Customer notification when preview URL set |
+| Overdue websites | Done | Ops “Flag overdue websites” (≥10 days paid, not live) |
+| Profitability | Done | Staff-entered costs on client Billing tab |
+
+**Tests:** unit suite green after Batch 4.  
+**Migrations:** apply `0012` + `0013` before deploy.  
+**Still blocked (need approval):** live Stripe unlock, production migrate/deploy, secret rotation.
+
+---
+
 ## Related artefacts
 
 - Ranked work: [`FEATURE_BACKLOG.md`](./FEATURE_BACKLOG.md)  

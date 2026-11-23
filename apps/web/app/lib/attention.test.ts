@@ -33,12 +33,33 @@ describe("attention board", () => {
       openDomainCount: 1,
     });
 
-    expect(board.customer.some((i) => i.id === "gbp-invite")).toBe(true);
+    // GBP invite is deferred until the website is live (FB-12).
+    expect(board.customer.some((i) => i.id === "gbp-invite")).toBe(false);
     expect(board.staff.some((i) => i.id === "domain-task")).toBe(true);
     expect(board.staff.some((i) => i.id === "build-live")).toBe(true);
-    expect(board.gbp.label).toMatch(/manager access needed|not confirmed/i);
-    expect(board.customerPendingCount).toBeGreaterThan(0);
+    expect(board.gbp.label).toMatch(/manager access|optional|not confirmed/i);
+    // Pre-live: no customer GBP action (FB-12); staff still have build work.
+    expect(board.customerPendingCount).toBe(0);
     expect(board.staffPendingCount).toBeGreaterThan(0);
+  });
+
+  it("shows GBP invite only after website is live", () => {
+    const data = emptyOnboardingData();
+    const board = buildAttentionBoard({
+      needsSubscription: false,
+      briefReady: true,
+      domainTask: {
+        domainName: "acme.co.uk",
+        domainMode: "new",
+        status: "connected",
+        registeredAt: null,
+        connectedAt: "2026-01-01T00:00:00.000Z",
+        liveUrl: "https://acme.co.uk",
+      },
+      data,
+      uploadCount: 2,
+    });
+    expect(board.customer.some((i) => i.id === "gbp-invite")).toBe(true);
   });
 
   it("clears customer GMB action once access is granted", () => {

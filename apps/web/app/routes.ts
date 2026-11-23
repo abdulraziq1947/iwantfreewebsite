@@ -10,6 +10,8 @@ export default [
     index("routes/home.tsx"),
     route("login", "routes/login.tsx"),
     route("signup", "routes/signup.tsx"),
+    route("forgot-password", "routes/forgot-password.tsx"),
+    route("reset-password", "routes/reset-password.tsx"),
     route("pricing", "routes/pricing.tsx"),
     route("terms", "routes/terms.tsx"),
     route("privacy", "routes/privacy.tsx"),
@@ -51,8 +53,10 @@ export default [
   ]),
   layout("routes/admin-layout.tsx", [
     route("admin", "routes/admin._index.tsx"),
+    route("admin/security/mfa", "routes/admin.security.mfa.tsx"),
     route("admin/clients", "routes/admin.clients.tsx"),
     route("admin/clients/:orgId", "routes/admin.clients.$orgId.tsx"),
+    route("admin/ops", "routes/admin.ops.tsx"),
     route(
       "admin/clients/:orgId/invoice/:invoiceId.pdf",
       "routes/admin.clients.$orgId.invoice.$invoiceId[.]pdf.ts",

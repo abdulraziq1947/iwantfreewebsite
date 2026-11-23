@@ -28,7 +28,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       throw redirect(homePathForAuth(auth));
     }
     const db = createDb(getEnv(context).DB);
-    const workspace = await getCustomerWorkspace(db, auth);
+    const workspace = await getCustomerWorkspace(db, auth, getConfig(context));
     if (workspace.primary && !workspace.needsSubscription) {
       throw redirect("/dashboard");
     }
@@ -192,6 +192,9 @@ export default function GetStartedAccount({
                 autoComplete="current-password"
               />
             </label>
+            <p className="iwfw-start__fine">
+              <Link to="/forgot-password">Forgot password?</Link>
+            </p>
           </>
         ) : (
           <>

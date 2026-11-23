@@ -324,8 +324,12 @@ export const domainRegistrationTasks = sqliteTable(
       .notNull()
       .default("pending"),
     adminNotes: text("admin_notes"),
+    /** Staging/preview URL customers can review before go-live. */
+    previewUrl: text("preview_url"),
     /** Public URL shown to the customer once the site is live. */
     liveUrl: text("live_url"),
+    /** Domain renewal date (staff-set; used for reminder tasks). */
+    renewsAt: integer("renews_at", { mode: "timestamp_ms" }),
     registeredAt: integer("registered_at", { mode: "timestamp_ms" }),
     connectedAt: integer("connected_at", { mode: "timestamp_ms" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
@@ -337,6 +341,88 @@ export const domainRegistrationTasks = sqliteTable(
   },
   (t) => [
     index("domain_registration_tasks_org_id_idx").on(t.organisationId),
+  ],
+);
+
+/** Lightweight product analytics (signup, checkout, activation, cancel). */
+export const productEvents = sqliteTable(
+  "product_events",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    organisationId: text("organisation_id").references(() => organisations.id, {
+      onDelete: "set null",
+    }),
+    userId: text("user_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    propertiesJson: text("properties_json"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+  },
+  (t) => [
+    index("product_events_name_idx").on(t.name),
+    index("product_events_created_at_idx").on(t.createdAt),
+    index("product_events_org_id_idx").on(t.organisationId),
+  ],
+);
+
+/** Simple per-org operating cost inputs for profitability estimates. */
+export const organisationCosts = sqliteTable("organisation_costs", {
+  organisationId: text("organisation_id")
+    .primaryKey()
+    .references(() => organisations.id, { onDelete: "cascade" }),
+  domainAnnualPence: integer("domain_annual_pence").notNull().default(0),
+  mailboxMonthlyPence: integer("mailbox_monthly_pence").notNull().default(0),
+  hostingMonthlyPence: integer("hosting_monthly_pence").notNull().default(0),
+  otherMonthlyPence: integer("other_monthly_pence").notNull().default(0),
+  notes: text("notes"),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+});
+
+/**
+ * Staff operational tasks (GBP weekly posts, review replies, domain renewals).
+ * No auto-purchase or auto-publish — status tracking only.
+ */
+export const opsTasks = sqliteTable(
+  "ops_tasks",
+  {
+    id: text("id").primaryKey(),
+    organisationId: text("organisation_id")
+      .notNull()
+      .references(() => organisations.id, { onDelete: "cascade" }),
+    kind: text("kind", {
+      enum: [
+        "gbp_weekly_post",
+        "gbp_review_reply",
+        "domain_renewal",
+        "website_overdue",
+        "other",
+      ],
+    }).notNull(),
+    status: text("status", {
+      enum: ["pending", "in_progress", "done", "cancelled"],
+    })
+      .notNull()
+      .default("pending"),
+    title: text("title").notNull(),
+    notes: text("notes"),
+    dueAt: integer("due_at", { mode: "timestamp_ms" }),
+    completedAt: integer("completed_at", { mode: "timestamp_ms" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+  },
+  (t) => [
+    index("ops_tasks_org_id_idx").on(t.organisationId),
+    index("ops_tasks_kind_status_idx").on(t.kind, t.status),
+    index("ops_tasks_due_at_idx").on(t.dueAt),
   ],
 );
 

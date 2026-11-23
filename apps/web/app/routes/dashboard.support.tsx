@@ -1,7 +1,7 @@
 import { Form, Link, useNavigation } from "react-router";
 import { Badge } from "@iwfw/ui";
 import { createDb } from "@iwfw/db";
-import { getEnv } from "../lib/env.server";
+import {getEnv, getConfig} from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
 import { getCustomerWorkspace } from "../lib/customer-org.server";
 import { formatAdminDate } from "../lib/admin-ops";
@@ -25,7 +25,7 @@ export function meta(_args: Route.MetaArgs) {
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
   const db = createDb(getEnv(context).DB);
-  const workspace = await getCustomerWorkspace(db, auth);
+  const workspace = await getCustomerWorkspace(db, auth, getConfig(context));
   const organisationIds = auth.memberships.map((m) => m.organisationId);
   const [tickets, notifications] = await Promise.all([
     listCustomerTickets(db, organisationIds),

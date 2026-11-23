@@ -1,7 +1,8 @@
 import { Link } from "react-router";
 import { Badge, Panel } from "@iwfw/ui";
 import { createDb } from "@iwfw/db";
-import { getEnv } from "../lib/env.server";
+import { goLiveSlaLabel } from "@iwfw/config";
+import { getEnv, getConfig } from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
 import { getCustomerWorkspace } from "../lib/customer-org.server";
 import { orgStatusLabel, orgStatusTone } from "../lib/customer-dashboard";
@@ -11,6 +12,7 @@ import {
   buildStatusBanner,
   liveWebsiteUrl,
   needsGbpInvite,
+  previewWebsiteUrl,
   websiteStageLabel,
 } from "../lib/customer-progress";
 import { AttentionBoardCard } from "../components/attention-board";
@@ -22,16 +24,18 @@ export function meta(_args: Route.MetaArgs) {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
+  const config = getConfig(context);
   const db = createDb(getEnv(context).DB);
-  const workspace = await getCustomerWorkspace(db, auth);
+  const workspace = await getCustomerWorkspace(db, auth, config);
   return {
     userName: auth.name,
     workspace,
+    goLiveSla: goLiveSlaLabel(config),
   };
 }
 
 export default function Dashboard({ loaderData }: Route.ComponentProps) {
-  const { workspace } = loaderData;
+  const { workspace, goLiveSla } = loaderData;
   const firstName = loaderData.userName?.split(" ")[0] ?? "";
   const stages = buildJourneyStages({
     needsSubscription: workspace.needsSubscription,
@@ -43,6 +47,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
     briefReady: workspace.briefReady,
     domainTask: workspace.domainTask,
     tradingName: workspace.primary?.tradingName,
+    goLiveSlaLabel: goLiveSla,
   });
   const actions = buildCustomerActions({
     needsSubscription: workspace.needsSubscription,
@@ -62,6 +67,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
   const paidAndReady = !workspace.needsSubscription && workspace.briefReady;
   const isLive = workspace.domainTask?.status === "connected";
   const liveUrl = liveWebsiteUrl(workspace.domainTask);
+  const previewUrl = previewWebsiteUrl(workspace.domainTask);
   const domainName = workspace.domainTask?.domainName;
 
   return (
@@ -103,6 +109,12 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
                 {liveUrl}
               </a>
             </p>
+          ) : previewUrl ? (
+            <p className="iwfw-dash-status__live-url">
+              <a href={previewUrl} target="_blank" rel="noreferrer">
+                {previewUrl}
+              </a>
+            </p>
           ) : null}
         </div>
         <div className="iwfw-dash-status__actions">
@@ -119,13 +131,22 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
             >
               Visit live site
             </a>
+          ) : previewUrl ? (
+            <a
+              href={previewUrl}
+              className="iwfw-btn iwfw-btn--green"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open preview
+            </a>
           ) : workspace.domainTask?.status === "unavailable" ? (
             <Link to="/dashboard/support" className="iwfw-btn iwfw-btn--green">
               Contact support
             </Link>
           ) : (
-            <Link to="/dashboard/onboarding" className="iwfw-btn iwfw-btn--outline">
-              View progress
+            <Link to="/dashboard/website" className="iwfw-btn iwfw-btn--outline">
+              Website details
             </Link>
           )}
         </div>

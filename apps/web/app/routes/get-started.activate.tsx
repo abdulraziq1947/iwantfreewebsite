@@ -45,6 +45,16 @@ export async function action({ request, context }: Route.ActionArgs) {
   const result = await consumeActivationToken({ db, token, password });
   if (!result.ok) return { error: result.error };
 
+  try {
+    const { trackProductEvent } = await import("../lib/analytics.server");
+    await trackProductEvent(db, {
+      name: "activation_completed",
+      properties: { emailDomain: result.email.split("@")[1] ?? null },
+    });
+  } catch {
+    // Non-fatal
+  }
+
   const auth = createAuth(env.DB, config);
   const signIn = await auth.api.signInEmail({
     body: { email: result.email, password },

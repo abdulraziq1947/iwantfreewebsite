@@ -78,6 +78,27 @@
       "when": 1763920800000,
       "tag": "0010_mailbox_password",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1763924400000,
+      "tag": "0011_preview_url",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1763928000000,
+      "tag": "0012_ops_tasks",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1763931600000,
+      "tag": "0013_analytics_costs",
+      "breakpoints": true
     }
   ]
 }

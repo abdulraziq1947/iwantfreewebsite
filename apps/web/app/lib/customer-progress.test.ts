@@ -31,9 +31,30 @@ describe("customer progress", () => {
         connectedAt: null,
       },
       tradingName: "Acme",
+      goLiveSlaLabel: "5–10 working days",
     });
     expect(banner.title).toMatch(/nothing more/i);
     expect(banner.body).toMatch(/working on your website|get back to you/i);
+    expect(banner.body).toMatch(/5–10 working days/);
+  });
+
+  it("surfaces preview URL before go-live", () => {
+    const banner = buildStatusBanner({
+      needsSubscription: false,
+      briefReady: true,
+      domainTask: {
+        domainName: "acme.co.uk",
+        domainMode: "new",
+        status: "in_progress",
+        registeredAt: null,
+        connectedAt: null,
+        previewUrl: "https://preview.example.com/acme",
+      },
+      tradingName: "Acme",
+    });
+    expect(banner.kicker).toMatch(/preview/i);
+    expect(banner.href).toBe("https://preview.example.com/acme");
+    expect(banner.cta).toMatch(/preview/i);
   });
 
   it("hides domain as its own stage and shows working on website", () => {

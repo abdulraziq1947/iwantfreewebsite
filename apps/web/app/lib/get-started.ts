@@ -8,10 +8,10 @@ export const TERMS_VERSION = "2026-11-23";
 
 export const PACKAGE_INCLUDES = [
   "Professionally built business website",
-  "Domain registration and renewal (manual, after payment)",
+  "Domain registration and renewal (we handle it after payment)",
   "Website hosting and maintenance",
   "One business email mailbox",
-  "Weekly Google Business Profile post",
+  "Google Business Profile help (Manager access & posting guidance)",
   "Help with Google review replies",
   "UK-based support",
 ] as const;

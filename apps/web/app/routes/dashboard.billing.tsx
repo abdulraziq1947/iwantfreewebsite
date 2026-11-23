@@ -1,4 +1,4 @@
-import { Form, Link, useNavigation } from "react-router";
+import { Form, Link, redirect, useNavigation } from "react-router";
 import { Badge, Panel } from "@iwfw/ui";
 import { createDb, desc, eq, assetTransferTasks } from "@iwfw/db";
 import { getConfig, getEnv } from "../lib/env.server";
@@ -6,6 +6,7 @@ import { requireAuth } from "../lib/session.server";
 import { getCustomerWorkspace } from "../lib/customer-org.server";
 import { orgStatusLabel, orgStatusTone } from "../lib/customer-dashboard";
 import {
+  createBillingPortalSession,
   getOrganisationSubscription,
   listOrganisationInvoices,
   setSubscriptionCancelAtPeriodEnd,
@@ -20,7 +21,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
   const config = getConfig(context);
   const db = createDb(getEnv(context).DB);
-  const workspace = await getCustomerWorkspace(db, auth);
+  const workspace = await getCustomerWorkspace(db, auth, getConfig(context));
   const subscription = workspace.primary
     ? await getOrganisationSubscription(db, workspace.primary.id)
     : null;
@@ -56,7 +57,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const auth = await requireAuth(request, context);
   const config = getConfig(context);
   const db = createDb(getEnv(context).DB);
-  const workspace = await getCustomerWorkspace(db, auth);
+  const workspace = await getCustomerWorkspace(db, auth, getConfig(context));
   if (!workspace.primary) {
     return { error: "No website account found." };
   }
@@ -79,6 +80,16 @@ export async function action({ request, context }: Route.ActionArgs) {
       organisationId: workspace.primary.id,
       cancelAtPeriodEnd: false,
     });
+  }
+  if (intent === "portal") {
+    const portal = await createBillingPortalSession({
+      config,
+      db,
+      organisationId: workspace.primary.id,
+      returnUrl: `${config.APP_URL}/dashboard/billing`,
+    });
+    if ("error" in portal) return portal;
+    throw redirect(portal.url);
   }
   return { error: "Unknown action." };
 }
@@ -243,28 +254,43 @@ export default function BillingPage({
           </ul>
 
           {subscription ? (
-            <dl className="iwfw-dash-dl">
-              <div>
-                <dt>Status</dt>
-                <dd>{subscriptionStatusLabel(subscription.status)}</dd>
-              </div>
-              <div>
-                <dt>
-                  {subscription.cancelAtPeriodEnd
-                    ? "Ends on"
-                    : "Renews / period ends"}
-                </dt>
-                <dd>{formatDate(subscription.currentPeriodEnd)}</dd>
-              </div>
-              <div>
-                <dt>Cancellation</dt>
-                <dd>
-                  {subscription.cancelAtPeriodEnd
-                    ? "Scheduled at period end"
-                    : "Not scheduled"}
-                </dd>
-              </div>
-            </dl>
+            <>
+              <dl className="iwfw-dash-dl">
+                <div>
+                  <dt>Status</dt>
+                  <dd>{subscriptionStatusLabel(subscription.status)}</dd>
+                </div>
+                <div>
+                  <dt>
+                    {subscription.cancelAtPeriodEnd
+                      ? "Ends on"
+                      : "Renews / period ends"}
+                  </dt>
+                  <dd>{formatDate(subscription.currentPeriodEnd)}</dd>
+                </div>
+                <div>
+                  <dt>Cancellation</dt>
+                  <dd>
+                    {subscription.cancelAtPeriodEnd
+                      ? "Scheduled at period end"
+                      : "Not scheduled"}
+                  </dd>
+                </div>
+              </dl>
+              <Form method="post">
+                <input type="hidden" name="intent" value="portal" />
+                <button
+                  type="submit"
+                  className="iwfw-btn iwfw-btn--outline"
+                  disabled={busy}
+                >
+                  {busy ? "Opening…" : "Update payment method"}
+                </button>
+              </Form>
+              <p className="iwfw-dash-fine">
+                Opens Stripe’s secure customer portal to update your card.
+              </p>
+            </>
           ) : status === "prospect" ? (
             <Link
               to="/get-started"

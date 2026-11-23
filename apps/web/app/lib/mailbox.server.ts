@@ -1,3 +1,4 @@
+import type { WorkerEnvConfig } from "@iwfw/config";
 import {
   createDb,
   eq,
@@ -5,6 +6,10 @@ import {
   organisations,
 } from "@iwfw/db";
 import { newId } from "./ids";
+import {
+  decryptMailboxPassword,
+  encryptMailboxPassword,
+} from "./mailbox-crypto.server";
 import {
   isMailboxSecurity,
   isMailboxStatus,
@@ -16,15 +21,16 @@ import { notifyCustomerNeedsAttention } from "./notifications.server";
 
 type Db = ReturnType<typeof createDb>;
 
-function mapMailbox(
+async function mapMailbox(
+  config: WorkerEnvConfig,
   row: typeof organisationMailboxes.$inferSelect,
-): OrganisationMailbox {
+): Promise<OrganisationMailbox> {
   return {
     id: row.id,
     organisationId: row.organisationId,
     emailAddress: row.emailAddress,
     username: row.username,
-    password: row.password,
+    password: await decryptMailboxPassword(config, row.password),
     webmailUrl: row.webmailUrl,
     imapHost: row.imapHost,
     imapPort: row.imapPort ?? null,
@@ -59,6 +65,7 @@ function isMissingMailboxSchema(error: unknown): boolean {
 export async function getOrganisationMailbox(
   db: Db,
   organisationId: string,
+  config: WorkerEnvConfig,
 ): Promise<OrganisationMailbox | null> {
   try {
     const row = await db
@@ -66,7 +73,7 @@ export async function getOrganisationMailbox(
       .from(organisationMailboxes)
       .where(eq(organisationMailboxes.organisationId, organisationId))
       .get();
-    return row ? mapMailbox(row) : null;
+    return row ? mapMailbox(config, row) : null;
   } catch (error) {
     // Deploy-before-migrate must not take down the whole customer dashboard.
     if (isMissingMailboxSchema(error)) return null;
@@ -90,6 +97,7 @@ export async function upsertOrganisationMailbox(
   db: Db,
   organisationId: string,
   form: FormData,
+  config: WorkerEnvConfig,
 ) {
   const org = await db
     .select()
@@ -152,12 +160,14 @@ export async function upsertOrganisationMailbox(
       .get();
 
     const wasActive = existing?.status === "active";
-    // Prefer the submitted value; empty + not clearing keeps the existing password.
-    const password = clearPassword
-      ? null
-      : passwordFromForm.length > 0
-        ? passwordFromForm
-        : (existing?.password ?? null);
+    let password: string | null;
+    if (clearPassword) {
+      password = null;
+    } else if (passwordFromForm.length > 0) {
+      password = await encryptMailboxPassword(config, passwordFromForm);
+    } else {
+      password = existing?.password ?? null;
+    }
 
     if (existing) {
       await db

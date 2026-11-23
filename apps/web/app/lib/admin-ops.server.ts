@@ -39,6 +39,7 @@ import {
   notifyWebsiteNotLive,
 } from "./notifications.server";
 import { buildAttentionBoard } from "./attention";
+import type { WorkerEnvConfig } from "@iwfw/config";
 import { getOrganisationMailbox } from "./mailbox.server";
 
 export const ORG_STATUSES = [
@@ -209,17 +210,62 @@ export async function listAdminClients(db: Db) {
     membersByOrg.set(m.organisationId, list);
   }
 
+  const profiles = await db.select().from(onboardingProfiles).all();
+  const profileByOrg = new Map(
+    profiles.map((p) => [p.organisationId, p]),
+  );
+  const uploads = await db.select().from(customerUploads).all();
+  const uploadCountByOrg = new Map<string, number>();
+  for (const u of uploads) {
+    if (u.status !== "ready" || !u.organisationId) continue;
+    uploadCountByOrg.set(
+      u.organisationId,
+      (uploadCountByOrg.get(u.organisationId) ?? 0) + 1,
+    );
+  }
+
   return orgs.map((o) => {
     const sub = subByOrg.get(o.id) ?? null;
     const memberIds = membersByOrg.get(o.id) ?? [];
     const primaryUser = memberIds
       .map((id) => userById.get(id))
       .find(Boolean);
+    const websiteLive = liveByOrg.has(o.id);
+    const profile = profileByOrg.get(o.id);
+    const data = parseOnboardingData(profile?.dataJson);
+    const briefReady = isBriefReady(data, Boolean(profile?.completedAt));
+    const hasPaidAccess =
+      o.status === "active" ||
+      o.status === "cancelling" ||
+      Boolean(sub && isBlockingSubscriptionStatus(sub.status));
+    const domainRow = domainTasks.find((t) => t.organisationId === o.id);
+    const domainTask: DomainTaskSnapshot = domainRow
+      ? {
+          domainName: domainRow.domainName,
+          domainMode: domainRow.domainMode,
+          status: domainRow.status,
+          registeredAt: domainRow.registeredAt
+            ? domainRow.registeredAt.toISOString()
+            : null,
+          connectedAt: domainRow.connectedAt
+            ? domainRow.connectedAt.toISOString()
+            : null,
+          previewUrl: domainRow.previewUrl ?? null,
+          liveUrl: domainRow.liveUrl ?? null,
+        }
+      : null;
+    const attention = buildAttentionBoard({
+      needsSubscription: !hasPaidAccess,
+      briefReady,
+      domainTask,
+      data,
+      uploadCount: uploadCountByOrg.get(o.id) ?? 0,
+    });
     return {
       id: o.id,
       tradingName: o.tradingName,
       status: o.status,
-      websiteLive: liveByOrg.has(o.id),
+      websiteLive,
       stripeCustomerId: o.stripeCustomerId,
       createdAt: o.createdAt ? o.createdAt.toISOString() : null,
       contactName: primaryUser?.name ?? null,
@@ -229,6 +275,7 @@ export async function listAdminClients(db: Db) {
       currentPeriodEnd: sub?.currentPeriodEnd
         ? sub.currentPeriodEnd.toISOString()
         : null,
+      attentionCount: attention.staffPendingCount,
     };
   });
 }
@@ -298,6 +345,7 @@ export async function listAdminDomainTasks(db: Db) {
     domainMode: t.domainMode,
     status: t.status,
     adminNotes: t.adminNotes,
+    renewsAt: t.renewsAt ? t.renewsAt.toISOString() : null,
     registeredAt: t.registeredAt ? t.registeredAt.toISOString() : null,
     connectedAt: t.connectedAt ? t.connectedAt.toISOString() : null,
     createdAt: t.createdAt ? t.createdAt.toISOString() : null,
@@ -603,10 +651,21 @@ export async function markClientWebsiteLive(
     liveUrl,
   });
 
+  try {
+    const { trackProductEvent } = await import("./analytics.server");
+    await trackProductEvent(db, {
+      name: "website_marked_live",
+      organisationId,
+      properties: { liveUrl },
+    });
+  } catch {
+    // Non-fatal
+  }
+
   return { ok: true as const, liveUrl };
 }
 
-/** Move the site back off “live” (domain task → in_progress). */
+/** Move the site back off “live” (domain task → in_progress). Preserves previewUrl. */
 export async function unmarkClientWebsiteLive(
   db: Db,
   organisationId: string,
@@ -647,7 +706,129 @@ export async function unmarkClientWebsiteLive(
   return { ok: true as const };
 }
 
-export async function getAdminClientDetail(db: Db, organisationId: string) {
+/**
+ * Set or clear a customer-facing preview URL without marking the site live.
+ */
+export async function setClientWebsitePreview(
+  db: Db,
+  organisationId: string,
+  options: { previewUrl?: string | null },
+) {
+  const org = await db
+    .select()
+    .from(organisations)
+    .where(eq(organisations.id, organisationId))
+    .get();
+  if (!org) return { error: "Client not found." };
+
+  const raw = (options.previewUrl ?? "").trim();
+  const previewUrl = raw ? normaliseLiveUrl(raw) : null;
+  if (raw && !previewUrl) {
+    return { error: "Enter a valid preview URL." };
+  }
+
+  const now = new Date();
+  const existing = await db
+    .select()
+    .from(domainRegistrationTasks)
+    .where(eq(domainRegistrationTasks.organisationId, organisationId))
+    .orderBy(desc(domainRegistrationTasks.createdAt))
+    .get();
+
+  if (existing) {
+    if (existing.status === "connected") {
+      return {
+        error:
+          "Site is already live. Unmark live first if you need to share a preview instead.",
+      };
+    }
+    await db
+      .update(domainRegistrationTasks)
+      .set({
+        previewUrl,
+        status:
+          existing.status === "pending" || existing.status === "unavailable"
+            ? "in_progress"
+            : existing.status,
+        updatedAt: now,
+      })
+      .where(eq(domainRegistrationTasks.id, existing.id));
+    if (previewUrl && previewUrl !== existing.previewUrl) {
+      try {
+        const { notifyWebsitePreviewReady } = await import(
+          "./notifications.server"
+        );
+        await notifyWebsitePreviewReady(db, {
+          organisationId,
+          tradingName: org.tradingName,
+          previewUrl,
+        });
+        const { trackProductEvent } = await import("./analytics.server");
+        await trackProductEvent(db, {
+          name: "website_preview_shared",
+          organisationId,
+          properties: { previewUrl },
+        });
+      } catch {
+        // Non-fatal
+      }
+    }
+    return { ok: true as const, previewUrl };
+  }
+
+  const profile = await db
+    .select()
+    .from(onboardingProfiles)
+    .where(eq(onboardingProfiles.organisationId, organisationId))
+    .get();
+  const data = parseOnboardingData(profile?.dataJson);
+  const domainName =
+    data.domain.preferredDomain.trim() ||
+    data.domain.existingDomain.trim() ||
+    `${org.tradingName.toLowerCase().replace(/[^a-z0-9]+/g, "") || "site"}.co.uk`;
+  const domainMode = data.domain.mode === "existing" ? "existing" : "new";
+
+  await db.insert(domainRegistrationTasks).values({
+    id: newId("dom"),
+    organisationId,
+    domainName,
+    domainMode,
+    status: "in_progress",
+    previewUrl,
+    createdAt: now,
+    updatedAt: now,
+    adminNotes: "Preview URL set from client folder",
+  });
+
+  if (previewUrl) {
+    try {
+      const { notifyWebsitePreviewReady } = await import(
+        "./notifications.server"
+      );
+      await notifyWebsitePreviewReady(db, {
+        organisationId,
+        tradingName: org.tradingName,
+        previewUrl,
+      });
+      const { trackProductEvent } = await import("./analytics.server");
+      await trackProductEvent(db, {
+        name: "website_preview_shared",
+        organisationId,
+        properties: { previewUrl },
+      });
+    } catch {
+      // Non-fatal
+    }
+  }
+
+  return { ok: true as const, previewUrl };
+}
+
+export async function getAdminClientDetail(
+  db: Db,
+  organisationId: string,
+  config: WorkerEnvConfig,
+) {
   const org = await db
     .select()
     .from(organisations)
@@ -746,6 +927,7 @@ export async function getAdminClientDetail(db: Db, organisationId: string) {
         connectedAt: latestDomain.connectedAt
           ? latestDomain.connectedAt.toISOString()
           : null,
+        previewUrl: latestDomain.previewUrl ?? null,
         liveUrl: latestDomain.liveUrl ?? null,
       }
     : null;
@@ -815,7 +997,7 @@ export async function getAdminClientDetail(db: Db, organisationId: string) {
     openDomainCount,
     openTransferCount,
   });
-  const mailbox = await getOrganisationMailbox(db, organisationId);
+  const mailbox = await getOrganisationMailbox(db, organisationId, config);
   const required = [
     ...attention.staff
       .filter((i) => i.severity === "action")
@@ -889,6 +1071,7 @@ export async function getAdminClientDetail(db: Db, organisationId: string) {
       domainMode: t.domainMode,
       status: t.status,
       adminNotes: t.adminNotes,
+      previewUrl: t.previewUrl,
       liveUrl: t.liveUrl,
       registeredAt: t.registeredAt ? t.registeredAt.toISOString() : null,
       connectedAt: t.connectedAt ? t.connectedAt.toISOString() : null,
