@@ -13,6 +13,7 @@ import {
   needsGbpInvite,
   websiteStageLabel,
 } from "../lib/customer-progress";
+import { AttentionBoardCard } from "../components/attention-board";
 import type { Route } from "./+types/dashboard";
 
 export function meta(_args: Route.MetaArgs) {
@@ -130,21 +131,30 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
         </div>
       </section>
 
-      {paidAndReady && !isLive && showGbp && gbpAction && (
-        <section className="iwfw-dash-gbp" aria-label="Optional Google Business">
-          <div className="iwfw-dash-gbp__copy">
-            <p className="iwfw-dash-gbp__kicker">Optional · while we build</p>
-            <h2>Google Business Profile</h2>
-            <p>
-              Want us to handle weekly posts and review replies? Give us Manager
-              access on your Google Business Profile. You can skip this for now.
-            </p>
-          </div>
-          <Link to={gbpAction.to} className="iwfw-btn iwfw-btn--green">
-            {gbpAction.cta}
-          </Link>
-        </section>
-      )}
+      {workspace.attention ? (
+        <AttentionBoardCard
+          board={workspace.attention}
+          perspective="customer"
+          title="Needs attention"
+          gbpActions={
+            !workspace.attention.gbp.granted ? (
+              <Link
+                to="/dashboard/google-business"
+                className="iwfw-btn iwfw-btn--outline"
+              >
+                {showGbp && gbpAction ? gbpAction.cta : "Update GMB"}
+              </Link>
+            ) : (
+              <Link
+                to="/dashboard/google-business"
+                className="iwfw-btn iwfw-btn--outline"
+              >
+                View GMB
+              </Link>
+            )
+          }
+        />
+      ) : null}
 
       <section className="iwfw-dash-steps" aria-label="What happens next">
         <div className="iwfw-dash-steps__head">

@@ -67,6 +67,8 @@ export type OnboardingData = {
     profileUrl: string;
     outcome: "invitation_sent" | "help_requested" | "no_profile" | "";
     publishDirectly: boolean;
+    /** Staff confirmed Manager access is active in Google. */
+    accessGranted: boolean;
   };
   checkout: {
     termsVersion: string;
@@ -132,6 +134,7 @@ export function emptyOnboardingData(): OnboardingData {
       profileUrl: "",
       outcome: "",
       publishDirectly: true,
+      accessGranted: false,
     },
     checkout: {
       termsVersion: "",
@@ -253,6 +256,7 @@ export function readStepFromForm(
             ? outcome
             : "",
         publishDirectly: bool("publishDirectly"),
+        accessGranted: Boolean(current.gbp.accessGranted),
       };
       break;
     }

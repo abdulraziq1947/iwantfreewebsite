@@ -32,6 +32,7 @@ import {
 import { categoryLabel, isUploadCategory } from "./image-sniff";
 import { newId } from "./ids";
 import { notifyWebsiteLive } from "./support.server";
+import { buildAttentionBoard } from "./attention";
 
 export const ORG_STATUSES = [
   "prospect",
@@ -438,6 +439,39 @@ export async function updateOrganisationStatus(
   return { ok: true as const };
 }
 
+/** Staff confirm / revoke Google Business Manager access. */
+export async function setGbpAccessGranted(
+  db: Db,
+  organisationId: string,
+  granted: boolean,
+) {
+  const profile = await db
+    .select()
+    .from(onboardingProfiles)
+    .where(eq(onboardingProfiles.organisationId, organisationId))
+    .get();
+  if (!profile) return { error: "No onboarding profile for this client." };
+
+  const data = parseOnboardingData(profile.dataJson);
+  data.gbp = {
+    ...data.gbp,
+    accessGranted: granted,
+    outcome: granted
+      ? data.gbp.outcome || "invitation_sent"
+      : data.gbp.outcome,
+  };
+
+  await db
+    .update(onboardingProfiles)
+    .set({
+      dataJson: JSON.stringify(data),
+      updatedAt: new Date(),
+    })
+    .where(eq(onboardingProfiles.id, profile.id));
+
+  return { ok: true as const };
+}
+
 /**
  * Mark the customer's website as live (journey “Go live” = domain connected).
  * Updates the latest domain task, or creates one from the brief if missing.
@@ -682,34 +716,7 @@ export async function getAdminClientDetail(db: Db, organisationId: string) {
     (OPEN_TRANSFER_STATUSES as readonly string[]).includes(t.status),
   ).length;
 
-  const required: string[] = [];
-  if (needsSubscription) required.push("Customer still needs to pay / subscribe.");
-  if (!briefReady) required.push("Brief incomplete — chase missing questionnaire details.");
-  if (openDomainCount > 0) {
-    required.push(
-      `${openDomainCount} domain task${openDomainCount === 1 ? "" : "s"} open (${domainTaskLabel(domainTask?.status)}).`,
-    );
-  }
-  if (needsGbpInvite(onboardingData)) {
-    required.push("Google Business Profile invite not confirmed yet.");
-  }
   const readyUploads = uploads.filter((u) => u.status === "ready");
-  if (readyUploads.length === 0) {
-    required.push("No customer images uploaded yet.");
-  }
-  if (openTransferCount > 0) {
-    required.push(
-      `${openTransferCount} asset transfer task${openTransferCount === 1 ? "" : "s"} open.`,
-    );
-  }
-  if (
-    !needsSubscription &&
-    briefReady &&
-    domainTask?.status !== "connected" &&
-    domainTask?.status !== "unavailable"
-  ) {
-    required.push("Website build / go-live still in progress with the team.");
-  }
 
   // Also pull uploads linked only via paid orders for this org
   const orderIds = orders.map((o) => o.id);
@@ -746,6 +753,24 @@ export async function getAdminClientDetail(db: Db, organisationId: string) {
     }
   }
 
+  const attention = buildAttentionBoard({
+    needsSubscription,
+    briefReady,
+    domainTask,
+    data: onboardingData,
+    uploadCount: orderUploads.length,
+    openDomainCount,
+    openTransferCount,
+  });
+  const required = [
+    ...attention.staff
+      .filter((i) => i.severity === "action")
+      .map((i) => i.title + (i.body ? ` — ${i.body}` : "")),
+    ...attention.customer
+      .filter((i) => i.severity === "action")
+      .map((i) => `Waiting on customer: ${i.title}`),
+  ];
+
   return {
     org: {
       id: org.id,
@@ -766,6 +791,7 @@ export async function getAdminClientDetail(db: Db, organisationId: string) {
     banner,
     journey,
     required,
+    attention,
     briefReady,
     needsSubscription,
     gbpNeeded: needsGbpInvite(onboardingData),

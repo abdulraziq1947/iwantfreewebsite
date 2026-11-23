@@ -6,6 +6,7 @@ import {
   onboardingProfiles,
   subscriptions,
   domainRegistrationTasks,
+  customerUploads,
   inArray,
 } from "@iwfw/db";
 import type { AuthContext } from "@iwfw/auth";
@@ -16,6 +17,7 @@ import {
   isBriefReady,
   type DomainTaskSnapshot,
 } from "./customer-progress";
+import { buildAttentionBoard } from "./attention";
 
 export async function getCustomerWorkspace(
   db: ReturnType<typeof createDb>,
@@ -39,6 +41,14 @@ export async function getCustomerWorkspace(
       domainTask: null as DomainTaskSnapshot,
       needsSubscription: true,
       briefReady: false,
+      uploadCount: 0,
+      attention: buildAttentionBoard({
+        needsSubscription: true,
+        briefReady: false,
+        domainTask: null,
+        data: null,
+        uploadCount: 0,
+      }),
     };
   }
 
@@ -103,6 +113,21 @@ export async function getCustomerWorkspace(
       }
     : null;
 
+  const uploadRows = await db
+    .select()
+    .from(customerUploads)
+    .where(eq(customerUploads.organisationId, primary.id))
+    .all();
+  const uploadCount = uploadRows.filter((u) => u.status === "ready").length;
+
+  const attention = buildAttentionBoard({
+    needsSubscription: !hasPaidAccess,
+    briefReady,
+    domainTask,
+    data,
+    uploadCount,
+  });
+
   return {
     orgs: orgs.map((o) => ({
       id: o.id,
@@ -129,5 +154,7 @@ export async function getCustomerWorkspace(
     domainTask,
     needsSubscription: !hasPaidAccess,
     briefReady,
+    uploadCount,
+    attention,
   };
 }

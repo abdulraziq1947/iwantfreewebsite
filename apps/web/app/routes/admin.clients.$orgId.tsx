@@ -8,10 +8,12 @@ import {
   getAdminClientDetail,
   isOrgStatus,
   markClientWebsiteLive,
+  setGbpAccessGranted,
   unmarkClientWebsiteLive,
   updateOrganisationStatus,
 } from "../lib/admin-ops.server";
 import { listOrganisationInvoices } from "../lib/billing.server";
+import { AttentionBoardCard } from "../components/attention-board";
 import type { Route } from "./+types/admin.clients.$orgId";
 
 const TABS = [
@@ -67,6 +69,18 @@ export async function action({ request, context, params }: Route.ActionArgs) {
 
   if (intent === "unmark_live") {
     const result = await unmarkClientWebsiteLive(db, params.orgId);
+    if ("error" in result) return result;
+    throw redirect(`/admin/clients/${params.orgId}?tab=${tab}`);
+  }
+
+  if (intent === "gbp_grant") {
+    const result = await setGbpAccessGranted(db, params.orgId, true);
+    if ("error" in result) return result;
+    throw redirect(`/admin/clients/${params.orgId}?tab=${tab}`);
+  }
+
+  if (intent === "gbp_revoke") {
+    const result = await setGbpAccessGranted(db, params.orgId, false);
     if ("error" in result) return result;
     throw redirect(`/admin/clients/${params.orgId}?tab=${tab}`);
   }
@@ -273,20 +287,38 @@ export default function AdminClientDetailPage({
             </ul>
           </section>
 
-          <section className="iwfw-admin-panel">
-            <div className="iwfw-admin-panel__head">
-              <h2>What staff need to do</h2>
-            </div>
-            {client.required.length === 0 ? (
-              <p className="iwfw-admin-empty">Nothing open right now.</p>
-            ) : (
-              <ul className="iwfw-admin-required">
-                {client.required.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            )}
-          </section>
+          <AttentionBoardCard
+            board={client.attention}
+            perspective="staff"
+            title="Needs attention"
+            gbpActions={
+              client.attention.gbp.granted ? (
+                <Form method="post">
+                  <input type="hidden" name="intent" value="gbp_revoke" />
+                  <input type="hidden" name="tab" value="overview" />
+                  <button
+                    type="submit"
+                    className="iwfw-btn iwfw-btn--outline"
+                    disabled={busy}
+                  >
+                    Revoke GMB granted
+                  </button>
+                </Form>
+              ) : (
+                <Form method="post">
+                  <input type="hidden" name="intent" value="gbp_grant" />
+                  <input type="hidden" name="tab" value="overview" />
+                  <button
+                    type="submit"
+                    className="iwfw-btn iwfw-btn--green"
+                    disabled={busy}
+                  >
+                    Mark GMB access granted
+                  </button>
+                </Form>
+              )
+            }
+          />
 
           <section className="iwfw-admin-panel">
             <div className="iwfw-admin-panel__head">
