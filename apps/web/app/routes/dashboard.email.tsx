@@ -145,18 +145,27 @@ export default function EmailPage({
 
           <section className="iwfw-dash-panel">
             <div className="iwfw-dash-panel-head">
-              <h2>Server settings (IMAP / SMTP)</h2>
+              <h2>Server settings for apps</h2>
             </div>
-            <p className="iwfw-dash-fine" style={{ marginBottom: "0.85rem" }}>
-              Use these when adding your email to Outlook, Apple Mail, Gmail,
-              Samsung Email or any other app.
+            <p className="iwfw-dash-fine" style={{ marginBottom: "1rem" }}>
+              When your phone or computer asks for mail servers, use{" "}
+              <strong>Incoming</strong> to receive mail and{" "}
+              <strong>Outgoing</strong> to send mail. Username is usually your
+              full email address; use the mailbox password we gave you.
             </p>
             <div className="iwfw-mail-servers">
-              <div>
-                <h3>Incoming (IMAP)</h3>
+              <article className="iwfw-mail-card iwfw-mail-card--in">
+                <header className="iwfw-mail-card__head">
+                  <p className="iwfw-mail-card__eyebrow">Incoming mail</p>
+                  <h3>IMAP — receive emails</h3>
+                  <p>
+                    Enter these under Incoming / IMAP when Outlook, Apple Mail,
+                    Gmail or another app asks how to download your mail.
+                  </p>
+                </header>
                 <dl className="iwfw-dash-dl">
                   <CopyRow
-                    label="Server"
+                    label="IMAP server"
                     value={mailbox.imapHost || "—"}
                   />
                   <CopyRow
@@ -164,16 +173,28 @@ export default function EmailPage({
                     value={String(mailbox.imapPort ?? 993)}
                   />
                   <CopyRow
-                    label="Security"
+                    label="Security / encryption"
                     value={mailboxSecurityLabel(mailbox.imapSecurity)}
                   />
+                  <CopyRow
+                    label="Username"
+                    value={mailbox.username || mailbox.emailAddress}
+                  />
                 </dl>
-              </div>
-              <div>
-                <h3>Outgoing (SMTP)</h3>
+              </article>
+
+              <article className="iwfw-mail-card iwfw-mail-card--out">
+                <header className="iwfw-mail-card__head">
+                  <p className="iwfw-mail-card__eyebrow">Outgoing mail</p>
+                  <h3>SMTP — send emails</h3>
+                  <p>
+                    Enter these under Outgoing / SMTP so the same app can send
+                    mail from your business address.
+                  </p>
+                </header>
                 <dl className="iwfw-dash-dl">
                   <CopyRow
-                    label="Server"
+                    label="SMTP server"
                     value={mailbox.smtpHost || "—"}
                   />
                   <CopyRow
@@ -181,26 +202,42 @@ export default function EmailPage({
                     value={String(mailbox.smtpPort ?? 465)}
                   />
                   <CopyRow
-                    label="Security"
+                    label="Security / encryption"
                     value={mailboxSecurityLabel(mailbox.smtpSecurity)}
                   />
+                  <CopyRow
+                    label="Username"
+                    value={mailbox.username || mailbox.emailAddress}
+                  />
                 </dl>
-              </div>
+              </article>
+
               {mailbox.popHost ? (
-                <div>
-                  <h3>Incoming (POP3) — optional</h3>
+                <article className="iwfw-mail-card iwfw-mail-card--pop">
+                  <header className="iwfw-mail-card__head">
+                    <p className="iwfw-mail-card__eyebrow">Optional</p>
+                    <h3>POP3 — alternate incoming</h3>
+                    <p>
+                      Only needed if an app asks for POP instead of IMAP. Prefer
+                      IMAP when you can.
+                    </p>
+                  </header>
                   <dl className="iwfw-dash-dl">
-                    <CopyRow label="Server" value={mailbox.popHost} />
+                    <CopyRow label="POP3 server" value={mailbox.popHost} />
                     <CopyRow
                       label="Port"
                       value={String(mailbox.popPort ?? 995)}
                     />
                     <CopyRow
-                      label="Security"
+                      label="Security / encryption"
                       value={mailboxSecurityLabel(mailbox.popSecurity)}
                     />
+                    <CopyRow
+                      label="Username"
+                      value={mailbox.username || mailbox.emailAddress}
+                    />
                   </dl>
-                </div>
+                </article>
               ) : null}
             </div>
           </section>
