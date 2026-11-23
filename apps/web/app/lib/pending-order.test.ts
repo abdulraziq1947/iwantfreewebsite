@@ -6,7 +6,7 @@ import {
 } from "./order-questionnaire";
 
 describe("order questionnaire", () => {
-  it("requires contact fields on step 0", () => {
+  it("requires contact fields on personal step", () => {
     const data = emptyQuestionnaire();
     expect(validateQuestionnaireStep(0, data)).toBeTruthy();
     data.contact = {
@@ -15,6 +15,26 @@ describe("order questionnaire", () => {
       phone: "0800 000 000",
     };
     expect(validateQuestionnaireStep(0, data)).toBeNull();
+  });
+
+  it("requires core business fields on business step", () => {
+    const data = emptyQuestionnaire();
+    data.contact = {
+      fullName: "Ada Lovelace",
+      email: "ada@example.com",
+      phone: "0800 000 000",
+    };
+    expect(validateQuestionnaireStep(1, data)).toBeTruthy();
+    data.business = {
+      tradingName: "Ada Analytical",
+      industry: "Consulting",
+      address: "1 Algorithm Way",
+      serviceAreas: "London",
+    };
+    data.services.list = "Analysis";
+    data.about.introduction = "We help businesses.";
+    data.website.preferredPages = "Home, About, Contact";
+    expect(validateQuestionnaireStep(1, data)).toBeNull();
   });
 
   it("round-trips JSON", () => {

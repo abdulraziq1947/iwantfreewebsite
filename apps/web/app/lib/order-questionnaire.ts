@@ -1,39 +1,34 @@
 /** Pre-payment website questionnaire stored on pending_orders. */
 
-export const QUESTIONNAIRE_STEPS = [
+/**
+ * Progress stored in pending_orders.questionnaire_step:
+ * 0 = personal, 1 = business, 2 = media, >=3 = questionnaire complete.
+ */
+export const FUNNEL_QUESTION_STEPS = [
   {
-    key: "contact",
-    title: "Your details",
+    key: "personal",
+    title: "Personal details",
     blurb: "How we should reach you about this website order.",
+    path: "/get-started/personal",
   },
   {
     key: "business",
-    title: "Your business",
-    blurb: "Trading name, industry and where you work from.",
-  },
-  {
-    key: "services",
-    title: "Services",
-    blurb: "What customers hire you for — keep it clear and specific.",
-  },
-  {
-    key: "about",
-    title: "About & hours",
-    blurb: "Your story, public contact details and opening hours.",
-  },
-  {
-    key: "website",
-    title: "Website preferences",
-    blurb: "Pages, look-and-feel and any sites you like as references.",
+    title: "Business details",
+    blurb: "Tell us about your business, services and website preferences.",
+    path: "/get-started/business",
   },
   {
     key: "media",
-    title: "Brand & media",
+    title: "Media, logo & photos",
     blurb: "Upload logos and photos, then add any notes for our designers.",
+    path: "/get-started/media",
   },
 ] as const;
 
-export type QuestionnaireStepKey = (typeof QUESTIONNAIRE_STEPS)[number]["key"];
+/** @deprecated Prefer FUNNEL_QUESTION_STEPS — kept for older imports/tests. */
+export const QUESTIONNAIRE_STEPS = FUNNEL_QUESTION_STEPS;
+
+export type QuestionnaireStepKey = (typeof FUNNEL_QUESTION_STEPS)[number]["key"];
 
 export type OrderQuestionnaire = {
   contact: {
@@ -126,6 +121,27 @@ export function parseQuestionnaire(raw: string | null | undefined): OrderQuestio
   }
 }
 
+/** Map legacy multi-step indices onto the 3-step funnel. */
+export function normalizeQuestionnaireStep(step: number): number {
+  if (!Number.isFinite(step) || step < 0) return 0;
+  if (step >= 3) return 3; // complete (includes legacy steps 3–5 once remapped below)
+  return step;
+}
+
+/**
+ * Resume path for an in-progress order.
+ * New: 0 personal, 1 business, 2 media, >=3 complete → domain.
+ * Legacy: 5 was media; 3–4 were about/website (treat as business).
+ */
+export function questionnaireResumePath(rawStep: number): string {
+  if (rawStep === 5) return "/get-started/media";
+  if (rawStep === 3 || rawStep === 4) return "/get-started/business";
+  if (rawStep >= 3) return "/get-started/domain";
+  if (rawStep === 2) return "/get-started/media";
+  if (rawStep === 1) return "/get-started/business";
+  return "/get-started/personal";
+}
+
 export function validateQuestionnaireStep(
   step: number,
   data: OrderQuestionnaire,
@@ -141,20 +157,15 @@ export function validateQuestionnaireStep(
     if (!data.business.tradingName.trim()) return "Please enter your business name.";
     if (!data.business.industry.trim()) return "Please enter your industry.";
     if (!data.business.address.trim()) return "Please enter your business address.";
-  }
-  if (step === 2) {
     if (!data.services.list.trim()) return "Please list your services.";
-  }
-  if (step === 3) {
     if (!data.about.introduction.trim()) {
       return "Please add a short business introduction.";
     }
-  }
-  if (step === 4) {
     if (!data.website.preferredPages.trim()) {
       return "Please list the pages you want.";
     }
   }
+  // Media step has no required fields — uploads are optional.
   return null;
 }
 

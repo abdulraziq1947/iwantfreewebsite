@@ -24,8 +24,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const db = createDb(getEnv(context).DB);
   const { order, setCookie } = await getOrCreateDraftOrder(db, request);
   const q = orderQuestionnaire(order);
-  if (!q.contact.email || !q.business.tradingName) {
-    throw redirect("/get-started/website");
+  if (!q.contact.email) {
+    throw redirect("/get-started/personal");
+  }
+  if (!q.business.tradingName) {
+    throw redirect("/get-started/business");
   }
   return data(
     {
@@ -131,12 +134,15 @@ export default function GetStartedDomain({
   return (
     <div className="iwfw-start">
       <header className="iwfw-start__intro">
-        <p className="iwfw-start__kicker">Domain selection</p>
+        <p className="iwfw-start__kicker">Step 4 of 5 · Domain</p>
         <h1>Find your web address</h1>
         <p className="iwfw-start__lead">
           Search .co.uk, .com or .uk — or tell us a domain you already own. We
           register new domains manually after payment.
         </p>
+        <div className="iwfw-order-progress" aria-hidden>
+          <span style={{ width: "80%" }} />
+        </div>
       </header>
 
       <section className="iwfw-start__card">
@@ -243,8 +249,8 @@ export default function GetStartedDomain({
             </p>
           )}
           <div className="iwfw-order-actions">
-            <Link to="/get-started/website" className="iwfw-btn iwfw-btn--outline">
-              ← Website details
+            <Link to="/get-started/media" className="iwfw-btn iwfw-btn--outline">
+              ← Media &amp; logos
             </Link>
             <button
               type="submit"

@@ -19,9 +19,23 @@ export const PACKAGE_INCLUDES = [
 export const DOMAIN_DISCLAIMER =
   "Domain availability is provisional and not guaranteed until our team completes registration after payment. Selecting a domain does not reserve or purchase it.";
 
+/** Numbered progress after the package intro page. */
 export const GET_STARTED_STEPS = [
-  { key: "package", label: "Package", path: "/get-started" },
-  { key: "website", label: "Website details", path: "/get-started/website" },
+  {
+    key: "personal",
+    label: "Personal details",
+    path: "/get-started/personal",
+  },
+  {
+    key: "business",
+    label: "Business details",
+    path: "/get-started/business",
+  },
+  {
+    key: "media",
+    label: "Media & logos",
+    path: "/get-started/media",
+  },
   { key: "domain", label: "Domain", path: "/get-started/domain" },
   { key: "review", label: "Review & pay", path: "/get-started/review" },
 ] as const;
@@ -29,11 +43,16 @@ export const GET_STARTED_STEPS = [
 export type GetStartedStepKey = (typeof GET_STARTED_STEPS)[number]["key"];
 
 export function stepIndex(pathname: string): number {
-  if (pathname.startsWith("/get-started/confirmation")) return 3;
-  if (pathname.startsWith("/get-started/activate")) return 3;
-  if (pathname.startsWith("/get-started/review")) return 3;
-  if (pathname.startsWith("/get-started/domain")) return 2;
-  if (pathname.startsWith("/get-started/website")) return 1;
-  if (pathname.startsWith("/get-started/account")) return 0;
-  return 0;
+  if (pathname.startsWith("/get-started/confirmation")) return 4;
+  if (pathname.startsWith("/get-started/activate")) return 4;
+  if (pathname.startsWith("/get-started/review")) return 4;
+  if (pathname.startsWith("/get-started/domain")) return 3;
+  if (pathname.startsWith("/get-started/media")) return 2;
+  if (pathname.startsWith("/get-started/business")) return 1;
+  if (pathname.startsWith("/get-started/personal")) return 0;
+  if (pathname.startsWith("/get-started/website")) return 0;
+  if (pathname.startsWith("/get-started/account")) return -1;
+  // Package intro — no numbered step active yet.
+  if (pathname === "/get-started" || pathname === "/get-started/") return -1;
+  return -1;
 }
