@@ -24,6 +24,7 @@ function mapMailbox(
     organisationId: row.organisationId,
     emailAddress: row.emailAddress,
     username: row.username,
+    password: row.password,
     webmailUrl: row.webmailUrl,
     imapHost: row.imapHost,
     imapPort: row.imapPort ?? null,
@@ -44,11 +45,14 @@ function mapMailbox(
   };
 }
 
-function isMissingMailboxTable(error: unknown): boolean {
+function isMissingMailboxSchema(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error ?? "");
   return (
-    message.includes("organisation_mailboxes") &&
-    (message.includes("no such table") || message.includes("SQLITE_ERROR"))
+    (message.includes("organisation_mailboxes") ||
+      message.includes("no such column: password")) &&
+    (message.includes("no such table") ||
+      message.includes("no such column") ||
+      message.includes("SQLITE_ERROR"))
   );
 }
 
@@ -65,7 +69,7 @@ export async function getOrganisationMailbox(
     return row ? mapMailbox(row) : null;
   } catch (error) {
     // Deploy-before-migrate must not take down the whole customer dashboard.
-    if (isMissingMailboxTable(error)) return null;
+    if (isMissingMailboxSchema(error)) return null;
     throw error;
   }
 }
@@ -110,6 +114,9 @@ export async function upsertOrganisationMailbox(
   const smtpSecurityRaw = String(form.get("smtpSecurity") ?? "ssl");
   const popSecurityRaw = String(form.get("popSecurity") ?? "ssl");
 
+  const passwordFromForm = String(form.get("password") ?? "");
+  const clearPassword = form.get("clearPassword") === "on";
+
   const now = new Date();
   const payload = {
     emailAddress,
@@ -145,12 +152,19 @@ export async function upsertOrganisationMailbox(
       .get();
 
     const wasActive = existing?.status === "active";
+    // Prefer the submitted value; empty + not clearing keeps the existing password.
+    const password = clearPassword
+      ? null
+      : passwordFromForm.length > 0
+        ? passwordFromForm
+        : (existing?.password ?? null);
 
     if (existing) {
       await db
         .update(organisationMailboxes)
         .set({
           ...payload,
+          password,
           provisionedAt:
             status === "active"
               ? (existing.provisionedAt ?? now)
@@ -162,6 +176,7 @@ export async function upsertOrganisationMailbox(
         id: newId("mbox"),
         organisationId,
         ...payload,
+        password,
         createdAt: now,
       });
     }
@@ -184,10 +199,10 @@ export async function upsertOrganisationMailbox(
 
     return { ok: true as const };
   } catch (error) {
-    if (isMissingMailboxTable(error)) {
+    if (isMissingMailboxSchema(error)) {
       return {
         error:
-          "Mailbox storage isn’t ready yet. Apply D1 migration 0009_organisation_mailboxes, then try again.",
+          "Mailbox storage isn’t ready yet. Apply the latest D1 mailbox migrations, then try again.",
       };
     }
     throw error;

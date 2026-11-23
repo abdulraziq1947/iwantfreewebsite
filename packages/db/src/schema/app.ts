@@ -350,6 +350,8 @@ export const organisationMailboxes = sqliteTable(
       .references(() => organisations.id, { onDelete: "cascade" }),
     emailAddress: text("email_address").notNull(),
     username: text("username"),
+    /** Mailbox login password shown to the customer in their dashboard. */
+    password: text("password"),
     webmailUrl: text("webmail_url"),
     imapHost: text("imap_host"),
     imapPort: integer("imap_port").default(993),

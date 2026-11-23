@@ -597,6 +597,17 @@ export default function AdminClientDetailPage({
                   />
                 </label>
                 <label className="iwfw-field">
+                  <span>Password</span>
+                  <input
+                    className="iwfw-control"
+                    name="password"
+                    type="text"
+                    autoComplete="off"
+                    defaultValue={client.mailbox?.password ?? ""}
+                    placeholder="Mailbox password from MXroute"
+                  />
+                </label>
+                <label className="iwfw-field">
                   <span>Webmail URL</span>
                   <input
                     className="iwfw-control"
@@ -619,6 +630,17 @@ export default function AdminClientDetailPage({
                   </select>
                 </label>
               </div>
+              <p className="iwfw-admin-muted">
+                Customers see this password on their Email page (Show to reveal).
+                Paste the MXroute mailbox password here when you create the
+                account.
+              </p>
+              {client.mailbox?.password ? (
+                <label className="iwfw-check">
+                  <input type="checkbox" name="clearPassword" />
+                  <span>Clear saved password</span>
+                </label>
+              ) : null}
 
               <fieldset className="iwfw-fieldset">
                 <legend>IMAP (incoming)</legend>
@@ -735,7 +757,7 @@ export default function AdminClientDetailPage({
                   name="customerNotes"
                   rows={3}
                   defaultValue={client.mailbox?.customerNotes ?? ""}
-                  placeholder="e.g. Password sent by SMS / check your welcome email"
+                  placeholder="Optional tip for the customer (e.g. change password after first login)"
                 />
               </label>
               <label className="iwfw-field">
