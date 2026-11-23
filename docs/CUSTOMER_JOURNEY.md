@@ -2,7 +2,7 @@
 
 ## Marketing message (locked)
 
-**£39.99/month. No upfront website fee. No minimum contract. Cancel anytime.**
+**£39.99/month for design, hosting and renewals handled. No minimum contract. Cancel anytime.**
 
 Optional: **+ £9.99/month Google Rank Tracking** (only when feature flag enabled).
 

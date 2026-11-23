@@ -291,7 +291,7 @@ export function buildCustomerActions(options: {
     actions.push({
       id: "subscribe",
       title: "Start your website plan",
-      body: "£39.99/month · £0 upfront design fee. Cancel anytime at period end.",
+      body: "£39.99/month · design, hosting & renewals handled. Cancel anytime at period end.",
       to: "/get-started",
       cta: "View package",
       tone: "primary",

@@ -17,7 +17,7 @@ export function meta(_args: Route.MetaArgs) {
     {
       name: "description",
       content:
-        "Professional business website for £39.99/month. £0 upfront website design fee. Cancel anytime at the end of your billing period.",
+        "Professional business website for £39.99/month — design, hosting and renewals handled for you. Cancel anytime at the end of your billing period.",
     },
   ];
 }
@@ -60,7 +60,10 @@ export default function GetStartedPackage({ loaderData }: Route.ComponentProps) 
           {PACKAGE_PRICE_LABEL}
           <span>{PACKAGE_PRICE_PERIOD}</span>
         </p>
-        <p className="iwfw-start__upfront">£0 upfront website design fee</p>
+        <p className="iwfw-start__upfront">
+          One plan for design, hosting &amp; renewals — no juggling separate
+          bills
+        </p>
         <ul className="iwfw-start__includes">
           {PACKAGE_INCLUDES.map((item) => (
             <li key={item}>{item}</li>
@@ -75,8 +78,8 @@ export default function GetStartedPackage({ loaderData }: Route.ComponentProps) 
               questionnaire and domain selection first.
             </li>
             <li>
-              <strong>£39.99/month</strong> · <strong>£0</strong> upfront website
-              fee · cancel anytime.
+              <strong>£39.99/month</strong> billed in advance · we look after
+              the website, hosting and domain renewals · cancel anytime.
             </li>
             <li>
               Domains are checked live, then registered by our team after

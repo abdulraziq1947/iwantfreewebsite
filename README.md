@@ -2,7 +2,7 @@
 
 Cloudflare-native SaaS for managed UK business websites.
 
-**£39.99/month. No upfront website fee. No minimum contract. Cancel anytime.**
+**£39.99/month for design, hosting and renewals handled. No minimum contract. Cancel anytime.**
 
 Planning & audit: [`docs/README.md`](./docs/README.md) · [`WEBSITE_AUDIT.md`](./WEBSITE_AUDIT.md) · [`FEATURE_BACKLOG.md`](./FEATURE_BACKLOG.md) · [`PRODUCT_ROADMAP.md`](./PRODUCT_ROADMAP.md)
 

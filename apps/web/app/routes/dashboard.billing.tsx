@@ -164,8 +164,8 @@ export default function BillingPage({
         <div>
           <h1>Billing</h1>
           <p>
-            £39.99/month. No upfront website fee. No minimum contract. Cancel
-            anytime.
+            £39.99/month for your managed website, hosting and domain care. No
+            minimum contract. Cancel anytime.
           </p>
         </div>
         <Badge tone={orgStatusTone(status)}>{orgStatusLabel(status)}</Badge>

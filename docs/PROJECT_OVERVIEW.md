@@ -6,16 +6,16 @@ iwantfreewebsite.com is a Cloudflare-native SaaS platform that sells fully manag
 
 **Positioning (mandatory copy):**
 
-> £39.99/month. No upfront website fee. No minimum contract. Cancel anytime.
+> £39.99/month for design, hosting and renewals handled. No minimum contract. Cancel anytime.
 
-The brand name must never imply that the paid service is free. Marketing, Checkout, and Terms must state the price and cancellation terms clearly.
+The brand name must never imply that the paid service is free. Do not claim “£0 upfront” — the subscription is billed monthly in advance. Marketing should emphasise that customers avoid juggling separate design, hosting and domain bills (and the risk of a missed renewal taking a site offline). Marketing, Checkout, and Terms must state the price and cancellation terms clearly.
 
 ## Approved business model
 
 | Item | Decision |
 | --- | --- |
-| Core package | £39.99/month |
-| Upfront website fee | None |
+| Core package | £39.99/month, billed in advance |
+| Positioning | Managed design + hosting + domain care (not “£0 upfront”) |
 | Minimum contract | None — cancel anytime |
 | Early cancellation penalty | None |
 | Cancellation effect | End of current paid billing period |

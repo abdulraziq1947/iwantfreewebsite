@@ -166,7 +166,10 @@ export default function GetStartedReview({
             </div>
             <div>
               <dt>Monthly price</dt>
-              <dd>{PACKAGE_PRICE_LABEL}/month · £0 upfront website fee</dd>
+              <dd>
+                {PACKAGE_PRICE_LABEL}/month · design, hosting &amp; renewals
+                included
+              </dd>
             </div>
           </dl>
           <h3 className="iwfw-start__subhead">Website requirements</h3>

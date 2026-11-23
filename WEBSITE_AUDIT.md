@@ -18,7 +18,7 @@ Evidence tags:
 | Item | Finding |
 | --- | --- |
 | Product | Managed UK business websites as a subscription service |
-| Price | **£39.99/month**, £0 upfront, cancel anytime — consistent across marketing, funnel, billing constants |
+| Price | **£39.99/month** billed in advance, cancel anytime — emphasise managed design/hosting/renewals, not “£0 upfront” |
 | Acquisition | Pay-first funnel: questionnaire → Stripe Checkout → activation email → dashboard |
 | Ops model | Staff manually register domains, build/host sites externally, paste MXroute mailbox details, mark live |
 | Stack | React Router 7 + Cloudflare Workers + D1/Drizzle + Better Auth + Stripe + R2 |

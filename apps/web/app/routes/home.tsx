@@ -8,7 +8,7 @@ export function meta(_args: Route.MetaArgs) {
     {
       name: "description",
       content:
-        "£39.99/month. No upfront website fee. No minimum contract. Cancel anytime. We build your website, set up your domain, host it, and help with your Google Business Profile.",
+        "£39.99/month. We build your website, host it, look after your domain and renewals, and help with Google Business Profile — so you are not juggling design, hosting and domain bills alone. Cancel anytime.",
     },
   ];
 }
@@ -25,17 +25,19 @@ export default function Home() {
             <p className="iwfw-pill">Managed website service</p>
             <h1>Get a Professional Business Website</h1>
             <p className="iwfw-price-banner">
-              <span>£39.99/month · No upfront website fee</span>
+              <span>£39.99/month · Design, hosting &amp; renewals handled</span>
             </p>
             <p className="iwfw-hero__lead">
               <span className="iwfw-hero__lead-short">
-                We build your website, domain, email, and Google Business
-                Profile — you focus on the business.
+                Stop juggling website design, hosting and domain renewals —
+                one monthly plan keeps your site online.
               </span>
               <span className="iwfw-hero__lead-full">
-                We build your website, set up your domain, host it, and manage
-                your Google Business Profile posts and review replies. You focus
-                on the business — we handle the website.
+                Paying separately for design, hosting and a domain is easy to
+                forget — miss a renewal and years of work can disappear
+                overnight. We build your site, host it, look after your domain
+                and renewals, and help with Google Business Profile so you can
+                focus on the business.
               </span>
             </p>
             <div className="iwfw-hero__ctas">
@@ -184,15 +186,16 @@ export default function Home() {
             <li>
               <strong>2. Pay securely</strong>
               <p>
-                Subscribe for £39.99/month with Stripe. No upfront website fee.
-                We email your account activation link after payment.
+                Subscribe for £39.99/month with Stripe (billed in advance). We
+                email your account activation link after payment.
               </p>
             </li>
             <li>
               <strong>3. We build and manage it</strong>
               <p>
                 We register your domain, launch your site, set up business email,
-                and help with Google Business Profile access.
+                help with Google Business Profile access, and keep hosting and
+                renewals on track so your hard work stays online.
               </p>
             </li>
           </ol>
@@ -203,10 +206,14 @@ export default function Home() {
         <div className="iwfw-band__inner iwfw-faqs">
           <h2>FAQs</h2>
           <details open>
-            <summary>Is there an upfront website fee?</summary>
+            <summary>Why is it a monthly subscription?</summary>
             <p>
-              No. There is no upfront website fee. You pay £39.99/month for the
-              managed service.
+              Building a site yourself usually means separate bills for design,
+              hosting and a domain — plus remembering renewals. Miss one and
+              your site (and the work behind it) can vanish overnight. For
+              £39.99/month we handle the website, hosting, domain care and
+              day-to-day management so you are not left holding those pieces
+              alone.
             </p>
           </details>
           <details>
@@ -237,7 +244,10 @@ export default function Home() {
       <section className="iwfw-band iwfw-band--close">
         <div className="iwfw-band__inner iwfw-close">
           <h2>Ready for a website that works for your business?</h2>
-          <p>£39.99/month. No upfront website fee. Cancel anytime.</p>
+          <p>
+            £39.99/month for design, hosting and renewals looked after. Cancel
+            anytime.
+          </p>
           <div className="iwfw-close__actions">
             <Link to="/get-started" className="iwfw-btn iwfw-btn--green">
               Get My Website Today

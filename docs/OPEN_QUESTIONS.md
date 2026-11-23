@@ -11,7 +11,7 @@ Separated from **confirmed** decisions. Do not block Phase 0 docs; resolve befor
 - On cancel scheduled: create internal asset transfer task; admin notify; dashboard status Pending → In progress → Completed; notify customer on completion; record completion date.
 - Do **not** auto-delete websites, domains, email or files on subscription end; preserve until manual transfer completes.
 - Do not promise an exact transfer timeframe until an operational SLA is published.
-- £0 upfront website design fee; advertised price inclusive of VAT where applicable (confirm tax treatment before live billing).
+- Advertised price inclusive of VAT where applicable (confirm tax treatment before live billing). Do not market as “£0 upfront” — subscription is billed monthly in advance.
 - Funnel: package → account → pay → full dashboard onboarding (`/get-started`).
 - Transactional email: **Resend** (including verification).
 - Optional £9.99 rank tracking; gated until operational.
