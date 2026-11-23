@@ -2265,6 +2265,7 @@ h3 {
 .iwfw-dash-steps__item {
   display: grid;
   grid-template-columns: auto 1fr;
+  align-items: start;
   gap: 0.75rem;
   padding: 0.95rem 0.95rem 1rem;
   border-radius: 0.95rem;
@@ -2276,6 +2277,7 @@ h3 {
 .iwfw-dash-steps__index {
   display: inline-grid;
   place-items: center;
+  flex-shrink: 0;
   width: 1.7rem;
   height: 1.7rem;
   border-radius: 999px;
@@ -2299,6 +2301,7 @@ h3 {
   color: var(--iwfw-muted);
   font-size: 0.86rem;
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .iwfw-dash-steps__item.is-done {
