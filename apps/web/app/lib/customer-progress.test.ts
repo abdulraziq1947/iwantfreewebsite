@@ -3,7 +3,9 @@ import { emptyOnboardingData } from "./onboarding";
 import {
   buildCustomerActions,
   buildJourneyStages,
+  buildStatusBanner,
   isBriefReady,
+  needsGbpInvite,
   websiteStageLabel,
 } from "./customer-progress";
 
@@ -15,6 +17,23 @@ describe("customer progress", () => {
     data.domain.preferredDomain = "acme.co.uk";
     expect(isBriefReady(data, false)).toBe(true);
     expect(isBriefReady(emptyOnboardingData(), false)).toBe(false);
+  });
+
+  it("tells paid customers nothing more is required", () => {
+    const banner = buildStatusBanner({
+      needsSubscription: false,
+      briefReady: true,
+      domainTask: {
+        domainName: "acme.co.uk",
+        domainMode: "new",
+        status: "pending",
+        registeredAt: null,
+        connectedAt: null,
+      },
+      tradingName: "Acme",
+    });
+    expect(banner.title).toMatch(/nothing more/i);
+    expect(banner.body).toMatch(/get back to you/i);
   });
 
   it("marks payment and brief done after subscribe", () => {
@@ -34,27 +53,27 @@ describe("customer progress", () => {
     expect(stages.find((s) => s.id === "domain")?.state).toBe("current");
   });
 
-  it("surfaces add-another-site and gbp actions for paid customers", () => {
+  it("surfaces optional GBP manager access for paid customers", () => {
+    const data = emptyOnboardingData();
+    expect(needsGbpInvite(data)).toBe(true);
     const actions = buildCustomerActions({
       needsSubscription: false,
       briefReady: true,
       domainTask: null,
-      data: emptyOnboardingData(),
+      data,
     });
-    expect(actions.some((a) => a.id === "gbp")).toBe(true);
+    const gbp = actions.find((a) => a.id === "gbp");
+    expect(gbp?.cta).toBe("Give Manager access");
     expect(actions.some((a) => a.id === "add-site")).toBe(true);
-    expect(actions.find((a) => a.id === "add-site")?.to).toBe(
-      "/get-started?new=1",
-    );
   });
 
-  it("labels website stage from domain status", () => {
+  it("labels website stage clearly for the team-owned phase", () => {
     expect(
       websiteStageLabel({
         needsSubscription: false,
         briefReady: true,
-        domainStatus: "in_progress",
+        domainStatus: "pending",
       }),
-    ).toBe("Building your website");
+    ).toBe("We’re on it");
   });
 });

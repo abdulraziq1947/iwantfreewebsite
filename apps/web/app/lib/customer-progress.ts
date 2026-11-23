@@ -24,12 +24,19 @@ export type CustomerAction = {
   tone: "primary" | "secondary";
 };
 
+export type StatusBanner = {
+  kicker: string;
+  title: string;
+  body: string;
+  meta?: string;
+};
+
 export function domainTaskLabel(status: string | undefined): string {
   switch (status) {
     case "pending":
-      return "Queued for our team";
+      return "Queued with our team";
     case "in_progress":
-      return "In progress";
+      return "In progress with our team";
     case "registered":
       return "Registered — connecting DNS";
     case "connected":
@@ -52,15 +59,15 @@ export function websiteStageLabel(options: {
   if (!options.briefReady) return "Brief incomplete";
   switch (options.domainStatus) {
     case "connected":
-      return "Finishing build";
+      return "Almost live";
     case "registered":
     case "in_progress":
-      return "Building your website";
+      return "We’re building it";
     case "unavailable":
       return "Domain needs attention";
     case "pending":
     default:
-      return "Brief received — build queued";
+      return "We’re on it";
   }
 }
 
@@ -77,6 +84,67 @@ export function isBriefReady(
         data.domain.existingDomain.trim() ||
         data.domain.mode),
   );
+}
+
+export function needsGbpInvite(
+  data: OnboardingData | null | undefined,
+): boolean {
+  return !Boolean(data?.gbp.outcome);
+}
+
+export function buildStatusBanner(options: {
+  needsSubscription: boolean;
+  briefReady: boolean;
+  domainTask: DomainTaskSnapshot;
+  tradingName?: string | null;
+}): StatusBanner {
+  const name = options.tradingName?.trim() || "Your business";
+  const domain = options.domainTask?.domainName;
+
+  if (options.needsSubscription) {
+    return {
+      kicker: "Next step",
+      title: "Choose your website plan",
+      body: "Subscribe for £39.99/month to start domain setup and website build.",
+      meta: name,
+    };
+  }
+
+  if (!options.briefReady) {
+    return {
+      kicker: "Almost ready",
+      title: "We’re missing a few order details",
+      body: "Contact support and we’ll sort this quickly — you shouldn’t need to fill the questionnaire again.",
+      meta: name,
+    };
+  }
+
+  if (options.domainTask?.status === "unavailable") {
+    return {
+      kicker: "Needs a quick decision",
+      title: "Your preferred domain looks unavailable",
+      body: "Nothing else is blocked on the brief — message us and we’ll help pick another name.",
+      meta: domain ? `${name} · ${domain}` : name,
+    };
+  }
+
+  if (options.domainTask?.status === "connected") {
+    return {
+      kicker: "You’re all set",
+      title: "Nothing more for you to do right now",
+      body: "Your domain is connected and we’re finishing launch. We’ll get back to you when the site is ready.",
+      meta: domain ? `${name} · ${domain}` : name,
+    };
+  }
+
+  return {
+    kicker: "You’re all set",
+    title: "Nothing more for you to do right now",
+    body: domain
+      ? `We’ve got your brief and ${domain} is with our team. We’ll start work shortly and get back to you once the website is live.`
+      : "We’ve got your brief. Our team will start work shortly and get back to you once the website is live.",
+    meta: name,
+  };
 }
 
 export function buildJourneyStages(options: {
@@ -162,8 +230,8 @@ export function buildJourneyStages(options: {
       detail: liveDone
         ? "Build complete — finishing launch checks."
         : buildCurrent
-          ? "Designers are working from your brief, photos and domain."
-          : "Starts once payment and your brief are in — usually alongside domain work.",
+          ? "Our team is building from your brief and photos."
+          : "Our team handles this next — no extra forms from you.",
       state: buildState,
     },
     {
@@ -171,7 +239,7 @@ export function buildJourneyStages(options: {
       title: "Go live",
       detail: liveDone
         ? "Your site is connected. Ask support if you need the live URL."
-        : "We’ll share a preview for approval, then put the site live.",
+        : "We’ll get back to you when it’s ready to review and go live.",
       state: liveState,
     },
   ];
@@ -196,42 +264,8 @@ export function buildCustomerActions(options: {
     return actions;
   }
 
-  const gbpDone = Boolean(options.data?.gbp.outcome);
-  const emailSet = Boolean(options.data?.email.localPart?.trim());
-
-  if (!gbpDone) {
-    actions.push({
-      id: "gbp",
-      title: "Invite us to Google Business",
-      body: "Add our manager email so we can post weekly and help with reviews.",
-      to: "/dashboard/google-business",
-      cta: "Open Google Business",
-      tone: "primary",
-    });
-  }
-
-  if (!emailSet) {
-    actions.push({
-      id: "email",
-      title: "Choose your business email",
-      body: "Tell us the mailbox you want (for example info@) once the domain is ready.",
-      to: "/dashboard/email",
-      cta: "Set email preference",
-      tone: gbpDone ? "primary" : "secondary",
-    });
-  }
-
-  actions.push({
-    id: "images",
-    title: "Add or update images",
-    body: "Upload extra logos, photos or project images anytime — they stay private.",
-    to: "/dashboard/media",
-    cta: "Manage images",
-    tone: "secondary",
-  });
-
   if (options.domainTask?.status === "unavailable") {
-    actions.unshift({
+    actions.push({
       id: "domain-help",
       title: "Domain needs a decision",
       body: "Your preferred domain looks unavailable. Contact us to pick another.",
@@ -241,10 +275,21 @@ export function buildCustomerActions(options: {
     });
   }
 
+  if (needsGbpInvite(options.data)) {
+    actions.push({
+      id: "gbp",
+      title: "Optional: Google Business access",
+      body: "If you’d like us to handle weekly posts and review replies, give us Manager access on your Google Business Profile.",
+      to: "/dashboard/google-business",
+      cta: "Give Manager access",
+      tone: "primary",
+    });
+  }
+
   actions.push({
     id: "add-site",
     title: "Add another website",
-    body: "Start a new questionnaire and subscription for a second business or brand.",
+    body: "Start a new order for another business or brand whenever you like.",
     to: "/get-started?new=1",
     cta: "Add another site",
     tone: "secondary",
