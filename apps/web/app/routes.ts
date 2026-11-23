@@ -41,6 +41,11 @@ export default [
   ]),
   layout("routes/admin-layout.tsx", [
     route("admin", "routes/admin._index.tsx"),
+    route("admin/clients", "routes/admin.clients.tsx"),
+    route("admin/subscriptions", "routes/admin.subscriptions.tsx"),
+    route("admin/orders", "routes/admin.orders.tsx"),
+    route("admin/domains", "routes/admin.domains.tsx"),
+    route("admin/transfers", "routes/admin.transfers.tsx"),
     route("admin/media", "routes/admin.media.tsx"),
   ]),
 ] satisfies RouteConfig;
