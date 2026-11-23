@@ -439,3 +439,112 @@ export const uploadRateLimits = sqliteTable("upload_rate_limits", {
   }).notNull(),
   requestCount: integer("request_count").notNull().default(0),
 });
+
+/** Customer ↔ staff support tickets. */
+export const supportTickets = sqliteTable(
+  "support_tickets",
+  {
+    id: text("id").primaryKey(),
+    organisationId: text("organisation_id")
+      .notNull()
+      .references(() => organisations.id, { onDelete: "cascade" }),
+    createdByUserId: text("created_by_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    subject: text("subject").notNull(),
+    category: text("category", {
+      enum: ["issue", "request", "billing", "website", "other"],
+    })
+      .notNull()
+      .default("issue"),
+    status: text("status", {
+      enum: [
+        "open",
+        "awaiting_customer",
+        "awaiting_staff",
+        "resolved",
+        "closed",
+      ],
+    })
+      .notNull()
+      .default("open"),
+    lastMessageAt: integer("last_message_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+    lastMessageBy: text("last_message_by", {
+      enum: ["customer", "staff"],
+    })
+      .notNull()
+      .default("customer"),
+    customerUnreadCount: integer("customer_unread_count").notNull().default(0),
+    staffUnreadCount: integer("staff_unread_count").notNull().default(0),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+  },
+  (t) => [
+    index("support_tickets_org_id_idx").on(t.organisationId),
+    index("support_tickets_status_idx").on(t.status),
+    index("support_tickets_last_message_at_idx").on(t.lastMessageAt),
+  ],
+);
+
+export const ticketMessages = sqliteTable(
+  "ticket_messages",
+  {
+    id: text("id").primaryKey(),
+    ticketId: text("ticket_id")
+      .notNull()
+      .references(() => supportTickets.id, { onDelete: "cascade" }),
+    authorUserId: text("author_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    authorKind: text("author_kind", {
+      enum: ["customer", "staff"],
+    }).notNull(),
+    body: text("body").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+  },
+  (t) => [
+    index("ticket_messages_ticket_id_idx").on(t.ticketId),
+    index("ticket_messages_created_at_idx").on(t.createdAt),
+  ],
+);
+
+/** In-app notifications for customers and staff. */
+export const notifications = sqliteTable(
+  "notifications",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    organisationId: text("organisation_id").references(() => organisations.id, {
+      onDelete: "set null",
+    }),
+    kind: text("kind", {
+      enum: [
+        "ticket_created",
+        "ticket_reply_customer",
+        "ticket_reply_staff",
+        "ticket_status",
+      ],
+    }).notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    href: text("href").notNull(),
+    readAt: integer("read_at", { mode: "timestamp_ms" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+  },
+  (t) => [
+    index("notifications_user_id_idx").on(t.userId),
+    index("notifications_user_unread_idx").on(t.userId, t.readAt),
+  ],
+);

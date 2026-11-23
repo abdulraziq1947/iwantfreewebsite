@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation } from "react-router";
 import { getOptionalAuth } from "../lib/session.server";
+import { BrandLogo } from "../components/brand-logo";
 import type { Route } from "./+types/public-layout";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -9,26 +10,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       ? { name: auth.name, email: auth.email, isStaff: auth.staffRoles.length > 0 }
       : null,
   };
-}
-
-function LogoMark() {
-  return (
-    <svg
-      className="iwfw-logo-mark"
-      width="28"
-      height="28"
-      viewBox="0 0 28 28"
-      aria-hidden="true"
-    >
-      <rect x="3" y="5" width="22" height="15" rx="2.5" fill="currentColor" />
-      <rect x="6" y="8" width="16" height="9" rx="1" fill="#fff" />
-      <path d="M10 24h8l-1.2-3H11.2L10 24z" fill="currentColor" />
-      <path
-        d="M17.2 11.2l2.3 3.6-2.1-.4-.7 1.8-1.4-4.2 1.9.2z"
-        fill="var(--iwfw-accent)"
-      />
-    </svg>
-  );
 }
 
 export default function PublicLayout({ loaderData }: Route.ComponentProps) {
@@ -41,11 +22,7 @@ export default function PublicLayout({ loaderData }: Route.ComponentProps) {
       <header className="iwfw-topbar">
         <div className="iwfw-topbar__inner">
           <Link to="/" className="iwfw-topbar__brand" aria-label="iwantfreewebsite.com home">
-            <LogoMark />
-            <span>
-              iwantfreewebsite
-              <span className="iwfw-topbar__tld">.com</span>
-            </span>
+            <BrandLogo size={30} withWordmark />
           </Link>
 
           <nav className="iwfw-topbar__nav" aria-label="Primary">
@@ -92,7 +69,7 @@ export default function PublicLayout({ loaderData }: Route.ComponentProps) {
       <footer className="iwfw-footer">
         <div className="iwfw-footer__inner">
           <div className="iwfw-footer__brand">
-            <LogoMark />
+            <BrandLogo size={34} />
             <div>
               <strong>iwantfreewebsite.com</strong>
               <p>

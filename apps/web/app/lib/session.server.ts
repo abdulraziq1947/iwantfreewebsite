@@ -36,9 +36,19 @@ export async function requireStaffSession(
   request: Request,
   context: Readonly<RouterContextProvider>,
 ): Promise<AuthContext> {
-  const ctx = await requireAuth(request, context);
+  const ctx = await getOptionalAuth(request, context);
+  if (!ctx) {
+    throw new Response(null, {
+      status: 302,
+      headers: { Location: "/get-started/account?mode=login" },
+    });
+  }
+  // Customers never see the admin panel — send them to their dashboard.
   if (ctx.staffRoles.length === 0) {
-    throw new Response("Forbidden", { status: 403 });
+    throw new Response(null, {
+      status: 302,
+      headers: { Location: "/dashboard" },
+    });
   }
   return ctx;
 }

@@ -12,6 +12,8 @@ import "./app.css";
 import { log } from "./lib/logger";
 
 export const links: Route.LinksFunction = () => [
+  { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+  { rel: "apple-touch-icon", href: "/logo.svg" },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",

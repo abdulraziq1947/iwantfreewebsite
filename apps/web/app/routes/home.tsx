@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { BrandLogo } from "../components/brand-logo";
 import type { Route } from "./+types/home";
 
 export function meta(_args: Route.MetaArgs) {
@@ -18,7 +19,9 @@ export default function Home() {
       <section className="iwfw-hero" aria-label="Introduction">
         <div className="iwfw-hero__inner">
           <div className="iwfw-hero__copy iwfw-anim iwfw-anim--1">
-            <p className="iwfw-hero__brand">iwantfreewebsite.com</p>
+            <p className="iwfw-hero__brand">
+              <BrandLogo size={40} withWordmark />
+            </p>
             <p className="iwfw-pill">Managed website service</p>
             <h1>Get a Professional Business Website</h1>
             <p className="iwfw-price-banner">

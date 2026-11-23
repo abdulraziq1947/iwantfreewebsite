@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { Badge } from "@iwfw/ui";
 import { createDb } from "@iwfw/db";
 import { getEnv } from "../lib/env.server";
@@ -29,9 +30,10 @@ export default function AdminClientsPage({ loaderData }: Route.ComponentProps) {
       <header className="iwfw-admin-page__header">
         <div>
           <p className="iwfw-admin-page__eyebrow">Clients</p>
-          <h1>Existing clients</h1>
+          <h1>Client folders</h1>
           <p>
-            Every organisation on the platform — contact, plan status and renewal.
+            Open a client to see their progress, brief, images, billing and open
+            tasks.
           </p>
         </div>
         <p className="iwfw-admin-page__count">
@@ -59,7 +61,9 @@ export default function AdminClientsPage({ loaderData }: Route.ComponentProps) {
                 {loaderData.clients.map((c) => (
                   <tr key={c.id}>
                     <td>
-                      <strong>{c.tradingName}</strong>
+                      <strong>
+                        <Link to={`/admin/clients/${c.id}`}>{c.tradingName}</Link>
+                      </strong>
                       <span className="iwfw-admin-table__sub">{c.id}</span>
                     </td>
                     <td>
