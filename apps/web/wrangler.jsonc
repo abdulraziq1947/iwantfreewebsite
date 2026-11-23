@@ -85,7 +85,9 @@
       "vars": {
         "APP_URL": "https://iwantfreewebsite.com",
         "APP_ENV": "production",
-        "STRIPE_PRICE_ID": "price_1UeFSMDyQBgE8h6RPqVRtzDo"
+        // Live £39.99 GBP/month Price ID (non-secret). Secrets stay in dashboard.
+        "STRIPE_PRICE_ID": "price_1UdZXSDyQBgE8h6RBVVhmXwy",
+        "STRIPE_ALLOW_LIVE": "true"
       },
       "d1_databases": [
         {

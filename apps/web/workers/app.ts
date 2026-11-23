@@ -22,6 +22,30 @@ export default {
       return handleHealth(env);
     }
 
+    if (url.pathname === "/api/stripe/ready") {
+      if (request.method !== "GET") {
+        return new Response("Method Not Allowed", { status: 405 });
+      }
+      try {
+        const config = parseWorkerEnv(
+          env as unknown as Record<string, unknown>,
+        );
+        const { buildStripeReadyReport } = await import(
+          "../app/lib/stripe-ready.server"
+        );
+        const report = await buildStripeReadyReport(config);
+        return Response.json(report, { status: report.ok ? 200 : 503 });
+      } catch (error) {
+        log("error", "stripe_ready_failed", {
+          error: error instanceof Error ? error.message : "unknown",
+        });
+        return Response.json(
+          { ok: false, error: "Stripe readiness check failed." },
+          { status: 500 },
+        );
+      }
+    }
+
     const uploadResponse = await handleUploadsApiRequest(request, env);
     if (uploadResponse) return uploadResponse;
 

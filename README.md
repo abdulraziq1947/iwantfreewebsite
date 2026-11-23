@@ -11,7 +11,7 @@ Planning & audit: [`docs/README.md`](./docs/README.md) · [`WEBSITE_AUDIT.md`](.
 | Area | Status |
 | --- | --- |
 | Marketing site + pricing + legal | Live |
-| Pay-first get-started → Stripe Checkout | Live (test mode; live gated by `STRIPE_ALLOW_LIVE`) |
+| Pay-first get-started → Stripe Checkout | Live (`STRIPE_ALLOW_LIVE`; confirm `/api/stripe/ready`) |
 | Activation email + set password | Live (Resend) |
 | Customer dashboard (journey, website preview/live, billing, email, GBP, support) | Live |
 | Stripe Customer Portal (update card) + cancel/resume | Live |

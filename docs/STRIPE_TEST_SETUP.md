@@ -30,6 +30,7 @@ After this code is running somewhere Stripe can reach (staging or `stripe listen
 2. URL: `https://<your-host>/api/stripe/webhook`
 3. Events:
    - `checkout.session.completed`
+   - `checkout.session.expired`
    - `customer.subscription.created`
    - `customer.subscription.updated`
    - `customer.subscription.deleted`

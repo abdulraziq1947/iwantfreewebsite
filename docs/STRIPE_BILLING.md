@@ -33,10 +33,13 @@ Handle at minimum:
 | Event | Action |
 | --- | --- |
 | `checkout.session.completed` | Ensure org, subscription rows, entitlements |
+| `checkout.session.expired` | Mark pending order abandoned |
 | `customer.subscription.created/updated` | Sync status, period end, items, cancel_at_period_end |
 | `customer.subscription.deleted` | End entitlements at period boundary logic |
 | `invoice.paid` | Refresh entitlement validity; unlock domain purchase tasks |
 | `invoice.payment_failed` | Mark past_due; notify customer; dunning policy |
+
+Production endpoint: `https://iwantfreewebsite.com/api/stripe/webhook`. Readiness: `GET /api/stripe/ready`.
 | `charge.dispute.created` | Freeze risky provisioning; alert admins |
 
 ## Entitlements mapping
