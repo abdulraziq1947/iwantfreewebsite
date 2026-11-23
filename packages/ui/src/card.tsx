@@ -9,10 +9,6 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <div
-      className={`rounded-[var(--iwfw-radius)] border border-[var(--iwfw-border)] bg-[var(--iwfw-surface)] p-6 ${className}`}
-    >
-      {children}
-    </div>
+    <div className={`iwfw-ui-panel ${className}`.trim()}>{children}</div>
   );
 }

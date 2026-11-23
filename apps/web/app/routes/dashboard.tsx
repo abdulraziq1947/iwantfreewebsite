@@ -192,21 +192,29 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
           </Link>
         </div>
         <ul className="iwfw-dash-orgs">
-          {workspace.orgs.map((org) => (
-            <li key={org.id}>
-              <div>
-                <p className="iwfw-dash-orgs__name">{org.tradingName}</p>
-                <p className="iwfw-dash-orgs__meta">
-                  {org.id === workspace.primary?.id
-                    ? "Showing in this dashboard"
-                    : "Additional site"}
-                </p>
-              </div>
-              <Badge tone={orgStatusTone(org.status)}>
-                {orgStatusLabel(org.status)}
-              </Badge>
-            </li>
-          ))}
+          {workspace.orgs.map((org) => {
+            const initial = org.tradingName.trim().charAt(0).toUpperCase() || "W";
+            return (
+              <li key={org.id}>
+                <div className="iwfw-dash-orgs__body">
+                  <span className="iwfw-dash-orgs__mark" aria-hidden>
+                    {initial}
+                  </span>
+                  <div>
+                    <p className="iwfw-dash-orgs__name">{org.tradingName}</p>
+                    <p className="iwfw-dash-orgs__meta">
+                      {org.id === workspace.primary?.id
+                        ? "Showing in this dashboard"
+                        : "Additional site"}
+                    </p>
+                  </div>
+                </div>
+                <Badge tone={orgStatusTone(org.status)}>
+                  {orgStatusLabel(org.status)}
+                </Badge>
+              </li>
+            );
+          })}
           {workspace.orgs.length === 0 && (
             <li className="iwfw-dash-orgs__empty">
               No website yet. Start the package to create your first one.
