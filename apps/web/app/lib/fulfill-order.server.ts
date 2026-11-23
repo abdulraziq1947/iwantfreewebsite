@@ -187,39 +187,32 @@ export async function fulfillPaidPendingOrder(options: {
     });
   }
 
+  // Each paid order gets its own organisation so “add another site” works.
   let organisationId = order.organisationId;
   if (!organisationId) {
-    const membership = await options.db
-      .select()
-      .from(memberships)
-      .where(eq(memberships.userId, userId))
-      .get();
-    if (membership) {
-      organisationId = membership.organisationId;
-      await options.db
-        .update(organisations)
-        .set({
-          tradingName,
-          status: "active",
-          stripeCustomerId: customerId,
-          updatedAt: new Date(),
-        })
-        .where(eq(organisations.id, organisationId));
-    } else {
-      organisationId = newId("org");
-      await options.db.insert(organisations).values({
-        id: organisationId,
+    organisationId = newId("org");
+    await options.db.insert(organisations).values({
+      id: organisationId,
+      tradingName,
+      status: "active",
+      stripeCustomerId: customerId,
+    });
+    await options.db.insert(memberships).values({
+      id: newId("mem"),
+      organisationId,
+      userId,
+      role: "customer",
+    });
+  } else {
+    await options.db
+      .update(organisations)
+      .set({
         tradingName,
         status: "active",
-        stripeCustomerId: customerId,
-      });
-      await options.db.insert(memberships).values({
-        id: newId("mem"),
-        organisationId,
-        userId,
-        role: "customer",
-      });
-    }
+        ...(customerId ? { stripeCustomerId: customerId } : {}),
+        updatedAt: new Date(),
+      })
+      .where(eq(organisations.id, organisationId));
   }
 
   const onboardingData = mapQuestionnaireToOnboarding(order.questionnaireJson);
@@ -232,7 +225,19 @@ export async function fulfillPaidPendingOrder(options: {
       acknowledgedNoGuarantee: Boolean(order.domainAcknowledged),
     };
   }
+  if (order.termsVersion) {
+    onboardingData.checkout = {
+      ...onboardingData.checkout,
+      termsVersion: order.termsVersion,
+      termsAcceptedAt: order.termsAcceptedAt
+        ? new Date(order.termsAcceptedAt).toISOString()
+        : "",
+      marketingOptIn: Boolean(order.marketingOptIn),
+    };
+  }
 
+  // Questionnaire at checkout is the brief — do not send customers through it again.
+  const briefCompletedAt = new Date();
   const existingProfile = await options.db
     .select()
     .from(onboardingProfiles)
@@ -243,6 +248,8 @@ export async function fulfillPaidPendingOrder(options: {
       .update(onboardingProfiles)
       .set({
         dataJson: JSON.stringify(onboardingData),
+        currentStep: 7,
+        completedAt: existingProfile.completedAt ?? briefCompletedAt,
         updatedAt: new Date(),
       })
       .where(eq(onboardingProfiles.id, existingProfile.id));
@@ -250,7 +257,8 @@ export async function fulfillPaidPendingOrder(options: {
     await options.db.insert(onboardingProfiles).values({
       id: newId("onb"),
       organisationId,
-      currentStep: 0,
+      currentStep: 7,
+      completedAt: briefCompletedAt,
       dataJson: JSON.stringify(onboardingData),
     });
   }

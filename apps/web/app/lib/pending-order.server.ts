@@ -44,17 +44,20 @@ export async function getPendingOrderById(db: Db, id: string) {
 export async function getOrCreateDraftOrder(
   db: Db,
   request: Request,
+  options?: { forceNew?: boolean },
 ): Promise<{ order: NonNullable<Awaited<ReturnType<typeof getPendingOrderById>>>; setCookie?: string }> {
-  const existingToken = readResumeToken(request);
-  if (existingToken) {
-    const existing = await getPendingOrderByResumeToken(db, existingToken);
-    if (
-      existing &&
-      existing.status !== "expired" &&
-      existing.status !== "paid" &&
-      (!existing.expiresAt || existing.expiresAt.getTime() > Date.now())
-    ) {
-      return { order: existing };
+  if (!options?.forceNew) {
+    const existingToken = readResumeToken(request);
+    if (existingToken) {
+      const existing = await getPendingOrderByResumeToken(db, existingToken);
+      if (
+        existing &&
+        existing.status !== "expired" &&
+        existing.status !== "paid" &&
+        (!existing.expiresAt || existing.expiresAt.getTime() > Date.now())
+      ) {
+        return { order: existing };
+      }
     }
   }
 

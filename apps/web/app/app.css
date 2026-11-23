@@ -1763,6 +1763,178 @@ h3 {
   font-size: 0.84rem;
 }
 
+.iwfw-dash-kicker {
+  margin: 0 0 0.35rem;
+  color: var(--iwfw-accent);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.iwfw-dash-focus {
+  background:
+    radial-gradient(120% 140% at 0% 0%, #e8f0ff 0%, transparent 55%),
+    linear-gradient(160deg, #ffffff, #f7faff);
+  border: 1px solid color-mix(in srgb, var(--iwfw-accent) 18%, var(--iwfw-border));
+}
+
+.iwfw-dash-focus__kicker {
+  margin: 0 0 0.35rem;
+  color: var(--iwfw-accent);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.iwfw-dash-focus__meta {
+  margin: 0.85rem 0 0;
+  color: var(--iwfw-muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.iwfw-dash-journey {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1.1rem 1.15rem 1.2rem;
+  border: 1px solid var(--iwfw-border);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.iwfw-dash-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+}
+
+.iwfw-dash-timeline__item {
+  display: grid;
+  grid-template-columns: 1.15rem 1fr;
+  gap: 0.85rem;
+  padding: 0.75rem 0;
+  position: relative;
+}
+
+.iwfw-dash-timeline__item:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 0.48rem;
+  top: 1.55rem;
+  bottom: 0;
+  width: 2px;
+  background: #e5ebf5;
+}
+
+.iwfw-dash-timeline__marker {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-top: 0.15rem;
+  border-radius: 999px;
+  border: 2px solid #c9d5ea;
+  background: #fff;
+  z-index: 1;
+}
+
+.iwfw-dash-timeline__item strong {
+  display: block;
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.iwfw-dash-timeline__item p {
+  margin: 0.2rem 0 0;
+  color: var(--iwfw-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.iwfw-dash-timeline__item.is-done .iwfw-dash-timeline__marker {
+  border-color: var(--iwfw-cta);
+  background: var(--iwfw-cta);
+  box-shadow: inset 0 0 0 3px #fff;
+}
+
+.iwfw-dash-timeline__item.is-current .iwfw-dash-timeline__marker {
+  border-color: var(--iwfw-accent);
+  background: var(--iwfw-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--iwfw-accent) 18%, transparent);
+}
+
+.iwfw-dash-timeline__item.is-current strong {
+  color: var(--iwfw-accent);
+}
+
+.iwfw-dash-timeline__item.is-upcoming {
+  opacity: 0.72;
+}
+
+.iwfw-dash-actions {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 0.75rem;
+}
+
+@media (min-width: 800px) {
+  .iwfw-dash-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.iwfw-dash-action {
+  display: grid;
+  gap: 0.45rem;
+  align-content: start;
+  padding: 1.05rem 1.1rem;
+  border: 1px solid var(--iwfw-border);
+  border-radius: 1rem;
+  background: #fff;
+}
+
+.iwfw-dash-action--primary {
+  border-color: color-mix(in srgb, var(--iwfw-cta) 35%, var(--iwfw-border));
+  background: linear-gradient(160deg, #f3fbf6, #fff);
+}
+
+.iwfw-dash-action strong {
+  font-size: 1.02rem;
+  font-weight: 800;
+}
+
+.iwfw-dash-action p {
+  margin: 0;
+  color: var(--iwfw-muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.iwfw-dash-action .iwfw-btn {
+  width: fit-content;
+  margin-top: 0.35rem;
+}
+
+.iwfw-dash-pre {
+  white-space: pre-wrap;
+}
+
+.iwfw-dash-fieldset {
+  margin: 0 0 0.85rem;
+  padding: 0;
+  border: none;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.iwfw-dash-fieldset legend {
+  margin-bottom: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 .iwfw-dash-split {
   display: grid;
   gap: 1rem;

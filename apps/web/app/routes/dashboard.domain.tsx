@@ -85,11 +85,17 @@ export default function DomainPage({ loaderData }: Route.ComponentProps) {
         </dl>
         <p className="iwfw-dash-fine">
           Availability at checkout was provisional. Our team completes registrar
-          purchase and DNS setup — you will see status updates here.
+          purchase and DNS setup — you will see status updates here. You already
+          chose this domain when you ordered.
         </p>
-        <Link to="/dashboard/support" className="iwfw-btn iwfw-btn--outline">
-          Contact support
-        </Link>
+        <div className="iwfw-dash-inline-actions">
+          <Link to="/dashboard/onboarding" className="iwfw-btn iwfw-btn--outline">
+            Back to progress
+          </Link>
+          <Link to="/dashboard/support" className="iwfw-btn iwfw-btn--outline">
+            Contact support
+          </Link>
+        </div>
       </Panel>
     </div>
   );

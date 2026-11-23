@@ -4,7 +4,12 @@ import { createDb } from "@iwfw/db";
 import { getEnv } from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
 import { getCustomerWorkspace } from "../lib/customer-org.server";
-import { onboardingProgress } from "../lib/onboarding";
+import {
+  buildJourneyStages,
+  currentFocusCopy,
+  domainTaskLabel,
+  websiteStageLabel,
+} from "../lib/customer-progress";
 import type { Route } from "./+types/dashboard.website";
 
 export function meta(_args: Route.MetaArgs) {
@@ -15,27 +20,22 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
   const db = createDb(getEnv(context).DB);
   const workspace = await getCustomerWorkspace(db, auth);
-  const url = new URL(request.url);
-  return {
-    workspace,
-    justSubmitted: url.searchParams.get("onboarding") === "done",
-  };
+  return { workspace };
 }
 
 export default function WebsitePage({ loaderData }: Route.ComponentProps) {
-  const { workspace, justSubmitted } = loaderData;
-  const onboarding = workspace.onboarding;
-  const progress = onboarding
-    ? onboardingProgress(onboarding.currentStep, onboarding.completed)
-    : 0;
-
-  const stage = !workspace.primary
-    ? "No business yet"
-    : workspace.needsSubscription
-      ? "Awaiting subscription"
-      : onboarding?.completed
-        ? "Ready for production"
-        : "Onboarding in progress";
+  const { workspace } = loaderData;
+  const stages = buildJourneyStages({
+    needsSubscription: workspace.needsSubscription,
+    briefReady: workspace.briefReady,
+    domainTask: workspace.domainTask,
+  });
+  const focus = currentFocusCopy(stages);
+  const stage = websiteStageLabel({
+    needsSubscription: workspace.needsSubscription,
+    domainStatus: workspace.domainTask?.status,
+    briefReady: workspace.briefReady,
+  });
 
   return (
     <div className="iwfw-dash-page">
@@ -43,22 +43,20 @@ export default function WebsitePage({ loaderData }: Route.ComponentProps) {
         <div>
           <h1>Your website</h1>
           <p>
-            Track setup, finish onboarding, and see when your site is ready to
-            go live.
+            Track build progress after payment. Your questionnaire from checkout
+            is already with the team.
           </p>
         </div>
-        <Badge tone={onboarding?.completed ? "success" : "warning"}>{stage}</Badge>
+        <Badge tone={workspace.needsSubscription ? "warning" : "success"}>
+          {stage}
+        </Badge>
       </header>
 
-      {justSubmitted && (
-        <Panel className="iwfw-dash-callout">
-          <h2>Onboarding submitted</h2>
-          <p>
-            Thanks — our team has what they need to start building. We’ll update
-            this page as your preview becomes ready.
-          </p>
-        </Panel>
-      )}
+      <Panel className="iwfw-dash-focus">
+        <p className="iwfw-dash-focus__kicker">Now</p>
+        <h2>{focus.title}</h2>
+        <p>{focus.body}</p>
+      </Panel>
 
       <div className="iwfw-dash-split">
         <Panel>
@@ -73,56 +71,71 @@ export default function WebsitePage({ loaderData }: Route.ComponentProps) {
               <dd>{stage}</dd>
             </div>
             <div>
-              <dt>Onboarding</dt>
-              <dd>{onboarding?.completed ? "Submitted" : `${progress}% complete`}</dd>
+              <dt>Brief</dt>
+              <dd>
+                {workspace.briefReady
+                  ? "Received at checkout"
+                  : "Waiting for order details"}
+              </dd>
+            </div>
+            <div>
+              <dt>Domain</dt>
+              <dd>
+                {workspace.domainTask
+                  ? `${workspace.domainTask.domainName} · ${domainTaskLabel(workspace.domainTask.status)}`
+                  : "Assigned after payment"}
+              </dd>
             </div>
             <div>
               <dt>Live URL</dt>
-              <dd>Assigned after launch</dd>
+              <dd>
+                {workspace.domainTask?.status === "connected"
+                  ? "Connected — ask support if you need the link"
+                  : "Shared at go-live"}
+              </dd>
             </div>
           </dl>
         </Panel>
 
         <Panel>
-          <h2>Next step</h2>
-          {workspace.needsSubscription ? (
-            <>
-              <p className="iwfw-dash-copy">
-                Subscribe for £39.99/month to unlock production. You can still
-                start onboarding now so we’re ready.
-              </p>
-              <div className="iwfw-dash-inline-actions">
-                <Link to="/get-started" className="iwfw-btn iwfw-btn--green">
-                  View package
-                </Link>
-                <Link to="/dashboard/onboarding" className="iwfw-btn iwfw-btn--outline">
-                  Start onboarding
-                </Link>
-              </div>
-            </>
-          ) : onboarding?.completed ? (
-            <>
-              <p className="iwfw-dash-copy">
-                Your brief is with the team. Preview and approval steps will
-                appear here when ready.
-              </p>
-              <Link to="/dashboard/onboarding" className="iwfw-btn iwfw-btn--outline">
-                Review onboarding answers
+          <h2>What we’ll do</h2>
+          <ul className="iwfw-dash-list">
+            <li>Build from your checkout brief and uploaded images</li>
+            <li>Register or connect the domain manually</li>
+            <li>Send a preview for your approval before launch</li>
+            <li>Set up business email once DNS is ready</li>
+          </ul>
+          <div className="iwfw-dash-inline-actions">
+            {workspace.needsSubscription ? (
+              <Link to="/get-started" className="iwfw-btn iwfw-btn--green">
+                View package
               </Link>
-            </>
-          ) : (
-            <>
-              <p className="iwfw-dash-copy">
-                Complete the onboarding wizard so we can build your website,
-                domain, email, and Google Business Profile setup.
-              </p>
-              <Link to="/dashboard/onboarding" className="iwfw-btn iwfw-btn--green">
-                Continue onboarding
+            ) : (
+              <Link to="/dashboard/onboarding" className="iwfw-btn iwfw-btn--blue">
+                See full progress
               </Link>
-            </>
-          )}
+            )}
+            <Link to="/dashboard/media" className="iwfw-btn iwfw-btn--outline">
+              Update images
+            </Link>
+          </div>
         </Panel>
       </div>
+
+      <ol className="iwfw-dash-timeline">
+        {stages.map((item) => (
+          <li
+            key={item.id}
+            className={`iwfw-dash-timeline__item is-${item.state}`}
+          >
+            <span className="iwfw-dash-timeline__marker" aria-hidden />
+            <div>
+              <strong>{item.title}</strong>
+              <p>{item.detail}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }
