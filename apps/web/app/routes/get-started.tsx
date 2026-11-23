@@ -41,8 +41,9 @@ export default function GetStartedPackage({ loaderData }: Route.ComponentProps) 
         <p className="iwfw-start__kicker">Your website package</p>
         <h1>{PACKAGE_NAME}</h1>
         <p className="iwfw-start__lead">
-          Tell us about your business, choose a domain, then pay — we create your
-          account automatically after Stripe confirms payment.
+          Answer a short questionnaire, choose a domain, then pay securely. We
+          create your account automatically after Stripe confirms payment — no
+          signup first.
         </p>
       </header>
 

@@ -366,10 +366,11 @@ function Field({
 }) {
   return (
     <label className="iwfw-field">
-      <span>
+      <span className="iwfw-field__label">
         {label}
-        {required ? " *" : ""}
+        {required ? <span className="iwfw-field__req">*</span> : null}
       </span>
+      {hint ? <em className="iwfw-field__hint">{hint}</em> : null}
       {multiline ? (
         <textarea
           name={name}
@@ -379,9 +380,13 @@ function Field({
           className="iwfw-textarea"
         />
       ) : (
-        <Input name={name} type={type} defaultValue={defaultValue} required={required} />
+        <Input
+          name={name}
+          type={type}
+          defaultValue={defaultValue}
+          required={required}
+        />
       )}
-      {hint && <em>{hint}</em>}
     </label>
   );
 }

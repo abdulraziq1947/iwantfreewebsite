@@ -4,32 +4,32 @@ export const QUESTIONNAIRE_STEPS = [
   {
     key: "contact",
     title: "Your details",
-    blurb: "How we contact you about your website order.",
+    blurb: "How we should reach you about this website order.",
   },
   {
     key: "business",
-    title: "Business",
-    blurb: "Who you are and where you work.",
+    title: "Your business",
+    blurb: "Trading name, industry and where you work from.",
   },
   {
     key: "services",
     title: "Services",
-    blurb: "What customers hire you for.",
+    blurb: "What customers hire you for — keep it clear and specific.",
   },
   {
     key: "about",
     title: "About & hours",
-    blurb: "Your story, contact display and opening hours.",
+    blurb: "Your story, public contact details and opening hours.",
   },
   {
     key: "website",
     title: "Website preferences",
-    blurb: "Pages, design and references.",
+    blurb: "Pages, look-and-feel and any sites you like as references.",
   },
   {
     key: "media",
     title: "Brand & media",
-    blurb: "Colours, logo notes, socials and GBP.",
+    blurb: "Upload logos and photos, then add any notes for our designers.",
   },
 ] as const;
 

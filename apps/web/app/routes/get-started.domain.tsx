@@ -140,35 +140,46 @@ export default function GetStartedDomain({
       </header>
 
       <section className="iwfw-start__card">
+        <h2>Search availability</h2>
         <Form method="post" className="iwfw-start__form">
           <input type="hidden" name="intent" value="check" />
-          <label className="iwfw-field">
-            <span>Search a domain</span>
-            <input
-              name="query"
-              placeholder="yourbusiness.co.uk"
-              defaultValue={
-                (actionData && "query" in actionData && actionData.query) ||
-                loaderData.domainName ||
-                ""
-              }
-            />
-          </label>
-          <button type="submit" className="iwfw-btn iwfw-btn--outline" disabled={busy}>
-            {busy ? "Checking…" : "Check availability"}
-          </button>
+          <div className="iwfw-domain-search">
+            <label className="iwfw-field">
+              <span className="iwfw-field__label">Domain to check</span>
+              <em className="iwfw-field__hint">
+                Try .co.uk, .com or .uk — availability is provisional until we register.
+              </em>
+              <input
+                name="query"
+                placeholder="yourbusiness.co.uk"
+                defaultValue={
+                  (actionData && "query" in actionData && actionData.query) ||
+                  loaderData.domainName ||
+                  ""
+                }
+              />
+            </label>
+            <button
+              type="submit"
+              className="iwfw-btn iwfw-btn--outline"
+              disabled={busy}
+            >
+              {busy ? "Checking…" : "Check availability"}
+            </button>
+          </div>
         </Form>
 
         {actionData && "check" in actionData && actionData.check && (
           <div className="iwfw-domain-result">
             <p>
-              <strong>{actionData.check.domain}</strong> — {actionData.check.message}
+              <strong>{actionData.check.domain}</strong> —{" "}
+              {actionData.check.message}
             </p>
             {actionData.alternatives && actionData.alternatives.length > 0 && (
               <ul className="iwfw-domain-alts">
                 {actionData.alternatives.map((alt) => (
                   <li key={alt.domain}>
-                    {alt.domain}{" "}
+                    <span>{alt.domain}</span>
                     <span data-avail={alt.availability}>{alt.availability}</span>
                   </li>
                 ))}
@@ -191,7 +202,11 @@ export default function GetStartedDomain({
                 value="new"
                 defaultChecked={loaderData.domainMode !== "existing"}
               />
-              <span>Register a new domain for me (manual after payment)</span>
+              <span>
+                <strong>Register a new domain</strong>
+                <br />
+                We purchase it manually after payment — never automatically.
+              </span>
             </label>
             <label className="iwfw-check">
               <input
@@ -200,11 +215,17 @@ export default function GetStartedDomain({
                 value="existing"
                 defaultChecked={loaderData.domainMode === "existing"}
               />
-              <span>I already own a domain</span>
+              <span>
+                <strong>I already own a domain</strong>
+                <br />
+                We’ll connect it after checkout.
+              </span>
             </label>
           </fieldset>
           <label className="iwfw-field">
-            <span>Domain name *</span>
+            <span className="iwfw-field__label">
+              Domain name <span className="iwfw-field__req">*</span>
+            </span>
             <input
               name="domainName"
               required
@@ -221,12 +242,18 @@ export default function GetStartedDomain({
               {actionData.error}
             </p>
           )}
-          <button type="submit" className="iwfw-btn iwfw-btn--green" disabled={busy}>
-            Continue to review
-          </button>
-          <p className="iwfw-start__fine">
-            <Link to="/get-started/website">← Website details</Link>
-          </p>
+          <div className="iwfw-order-actions">
+            <Link to="/get-started/website" className="iwfw-btn iwfw-btn--outline">
+              ← Website details
+            </Link>
+            <button
+              type="submit"
+              className="iwfw-btn iwfw-btn--green"
+              disabled={busy}
+            >
+              {busy ? "Saving…" : "Continue to review"}
+            </button>
+          </div>
         </Form>
       </section>
     </div>
