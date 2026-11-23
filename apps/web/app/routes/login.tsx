@@ -3,7 +3,10 @@ import { Button, Input, Panel } from "@iwfw/ui";
 import { createAuth } from "@iwfw/auth";
 import { createDb, eq, platformRoles } from "@iwfw/db";
 import { getConfig, getEnv } from "../lib/env.server";
-import { getOptionalAuth } from "../lib/session.server";
+import {
+  getOptionalAuth,
+  homePathForAuth,
+} from "../lib/session.server";
 import {
   readAuthJson,
   redirectWithAuthCookies,
@@ -18,7 +21,7 @@ export function meta(_args: Route.MetaArgs) {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await getOptionalAuth(request, context);
-  if (auth) throw redirect("/dashboard");
+  if (auth) throw redirect(homePathForAuth(auth));
   const url = new URL(request.url);
   if (!url.searchParams.has("legacy")) {
     throw redirect("/get-started/account?mode=login");
@@ -44,35 +47,46 @@ export async function action({ request, context }: Route.ActionArgs) {
       return { error: "Invalid email or password." };
     }
 
+    const payload = await readAuthJson<{ user?: { id: string; email?: string } }>(
+      result,
+    );
+    const userId = payload?.user?.id;
+    const userEmail = (payload?.user?.email ?? email).toLowerCase();
+
     // Local/staging bootstrap: grant platform_owner if email matches and no role yet.
-    if (config.BOOTSTRAP_OWNER_EMAIL) {
-      const payload = await readAuthJson<{ user?: { id: string; email?: string } }>(
-        result,
-      );
-      const userId = payload?.user?.id;
-      const userEmail = (payload?.user?.email ?? email).toLowerCase();
-      if (
-        userId &&
-        userEmail === config.BOOTSTRAP_OWNER_EMAIL.toLowerCase()
-      ) {
-        const db = createDb(env.DB);
-        const existing = await db
-          .select()
-          .from(platformRoles)
-          .where(eq(platformRoles.userId, userId))
-          .get();
-        if (!existing) {
-          await db.insert(platformRoles).values({
-            id: newId("role"),
-            userId,
-            role: "platform_owner",
-          });
-          log("info", "bootstrap_owner_granted_on_login", { userId });
-        }
+    if (
+      config.BOOTSTRAP_OWNER_EMAIL &&
+      userId &&
+      userEmail === config.BOOTSTRAP_OWNER_EMAIL.toLowerCase()
+    ) {
+      const db = createDb(env.DB);
+      const existing = await db
+        .select()
+        .from(platformRoles)
+        .where(eq(platformRoles.userId, userId))
+        .get();
+      if (!existing) {
+        await db.insert(platformRoles).values({
+          id: newId("role"),
+          userId,
+          role: "platform_owner",
+        });
+        log("info", "bootstrap_owner_granted_on_login", { userId });
       }
     }
 
-    return redirectWithAuthCookies(result, "/dashboard");
+    let next = "/dashboard";
+    if (userId) {
+      const db = createDb(env.DB);
+      const roles = await db
+        .select()
+        .from(platformRoles)
+        .where(eq(platformRoles.userId, userId))
+        .all();
+      next = homePathForAuth({ staffRoles: roles.map((r) => r.role) });
+    }
+
+    return redirectWithAuthCookies(result, next);
   } catch (error) {
     log("error", "login_failed", {
       error: error instanceof Error ? error.message : "unknown",

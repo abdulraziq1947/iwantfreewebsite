@@ -42,3 +42,8 @@ export async function requireStaffSession(
   }
   return ctx;
 }
+
+/** Where to send a signed-in user after auth. Staff land on ops. */
+export function homePathForAuth(auth: Pick<AuthContext, "staffRoles">): string {
+  return auth.staffRoles.length > 0 ? "/admin" : "/dashboard";
+}

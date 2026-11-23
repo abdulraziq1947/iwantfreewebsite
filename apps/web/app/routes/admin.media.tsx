@@ -1,9 +1,9 @@
-import { Link } from "react-router";
-import { Badge, Panel } from "@iwfw/ui";
+import { Badge } from "@iwfw/ui";
 import { createDb, customerUploads, desc, eq, organisations } from "@iwfw/db";
 import { getEnv } from "../lib/env.server";
 import { requireStaffSession } from "../lib/session.server";
 import { categoryLabel, isUploadCategory } from "../lib/image-sniff";
+import { formatAdminDate } from "../lib/admin-ops";
 import type { Route } from "./+types/admin.media";
 
 export function meta(_args: Route.MetaArgs) {
@@ -33,7 +33,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       organisationId: r.organisationId,
       pendingOrderId: r.pendingOrderId,
       tradingName: r.organisationId
-        ? orgName.get(r.organisationId) ?? null
+        ? (orgName.get(r.organisationId) ?? null)
         : null,
       createdAt: r.createdAt.toISOString(),
       contentUrl: `/api/uploads/${r.id}/content`,
@@ -48,38 +48,37 @@ function formatBytes(n: number) {
 
 export default function AdminMediaPage({ loaderData }: Route.ComponentProps) {
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-sm text-white/60">
-          <Link to="/admin" className="underline">
-            ← Admin overview
-          </Link>
+    <div className="iwfw-admin-page">
+      <header className="iwfw-admin-page__header">
+        <div>
+          <p className="iwfw-admin-page__eyebrow">Assets</p>
+          <h1>Customer images</h1>
+          <p>
+            Private R2 assets for website builds. Open a file only when you need
+            it for production work.
+          </p>
+        </div>
+        <p className="iwfw-admin-page__count">
+          {loaderData.uploads.length} shown
         </p>
-        <h1 className="mt-2 text-3xl font-bold">Customer images</h1>
-        <p className="mt-2 text-white/70">
-          Private R2 assets for website builds. Open a file only when you need
-          it for production work.
-        </p>
-      </div>
+      </header>
 
-      <Panel className="bg-white text-[var(--iwfw-ink)]">
-        <h2 className="font-semibold">Recent uploads</h2>
-        <ul className="mt-3 space-y-3 text-sm">
-          {loaderData.uploads.map((u) => (
-            <li
-              key={u.id}
-              className="flex flex-col gap-2 border-b border-black/10 pb-3 md:flex-row md:items-center md:justify-between"
-            >
-              <div className="flex items-center gap-3 min-w-0">
+      <section className="iwfw-admin-panel">
+        {loaderData.uploads.length === 0 ? (
+          <p className="iwfw-admin-empty">No customer images yet.</p>
+        ) : (
+          <ul className="iwfw-admin-media">
+            {loaderData.uploads.map((u) => (
+              <li key={u.id} className="iwfw-admin-media__item">
                 <img
                   src={u.contentUrl}
                   alt=""
-                  className="h-14 w-14 rounded object-cover bg-black/5"
+                  className="iwfw-admin-media__thumb"
                   loading="lazy"
                 />
-                <div className="min-w-0">
-                  <strong className="block truncate">{u.originalFilename}</strong>
-                  <div className="text-black/60">
+                <div className="iwfw-admin-media__body">
+                  <strong>{u.originalFilename}</strong>
+                  <p>
                     {isUploadCategory(u.category)
                       ? categoryLabel(u.category)
                       : u.category}{" "}
@@ -87,28 +86,26 @@ export default function AdminMediaPage({ loaderData }: Route.ComponentProps) {
                     {u.tradingName ??
                       (u.pendingOrderId
                         ? `Order ${u.pendingOrderId.slice(0, 10)}…`
-                        : "Unassigned")}
-                  </div>
+                        : "Unassigned")}{" "}
+                    · {formatAdminDate(u.createdAt)}
+                  </p>
                 </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge>{u.contentType.replace("image/", "")}</Badge>
-                <a
-                  href={u.contentUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="iwfw-btn iwfw-btn--outline"
-                >
-                  Open
-                </a>
-              </div>
-            </li>
-          ))}
-          {loaderData.uploads.length === 0 && (
-            <li>No customer images yet.</li>
-          )}
-        </ul>
-      </Panel>
+                <div className="iwfw-admin-media__meta">
+                  <Badge>{u.contentType.replace("image/", "")}</Badge>
+                  <a
+                    href={u.contentUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="iwfw-btn iwfw-btn--outline iwfw-admin__btn-sm"
+                  >
+                    Open
+                  </a>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

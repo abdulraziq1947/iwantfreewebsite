@@ -1,221 +1,202 @@
-import { Form, Link } from "react-router";
-import { Badge, Panel } from "@iwfw/ui";
-import {
-  createDb,
-  desc,
-  eq,
-  featureFlags,
-  organisations,
-  platformRoles,
-  user,
-  domainRegistrationTasks,
-} from "@iwfw/db";
+import { Link } from "react-router";
+import { Badge } from "@iwfw/ui";
+import { createDb } from "@iwfw/db";
 import { getEnv } from "../lib/env.server";
 import { requireStaffSession } from "../lib/session.server";
+import { formatAdminDate } from "../lib/admin-ops";
+import { getAdminOverview } from "../lib/admin-ops.server";
 import type { Route } from "./+types/admin._index";
 
 export function meta(_args: Route.MetaArgs) {
-  return [{ title: "Admin — iwantfreewebsite" }];
+  return [{ title: "Admin overview — iwantfreewebsite" }];
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   await requireStaffSession(request, context);
-  const env = getEnv(context);
-  const db = createDb(env.DB);
-
-  const orgs = await db.select().from(organisations).limit(20);
-  const flags = await db.select().from(featureFlags);
-  const roleRows = await db.select().from(platformRoles);
-  const users = await db.select().from(user);
-  const domainTasks = await db
-    .select()
-    .from(domainRegistrationTasks)
-    .orderBy(desc(domainRegistrationTasks.createdAt))
-    .limit(30);
-  const staffList = roleRows.map((r) => {
-    const u = users.find((x) => x.id === r.userId);
-    return {
-      userId: r.userId,
-      role: r.role,
-      email: u?.email ?? "unknown",
-      name: u?.name ?? "unknown",
-    };
-  });
-
-  return {
-    orgs: orgs.map((o) => ({
-      id: o.id,
-      tradingName: o.tradingName,
-      status: o.status,
-    })),
-    flags,
-    staffList,
-    domainTasks: domainTasks.map((t) => ({
-      id: t.id,
-      domainName: t.domainName,
-      domainMode: t.domainMode,
-      status: t.status,
-      organisationId: t.organisationId,
-    })),
-  };
-}
-
-export async function action({ request, context }: Route.ActionArgs) {
-  await requireStaffSession(request, context);
   const db = createDb(getEnv(context).DB);
-  const form = await request.formData();
-  const taskId = String(form.get("taskId") ?? "");
-  const intent = String(form.get("intent") ?? "");
-  if (!taskId) return { error: "Missing task." };
-
-  const now = new Date();
-  if (intent === "mark_registered") {
-    await db
-      .update(domainRegistrationTasks)
-      .set({
-        status: "registered",
-        registeredAt: now,
-        updatedAt: now,
-      })
-      .where(eq(domainRegistrationTasks.id, taskId));
-    return { ok: true };
-  }
-  if (intent === "mark_connected") {
-    await db
-      .update(domainRegistrationTasks)
-      .set({
-        status: "connected",
-        connectedAt: now,
-        updatedAt: now,
-      })
-      .where(eq(domainRegistrationTasks.id, taskId));
-    return { ok: true };
-  }
-  if (intent === "mark_in_progress") {
-    await db
-      .update(domainRegistrationTasks)
-      .set({ status: "in_progress", updatedAt: now })
-      .where(eq(domainRegistrationTasks.id, taskId));
-    return { ok: true };
-  }
-  return { error: "Unknown action." };
+  return getAdminOverview(db);
 }
 
-export default function AdminHome({
-  loaderData,
-  actionData,
-}: Route.ComponentProps) {
+export default function AdminHome({ loaderData }: Route.ComponentProps) {
+  const { kpis } = loaderData;
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Admin overview</h1>
-        <p className="mt-2 text-white/70">
-          Customers, domain registration tasks and feature flags. Domains are
-          never purchased automatically.
-        </p>
-        <p className="mt-3">
-          <Link to="/admin/media" className="iwfw-btn iwfw-btn--outline">
-            Customer images
-          </Link>
-        </p>
+    <div className="iwfw-admin-page">
+      <header className="iwfw-admin-page__header">
+        <div>
+          <p className="iwfw-admin-page__eyebrow">Overview</p>
+          <h1>Operations dashboard</h1>
+          <p>
+            New subscriptions, clients, estimated recurring revenue and open
+            tasks — domains are never purchased automatically.
+          </p>
+        </div>
+      </header>
+
+      <section className="iwfw-admin-kpis" aria-label="Key metrics">
+        <Kpi
+          label="Estimated MRR"
+          value={kpis.estimatedMrrLabel}
+          hint={`${kpis.blockingSubscriptions} active-like plans`}
+        />
+        <Kpi
+          label="Active clients"
+          value={String(kpis.activeClients)}
+          hint={`${kpis.totalOrganisations} organisations total`}
+        />
+        <Kpi
+          label="New subs · 7 days"
+          value={String(kpis.newSubscriptions7d)}
+          hint={`${kpis.paidOrders7d} paid orders this week`}
+        />
+        <Kpi
+          label="Open domain tasks"
+          value={String(kpis.openDomainTasks)}
+          hint={`${kpis.openTransferTasks} transfer · ${kpis.openCheckoutOrders} open checkout`}
+        />
+      </section>
+
+      <div className="iwfw-admin-grid">
+        <section className="iwfw-admin-panel">
+          <div className="iwfw-admin-panel__head">
+            <h2>New &amp; active subscriptions</h2>
+            <Link to="/admin/subscriptions">View all</Link>
+          </div>
+          <AdminTable
+            empty="No subscriptions yet."
+            rows={loaderData.recentSubscriptions.map((s) => ({
+              key: s.id,
+              title: s.tradingName,
+              meta: `${s.status}${s.cancelAtPeriodEnd ? " · cancelling" : ""} · renews ${formatAdminDate(s.currentPeriodEnd)}`,
+              right: formatAdminDate(s.createdAt),
+            }))}
+          />
+        </section>
+
+        <section className="iwfw-admin-panel">
+          <div className="iwfw-admin-panel__head">
+            <h2>Recent clients</h2>
+            <Link to="/admin/clients">View all</Link>
+          </div>
+          <AdminTable
+            empty="No clients yet."
+            rows={loaderData.recentClients.map((c) => ({
+              key: c.id,
+              title: c.tradingName,
+              meta: c.status,
+              right: formatAdminDate(c.createdAt),
+              badge: c.status,
+            }))}
+          />
+        </section>
+
+        <section className="iwfw-admin-panel">
+          <div className="iwfw-admin-panel__head">
+            <h2>Pending domain tasks</h2>
+            <Link to="/admin/domains">Manage</Link>
+          </div>
+          <AdminTable
+            empty="No open domain tasks."
+            rows={loaderData.pendingDomainTasks.map((t) => ({
+              key: t.id,
+              title: t.domainName,
+              meta: `${t.tradingName} · ${t.domainMode} · ${t.status}`,
+              right: formatAdminDate(t.createdAt),
+            }))}
+          />
+        </section>
+
+        <section className="iwfw-admin-panel">
+          <div className="iwfw-admin-panel__head">
+            <h2>Asset transfers</h2>
+            <Link to="/admin/transfers">Manage</Link>
+          </div>
+          <AdminTable
+            empty="No open transfer tasks."
+            rows={loaderData.pendingTransfers.map((t) => ({
+              key: t.id,
+              title: t.tradingName,
+              meta: `${t.status} · period end ${formatAdminDate(t.periodEndAt)}`,
+              right: formatAdminDate(t.createdAt),
+            }))}
+          />
+        </section>
+
+        <section className="iwfw-admin-panel iwfw-admin-panel--wide">
+          <div className="iwfw-admin-panel__head">
+            <h2>Recent paid orders</h2>
+            <Link to="/admin/orders">View all orders</Link>
+          </div>
+          <AdminTable
+            empty="No paid orders yet."
+            rows={loaderData.recentPaidOrders.map((o) => ({
+              key: o.id,
+              title: o.tradingName || o.email || o.id,
+              meta: `${o.email ?? "—"} · ${o.domainName ?? "no domain"}`,
+              right: formatAdminDate(o.paidAt),
+            }))}
+          />
+        </section>
       </div>
-
-      {actionData && "error" in actionData && actionData.error && (
-        <p className="text-red-300">{actionData.error}</p>
-      )}
-
-      <Panel className="bg-white text-[var(--iwfw-ink)]">
-        <h2 className="font-semibold">Domain registration tasks</h2>
-        <ul className="mt-3 space-y-3 text-sm">
-          {loaderData.domainTasks.map((t) => (
-            <li
-              key={t.id}
-              className="flex flex-col gap-2 border-b border-black/10 pb-3 md:flex-row md:items-center md:justify-between"
-            >
-              <div>
-                <strong>{t.domainName}</strong>{" "}
-                <Badge>{t.status}</Badge>
-                <div className="text-black/60">
-                  {t.domainMode} · org {t.organisationId.slice(0, 12)}…
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Form method="post">
-                  <input type="hidden" name="taskId" value={t.id} />
-                  <button
-                    name="intent"
-                    value="mark_in_progress"
-                    className="iwfw-btn iwfw-btn--outline"
-                  >
-                    In progress
-                  </button>
-                </Form>
-                <Form method="post">
-                  <input type="hidden" name="taskId" value={t.id} />
-                  <button
-                    name="intent"
-                    value="mark_registered"
-                    className="iwfw-btn iwfw-btn--outline"
-                  >
-                    Mark registered
-                  </button>
-                </Form>
-                <Form method="post">
-                  <input type="hidden" name="taskId" value={t.id} />
-                  <button
-                    name="intent"
-                    value="mark_connected"
-                    className="iwfw-btn iwfw-btn--green"
-                  >
-                    Mark connected
-                  </button>
-                </Form>
-              </div>
-            </li>
-          ))}
-          {loaderData.domainTasks.length === 0 && <li>No domain tasks yet</li>}
-        </ul>
-      </Panel>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Panel className="bg-white text-[var(--iwfw-ink)]">
-          <h2 className="font-semibold">Organisations</h2>
-          <ul className="mt-3 space-y-2 text-sm">
-            {loaderData.orgs.map((o) => (
-              <li key={o.id} className="flex justify-between gap-2">
-                <span>{o.tradingName}</span>
-                <Badge>{o.status}</Badge>
-              </li>
-            ))}
-            {loaderData.orgs.length === 0 && <li>None yet</li>}
-          </ul>
-        </Panel>
-
-        <Panel className="bg-white text-[var(--iwfw-ink)]">
-          <h2 className="font-semibold">Feature flags</h2>
-          <ul className="mt-3 space-y-2 text-sm">
-            {loaderData.flags.map((f) => (
-              <li key={f.key} className="flex justify-between gap-2">
-                <span>{f.key}</span>
-                <Badge tone={f.enabled ? "danger" : "success"}>
-                  {f.enabled ? "ON" : "OFF"}
-                </Badge>
-              </li>
-            ))}
-          </ul>
-        </Panel>
-      </div>
-
-      <Panel className="bg-white text-[var(--iwfw-ink)]">
-        <h2 className="font-semibold">Staff roles</h2>
-        <ul className="mt-3 space-y-2 text-sm">
-          {loaderData.staffList.map((s) => (
-            <li key={`${s.userId}-${s.role}`}>
-              {s.name} · {s.email} · {s.role}
-            </li>
-          ))}
-        </ul>
-      </Panel>
     </div>
+  );
+}
+
+function Kpi({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+}) {
+  return (
+    <article className="iwfw-admin-kpi">
+      <p className="iwfw-admin-kpi__label">{label}</p>
+      <p className="iwfw-admin-kpi__value">{value}</p>
+      <p className="iwfw-admin-kpi__hint">{hint}</p>
+    </article>
+  );
+}
+
+function AdminTable({
+  rows,
+  empty,
+}: {
+  empty: string;
+  rows: Array<{
+    key: string;
+    title: string;
+    meta: string;
+    right: string;
+    badge?: string;
+  }>;
+}) {
+  if (rows.length === 0) {
+    return <p className="iwfw-admin-empty">{empty}</p>;
+  }
+  return (
+    <ul className="iwfw-admin-list">
+      {rows.map((row) => (
+        <li key={row.key}>
+          <div>
+            <strong>
+              {row.title}
+              {row.badge ? (
+                <>
+                  {" "}
+                  <Badge tone={row.badge === "active" ? "success" : "neutral"}>
+                    {row.badge}
+                  </Badge>
+                </>
+              ) : null}
+            </strong>
+            <p>{row.meta}</p>
+          </div>
+          <span>{row.right}</span>
+        </li>
+      ))}
+    </ul>
   );
 }

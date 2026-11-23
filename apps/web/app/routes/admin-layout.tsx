@@ -1,5 +1,6 @@
-import { Link, Outlet } from "react-router";
+import { Form, Link, NavLink, Outlet, useLocation } from "react-router";
 import { requireStaffSession } from "../lib/session.server";
+import { ADMIN_NAV } from "../lib/admin-ops";
 import type { Route } from "./+types/admin-layout";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -11,24 +12,74 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export default function AdminLayout({ loaderData }: Route.ComponentProps) {
+  const { pathname } = useLocation();
+
   return (
-    <div className="min-h-screen bg-[#0f1c17] text-white">
-      <header className="border-b border-white/10">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+    <div className="iwfw-admin">
+      <header className="iwfw-admin__topbar">
+        <div className="iwfw-admin__topbar-inner">
           <div>
-            <p className="text-xs uppercase tracking-wide text-white/60">Admin</p>
-            <Link to="/admin" className="font-[family-name:var(--iwfw-font-display)] text-lg font-bold">
-              Operations
+            <p className="iwfw-admin__eyebrow">Operations</p>
+            <Link to="/admin" className="iwfw-admin__brand">
+              iwantfreewebsite admin
             </Link>
           </div>
-          <div className="text-right text-sm">
-            <p className="font-semibold">{loaderData.user.name}</p>
-            <p className="text-white/60">{loaderData.roles.join(", ")}</p>
+          <div className="iwfw-admin__user">
+            <div className="iwfw-admin__user-text">
+              <p className="iwfw-admin__user-name">{loaderData.user.name}</p>
+              <p className="iwfw-admin__user-meta">
+                {loaderData.roles.join(" · ")}
+              </p>
+            </div>
+            <Link to="/dashboard" className="iwfw-btn iwfw-btn--outline iwfw-admin__btn">
+              Customer view
+            </Link>
+            <Form method="post" action="/logout">
+              <button type="submit" className="iwfw-btn iwfw-btn--outline iwfw-admin__btn">
+                Log out
+              </button>
+            </Form>
           </div>
         </div>
       </header>
-      <div className="mx-auto max-w-6xl px-4 py-8">
-        <Outlet />
+
+      <div className="iwfw-admin__shell">
+        <aside className="iwfw-admin__nav" aria-label="Admin">
+          {ADMIN_NAV.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === "/admin"}
+              className={({ isActive }) =>
+                `iwfw-admin__nav-link${isActive ? " is-active" : ""}`
+              }
+            >
+              {item.label}
+            </NavLink>
+          ))}
+        </aside>
+
+        <div className="iwfw-admin__mobile-nav" aria-label="Admin sections">
+          {ADMIN_NAV.map((item) => {
+            const active =
+              item.to === "/admin"
+                ? pathname === "/admin"
+                : pathname.startsWith(item.to);
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`iwfw-admin__chip${active ? " is-active" : ""}`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+
+        <main className="iwfw-admin__main">
+          <Outlet />
+        </main>
       </div>
     </div>
   );
