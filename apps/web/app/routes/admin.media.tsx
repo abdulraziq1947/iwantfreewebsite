@@ -3,7 +3,7 @@ import { createDb, customerUploads, desc, eq, organisations } from "@iwfw/db";
 import { getEnv } from "../lib/env.server";
 import { requireStaffSession } from "../lib/session.server";
 import { categoryLabel, isUploadCategory } from "../lib/image-sniff";
-import { formatAdminDate } from "../lib/admin-ops.server";
+import { formatAdminDate } from "../lib/admin-ops";
 import type { Route } from "./+types/admin.media";
 
 export function meta(_args: Route.MetaArgs) {

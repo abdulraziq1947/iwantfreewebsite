@@ -14,29 +14,12 @@ import {
   BLOCKING_SUBSCRIPTION_STATUSES,
   WEBSITE_PLAN_UNIT_AMOUNT,
 } from "./stripe.server";
+import { formatGbpFromPence } from "./admin-ops";
 
 type Db = ReturnType<typeof createDb>;
 
 const OPEN_DOMAIN_STATUSES = ["pending", "in_progress", "registered"] as const;
 const OPEN_TRANSFER_STATUSES = ["pending", "in_progress"] as const;
-
-export function formatGbpFromPence(pence: number): string {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-  }).format(pence / 100);
-}
-
-export function formatAdminDate(value: Date | string | null | undefined): string {
-  if (!value) return "—";
-  const date = typeof value === "string" ? new Date(value) : value;
-  if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 export async function getAdminOverview(db: Db) {
   const [
@@ -368,13 +351,3 @@ export async function updateTransferTaskStatus(
   }
   return { error: "Unknown transfer action." };
 }
-
-export const ADMIN_NAV = [
-  { to: "/admin", label: "Overview", end: true },
-  { to: "/admin/clients", label: "Clients" },
-  { to: "/admin/subscriptions", label: "Subscriptions" },
-  { to: "/admin/orders", label: "Orders" },
-  { to: "/admin/domains", label: "Domains" },
-  { to: "/admin/transfers", label: "Transfers" },
-  { to: "/admin/media", label: "Images" },
-] as const;

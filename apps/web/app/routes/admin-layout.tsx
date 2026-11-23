@@ -1,6 +1,6 @@
 import { Form, Link, NavLink, Outlet, useLocation } from "react-router";
 import { requireStaffSession } from "../lib/session.server";
-import { ADMIN_NAV } from "../lib/admin-ops.server";
+import { ADMIN_NAV } from "../lib/admin-ops";
 import type { Route } from "./+types/admin-layout";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
