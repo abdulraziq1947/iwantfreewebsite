@@ -4,26 +4,26 @@ import { requireAuth } from "../lib/session.server";
 import { getEnv } from "../lib/env.server";
 import { CUSTOMER_NAV } from "../lib/customer-dashboard";
 import { BrandLogo } from "../components/brand-logo";
-import {
-  countCustomerUnreadTickets,
-  countUnreadNotifications,
-} from "../lib/support.server";
+import { NotificationBell } from "../components/notification-bell";
+import { countCustomerUnreadTickets } from "../lib/support.server";
+import { getNotificationsFeed } from "../lib/notifications.server";
 import type { Route } from "./+types/customer-layout";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
   const db = createDb(getEnv(context).DB);
   const organisationIds = auth.memberships.map((m) => m.organisationId);
-  const [ticketUnread, notifyUnread] = await Promise.all([
+  const [ticketUnread, feed] = await Promise.all([
     countCustomerUnreadTickets(db, organisationIds),
-    countUnreadNotifications(db, auth.userId),
+    getNotificationsFeed(db, auth.userId, 12),
   ]);
   return {
     user: { name: auth.name, email: auth.email },
     isStaff: auth.staffRoles.length > 0,
     organisationIds,
     supportUnread: ticketUnread,
-    notifyUnread,
+    notifyUnread: feed.unread,
+    notifications: feed.items,
   };
 }
 
@@ -42,6 +42,13 @@ export default function CustomerLayout({ loaderData }: Route.ComponentProps) {
           </div>
 
           <div className="iwfw-dash__user">
+            <NotificationBell
+              feedUrl="/dashboard/notifications/feed"
+              actionUrl="/dashboard/notifications/feed"
+              viewAllHref="/dashboard/notifications"
+              initialUnread={loaderData.notifyUnread}
+              initialItems={loaderData.notifications}
+            />
             <div className="iwfw-dash__user-text">
               <p className="iwfw-dash__user-name">{loaderData.user.name}</p>
               <p className="iwfw-dash__user-email">{loaderData.user.email}</p>
@@ -76,6 +83,12 @@ export default function CustomerLayout({ loaderData }: Route.ComponentProps) {
               loaderData.supportUnread > 0 ? (
                 <span className="iwfw-notify-badge">
                   {loaderData.supportUnread}
+                </span>
+              ) : null}
+              {item.to === "/dashboard/notifications" &&
+              loaderData.notifyUnread > 0 ? (
+                <span className="iwfw-notify-badge">
+                  {loaderData.notifyUnread}
                 </span>
               ) : null}
             </NavLink>

@@ -340,6 +340,17 @@ export async function fulfillPaidPendingOrder(options: {
     organisationId,
   });
 
+  try {
+    const { notifyStaffNewCustomer } = await import("./notifications.server");
+    await notifyStaffNewCustomer(options.db, {
+      organisationId,
+      tradingName,
+      email: order.email,
+    });
+  } catch {
+    // Non-fatal — fulfillment must still succeed if notify fails.
+  }
+
   return {
     organisationId,
     userId,

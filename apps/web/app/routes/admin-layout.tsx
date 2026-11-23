@@ -4,24 +4,24 @@ import { requireStaffSession } from "../lib/session.server";
 import { getEnv } from "../lib/env.server";
 import { ADMIN_NAV } from "../lib/admin-ops";
 import { BrandLogo } from "../components/brand-logo";
-import {
-  countOpenStaffTickets,
-  countUnreadNotifications,
-} from "../lib/support.server";
+import { NotificationBell } from "../components/notification-bell";
+import { countOpenStaffTickets } from "../lib/support.server";
+import { getNotificationsFeed } from "../lib/notifications.server";
 import type { Route } from "./+types/admin-layout";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireStaffSession(request, context);
   const db = createDb(getEnv(context).DB);
-  const [openTickets, notifyUnread] = await Promise.all([
+  const [openTickets, feed] = await Promise.all([
     countOpenStaffTickets(db),
-    countUnreadNotifications(db, auth.userId),
+    getNotificationsFeed(db, auth.userId, 12),
   ]);
   return {
     user: { name: auth.name, email: auth.email },
     roles: auth.staffRoles,
     openTickets,
-    notifyUnread,
+    notifyUnread: feed.unread,
+    notifications: feed.items,
   };
 }
 
@@ -45,6 +45,13 @@ export default function AdminLayout({ loaderData }: Route.ComponentProps) {
             </Link>
           </div>
           <div className="iwfw-admin__user">
+            <NotificationBell
+              feedUrl="/admin/notifications/feed"
+              actionUrl="/admin/notifications/feed"
+              viewAllHref="/admin/notifications"
+              initialUnread={loaderData.notifyUnread}
+              initialItems={loaderData.notifications}
+            />
             <div className="iwfw-admin__user-text">
               <p className="iwfw-admin__user-name">{loaderData.user.name}</p>
               <p className="iwfw-admin__user-meta">
@@ -77,6 +84,12 @@ export default function AdminLayout({ loaderData }: Route.ComponentProps) {
               {item.label}
               {item.to === "/admin/support" && loaderData.openTickets > 0 ? (
                 <span className="iwfw-notify-badge">{loaderData.openTickets}</span>
+              ) : null}
+              {item.to === "/admin/notifications" &&
+              loaderData.notifyUnread > 0 ? (
+                <span className="iwfw-notify-badge">
+                  {loaderData.notifyUnread}
+                </span>
               ) : null}
             </NavLink>
           ))}

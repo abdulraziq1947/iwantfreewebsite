@@ -42,6 +42,11 @@ export default [
     route("dashboard/google-business", "routes/dashboard.google-business.tsx"),
     route("dashboard/support", "routes/dashboard.support.tsx"),
     route("dashboard/support/:ticketId", "routes/dashboard.support.$ticketId.tsx"),
+    route("dashboard/notifications", "routes/dashboard.notifications.tsx"),
+    route(
+      "dashboard/notifications/feed",
+      "routes/dashboard.notifications.feed.ts",
+    ),
     route("dashboard/account", "routes/dashboard.account.tsx"),
   ]),
   layout("routes/admin-layout.tsx", [
@@ -58,6 +63,8 @@ export default [
     route("admin/transfers", "routes/admin.transfers.tsx"),
     route("admin/support", "routes/admin.support.tsx"),
     route("admin/support/:ticketId", "routes/admin.support.$ticketId.tsx"),
+    route("admin/notifications", "routes/admin.notifications.tsx"),
+    route("admin/notifications/feed", "routes/admin.notifications.feed.ts"),
     route("admin/media", "routes/admin.media.tsx"),
   ]),
 ] satisfies RouteConfig;

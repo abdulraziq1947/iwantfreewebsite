@@ -12,6 +12,7 @@ import {
   unmarkClientWebsiteLive,
   updateOrganisationStatus,
 } from "../lib/admin-ops.server";
+import { notifyCustomerNeedsAttention } from "../lib/notifications.server";
 import { listOrganisationInvoices } from "../lib/billing.server";
 import { AttentionBoardCard } from "../components/attention-board";
 import type { Route } from "./+types/admin.clients.$orgId";
@@ -82,6 +83,21 @@ export async function action({ request, context, params }: Route.ActionArgs) {
   if (intent === "gbp_revoke") {
     const result = await setGbpAccessGranted(db, params.orgId, false);
     if ("error" in result) return result;
+    throw redirect(`/admin/clients/${params.orgId}?tab=${tab}`);
+  }
+
+  if (intent === "notify_customer") {
+    const title = String(form.get("title") ?? "").trim().slice(0, 120);
+    const body = String(form.get("body") ?? "").trim().slice(0, 500);
+    if (title.length < 3 || body.length < 3) {
+      return { error: "Add a short title and message for the customer." };
+    }
+    await notifyCustomerNeedsAttention(db, {
+      organisationId: params.orgId,
+      title,
+      body,
+      href: "/dashboard",
+    });
     throw redirect(`/admin/clients/${params.orgId}?tab=${tab}`);
   }
 
@@ -319,6 +335,48 @@ export default function AdminClientDetailPage({
               )
             }
           />
+
+          <section className="iwfw-admin-panel">
+            <div className="iwfw-admin-panel__head">
+              <h2>Notify customer</h2>
+            </div>
+            <p className="iwfw-admin-muted" style={{ marginBottom: "0.75rem" }}>
+              Send a live alert when you need them to do something or you’ve
+              made a change.
+            </p>
+            <Form method="post" className="iwfw-start__form">
+              <input type="hidden" name="intent" value="notify_customer" />
+              <input type="hidden" name="tab" value="overview" />
+              <label className="iwfw-field">
+                <span>Title</span>
+                <input
+                  className="iwfw-control"
+                  name="title"
+                  required
+                  maxLength={120}
+                  placeholder="We need a quick decision"
+                />
+              </label>
+              <label className="iwfw-field">
+                <span>Message</span>
+                <textarea
+                  className="iwfw-control"
+                  name="body"
+                  required
+                  rows={3}
+                  maxLength={500}
+                  placeholder="Please reply in support with your preferred domain."
+                />
+              </label>
+              <button
+                type="submit"
+                className="iwfw-btn iwfw-btn--green"
+                disabled={busy}
+              >
+                {busy ? "Sending…" : "Send notification"}
+              </button>
+            </Form>
+          </section>
 
           <section className="iwfw-admin-panel">
             <div className="iwfw-admin-panel__head">

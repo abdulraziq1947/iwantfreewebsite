@@ -4427,6 +4427,177 @@ h3 {
   font-weight: 800;
 }
 
+.iwfw-bell {
+  position: relative;
+}
+
+.iwfw-bell__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.35rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--iwfw-border) 85%, #fff);
+  background: #fff;
+  color: var(--iwfw-ink);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.iwfw-bell__button:hover {
+  border-color: color-mix(in srgb, var(--iwfw-cta) 30%, var(--iwfw-border));
+}
+
+.iwfw-bell__icon {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: var(--iwfw-cta, #1f7a4c);
+  color: transparent;
+  font-size: 0;
+}
+
+.iwfw-bell__panel {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  z-index: 40;
+  width: min(22rem, calc(100vw - 1.5rem));
+  padding: 0.75rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--iwfw-border) 85%, #fff);
+  background: #fff;
+  box-shadow: 0 18px 40px rgba(15, 35, 70, 0.12);
+}
+
+.iwfw-bell__panel-head,
+.iwfw-bell__panel-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.iwfw-bell__panel-head {
+  margin-bottom: 0.55rem;
+}
+
+.iwfw-bell__panel-foot {
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid color-mix(in srgb, var(--iwfw-border) 75%, transparent);
+}
+
+.iwfw-bell__panel-foot a,
+.iwfw-bell__mark {
+  color: var(--iwfw-cta-hover);
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.iwfw-bell__empty {
+  margin: 0;
+  padding: 0.75rem;
+  color: var(--iwfw-muted);
+  font-size: 0.9rem;
+}
+
+.iwfw-bell__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+  max-height: 18rem;
+  overflow: auto;
+}
+
+.iwfw-bell__list a {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.65rem 0.7rem;
+  border-radius: 0.7rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.iwfw-bell__list li.is-unread a {
+  background: color-mix(in srgb, #fff7ed 80%, #fff);
+}
+
+.iwfw-bell__list a:hover {
+  background: color-mix(in srgb, var(--iwfw-border) 25%, #fff);
+}
+
+.iwfw-bell__item-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.iwfw-bell__item-body,
+.iwfw-bell__item-meta {
+  color: var(--iwfw-muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.iwfw-notify-page-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.iwfw-notify-page-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--iwfw-border) 80%, transparent);
+  background: #fff;
+}
+
+.iwfw-notify-page-list li.is-unread {
+  border-color: color-mix(in srgb, #c9851a 28%, var(--iwfw-border));
+  background: #fffaf2;
+}
+
+.iwfw-notify-page-list strong {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.iwfw-notify-page-list p {
+  margin: 0;
+  color: var(--iwfw-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.iwfw-notify-page-meta {
+  margin-top: 0.35rem !important;
+  font-size: 0.78rem !important;
+}
+
+.iwfw-notify-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
 .iwfw-invoice-list {
   list-style: none;
   margin: 0;

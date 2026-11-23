@@ -4,14 +4,11 @@ import {
   asc,
   eq,
   inArray,
-  isNull,
-  and,
   organisations,
   memberships,
   platformRoles,
   supportTickets,
   ticketMessages,
-  notifications,
   user,
 } from "@iwfw/db";
 import { newId } from "./ids";
@@ -20,6 +17,22 @@ import {
   type TicketCategory,
   type TicketStatus,
 } from "./support";
+import {
+  createNotifications,
+  listNotificationsForUser,
+  countUnreadNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  notifyWebsiteLive,
+} from "./notifications.server";
+
+export {
+  listNotificationsForUser,
+  countUnreadNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  notifyWebsiteLive,
+};
 
 type Db = ReturnType<typeof createDb>;
 
@@ -38,58 +51,6 @@ async function orgMemberUserIds(
     .where(eq(memberships.organisationId, organisationId))
     .all();
   return rows.map((r) => r.userId);
-}
-
-async function createNotifications(
-  db: Db,
-  options: {
-    userIds: string[];
-    organisationId: string | null;
-    kind:
-      | "ticket_created"
-      | "ticket_reply_customer"
-      | "ticket_reply_staff"
-      | "ticket_status"
-      | "website_live";
-    title: string;
-    body: string;
-    href: string;
-  },
-) {
-  const now = new Date();
-  for (const userId of options.userIds) {
-    await db.insert(notifications).values({
-      id: newId("ntf"),
-      userId,
-      organisationId: options.organisationId,
-      kind: options.kind,
-      title: options.title,
-      body: options.body,
-      href: options.href,
-      createdAt: now,
-    });
-  }
-}
-
-/** Congratulate org members when their website goes live. */
-export async function notifyWebsiteLive(
-  db: Db,
-  options: {
-    organisationId: string;
-    tradingName: string;
-    liveUrl: string;
-  },
-) {
-  const members = await orgMemberUserIds(db, options.organisationId);
-  if (members.length === 0) return;
-  await createNotifications(db, {
-    userIds: members,
-    organisationId: options.organisationId,
-    kind: "website_live",
-    title: "Congratulations — your website is live!",
-    body: `${options.tradingName} is live at ${options.liveUrl}. Open your dashboard to visit the site.`,
-    href: "/dashboard",
-  });
 }
 
 export async function listCustomerTickets(db: Db, organisationIds: string[]) {
@@ -402,52 +363,6 @@ export async function markTicketRead(
       .set({ staffUnreadCount: 0, updatedAt: now })
       .where(eq(supportTickets.id, ticketId));
   }
-}
-
-export async function listNotificationsForUser(
-  db: Db,
-  userId: string,
-  limit = 20,
-) {
-  const rows = await db
-    .select()
-    .from(notifications)
-    .where(eq(notifications.userId, userId))
-    .orderBy(desc(notifications.createdAt))
-    .limit(limit)
-    .all();
-  return rows.map((n) => ({
-    id: n.id,
-    kind: n.kind,
-    title: n.title,
-    body: n.body,
-    href: n.href,
-    readAt: n.readAt ? n.readAt.toISOString() : null,
-    createdAt: n.createdAt ? n.createdAt.toISOString() : null,
-  }));
-}
-
-export async function countUnreadNotifications(db: Db, userId: string) {
-  const rows = await db
-    .select()
-    .from(notifications)
-    .where(and(eq(notifications.userId, userId), isNull(notifications.readAt)))
-    .all();
-  return rows.length;
-}
-
-export async function markNotificationRead(db: Db, userId: string, id: string) {
-  await db
-    .update(notifications)
-    .set({ readAt: new Date() })
-    .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
-}
-
-export async function markAllNotificationsRead(db: Db, userId: string) {
-  await db
-    .update(notifications)
-    .set({ readAt: new Date() })
-    .where(and(eq(notifications.userId, userId), isNull(notifications.readAt)));
 }
 
 export async function countOpenStaffTickets(db: Db) {
