@@ -6,8 +6,9 @@ import { requireAuth } from "../lib/session.server";
 import { getCustomerWorkspace } from "../lib/customer-org.server";
 import {
   buildJourneyStages,
-  currentFocusCopy,
+  buildStatusBanner,
   domainTaskLabel,
+  needsGbpInvite,
   websiteStageLabel,
 } from "../lib/customer-progress";
 import type { Route } from "./+types/dashboard.website";
@@ -30,12 +31,20 @@ export default function WebsitePage({ loaderData }: Route.ComponentProps) {
     briefReady: workspace.briefReady,
     domainTask: workspace.domainTask,
   });
-  const focus = currentFocusCopy(stages);
+  const banner = buildStatusBanner({
+    needsSubscription: workspace.needsSubscription,
+    briefReady: workspace.briefReady,
+    domainTask: workspace.domainTask,
+    tradingName: workspace.primary?.tradingName,
+  });
   const stage = websiteStageLabel({
     needsSubscription: workspace.needsSubscription,
     domainStatus: workspace.domainTask?.status,
     briefReady: workspace.briefReady,
   });
+  const showGbp =
+    !workspace.needsSubscription &&
+    needsGbpInvite(workspace.onboarding?.data);
 
   return (
     <div className="iwfw-dash-page">
@@ -52,10 +61,26 @@ export default function WebsitePage({ loaderData }: Route.ComponentProps) {
         </Badge>
       </header>
 
-      <Panel className="iwfw-dash-focus">
-        <p className="iwfw-dash-focus__kicker">Now</p>
-        <h2>{focus.title}</h2>
-        <p>{focus.body}</p>
+      <Panel
+        className={
+          !workspace.needsSubscription && workspace.briefReady
+            ? "iwfw-dash-focus iwfw-dash-focus--ready"
+            : "iwfw-dash-focus"
+        }
+      >
+        <p className="iwfw-dash-focus__kicker">{banner.kicker}</p>
+        <h2>{banner.title}</h2>
+        <p>{banner.body}</p>
+        {showGbp && (
+          <div className="iwfw-dash-callout__actions">
+            <Link
+              to="/dashboard/google-business"
+              className="iwfw-btn iwfw-btn--green"
+            >
+              Give Manager access
+            </Link>
+          </div>
+        )}
       </Panel>
 
       <div className="iwfw-dash-split">
