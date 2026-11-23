@@ -54,12 +54,13 @@ Pause Builds until `main` contains Phase 1 + production D1 UUID and secrets are 
 
 ## Prerequisites / blockers
 
-1. **`main` lacks Phase 1 code** — currently still the initial commit. Production Builds on `main` cannot deploy the app until an approved merge from `staging` (or equivalent).
-2. **Production D1 UUID wired** — `iwfw-production` / `634c4590-3ace-4416-a439-9c634827f4ba` is in `env.production`. Migrations still not applied remotely.
-3. **Production secrets not set** on Worker `iwantfreewebsite`.
-4. **Existing Workers Builds** for `iwantfreewebsite` is misconfigured (root `/`, wrong build command) and runs on PR branches — pause/fix before cutover. See [`WORKERS_BUILDS_INVESTIGATION.md`](./WORKERS_BUILDS_INVESTIGATION.md).
+1. **Production D1 UUID wired** — `iwfw-production` / `634c4590-3ace-4416-a439-9c634827f4ba` is in `env.production`.
+2. **Apply new migrations before deploying code that selects new columns/tables** — see [`RELEASE_SAAS_IMPROVEMENTS.md`](./RELEASE_SAAS_IMPROVEMENTS.md) for PR #33 (`0011`–`0013`).
+3. **Production secrets** on Worker `iwantfreewebsite` (`BETTER_AUTH_SECRET`, Resend, Stripe test secrets). Prefer setting `MAILBOX_ENCRYPTION_KEY` before first encrypt write.
+4. **Workers Builds** root must be `apps/web` with `CLOUDFLARE_ENV=production` build command and production branch **`main`**. See [`WORKERS_BUILDS_INVESTIGATION.md`](./WORKERS_BUILDS_INVESTIGATION.md).
 5. **Custom domain** `iwantfreewebsite.com` must resolve to this Worker and match `APP_URL` for Better Auth cookies / `trustedOrigins`.
 6. **Do not** point production Builds at the staging branch or staging build command (`CLOUDFLARE_ENV=staging`).
+7. **Do not** set `STRIPE_ALLOW_LIVE=true` until live keys + webhook are verified in a separate approval.
 
 ---
 
@@ -134,14 +135,16 @@ Migrations live under `packages/db/migrations/` (`0000` … current journal head
 
 ## Recommended cutover order (after approval)
 
-1. Production D1 UUID is committed on the production-prep branch; merge into `staging` then `main` as agreed.
-2. Set production secrets/vars on Worker `iwantfreewebsite` (not on `iwfw-staging`).
-3. Pause or fix Builds: root `apps/web`, `CLOUDFLARE_ENV=production` build command, branch `main`, preview off.
-4. Merge approved app code to `main` (does not happen in this prep).
-5. Apply D1 migrations remotely to `iwfw-production` only.
-6. Trigger production build/deploy (Workers Builds push or approved `pnpm --filter @iwfw/web deploy:production`).
-7. Smoke: health, signup, login, dashboard; confirm Worker name and D1 binding in dashboard.
-8. Remove `BOOTSTRAP_OWNER_EMAIL` after first owner.
+For the SaaS-improvements release, follow the exact checklist in [`RELEASE_SAAS_IMPROVEMENTS.md`](./RELEASE_SAAS_IMPROVEMENTS.md).
+
+Short form:
+
+1. Confirm secrets/vars on Worker `iwantfreewebsite` (not staging). Prefer `MAILBOX_ENCRYPTION_KEY`.
+2. **Migrate D1 first** (`pnpm run db:migrate:production`) while the current Worker stays live.
+3. Merge approved PR to `main` / deploy Worker (`pnpm run deploy:production` or Builds).
+4. Smoke: `/api/health` (`schema.ok`), customer login + dashboard + mailbox Show, staff MFA enroll if needed.
+5. Leave `STRIPE_ALLOW_LIVE` unset/false.
+6. Remove `BOOTSTRAP_OWNER_EMAIL` if it is still present after owner exists.
 
 ---
 

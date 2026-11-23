@@ -27,6 +27,21 @@ describe("mailbox crypto", () => {
     );
   });
 
+  it("keeps plaintext readable when encryption key changes", async () => {
+    const other = parseWorkerEnv({
+      APP_URL: "http://localhost:5173",
+      APP_ENV: "development",
+      BETTER_AUTH_SECRET: "y".repeat(32),
+      MAILBOX_ENCRYPTION_KEY: "dedicated-mailbox-key-for-tests-32b",
+    });
+    expect(await decryptMailboxPassword(other, "still-plain")).toBe(
+      "still-plain",
+    );
+    const enc = await encryptMailboxPassword(config, "only-with-old-key");
+    expect(await decryptMailboxPassword(other, enc)).toBeNull();
+    expect(await decryptMailboxPassword(config, enc)).toBe("only-with-old-key");
+  });
+
   it("redacts secrets for logs", () => {
     expect(redactMailboxSecret("anything")).toBe("[redacted-mailbox-secret]");
   });
