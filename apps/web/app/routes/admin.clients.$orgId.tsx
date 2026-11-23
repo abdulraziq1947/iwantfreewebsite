@@ -1,10 +1,16 @@
-import { Link, useSearchParams } from "react-router";
+import { Form, Link, redirect, useNavigation, useSearchParams } from "react-router";
 import { Badge } from "@iwfw/ui";
 import { createDb } from "@iwfw/db";
 import { getConfig, getEnv } from "../lib/env.server";
 import { requireStaffSession } from "../lib/session.server";
 import { formatAdminDate, formatGbpFromPence } from "../lib/admin-ops";
-import { getAdminClientDetail } from "../lib/admin-ops.server";
+import {
+  getAdminClientDetail,
+  isOrgStatus,
+  markClientWebsiteLive,
+  unmarkClientWebsiteLive,
+  updateOrganisationStatus,
+} from "../lib/admin-ops.server";
 import { listOrganisationInvoices } from "../lib/billing.server";
 import type { Route } from "./+types/admin.clients.$orgId";
 
@@ -35,6 +41,36 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
   return { client, invoices: invoices.invoices, invoiceError: invoices.error };
 }
 
+export async function action({ request, context, params }: Route.ActionArgs) {
+  await requireStaffSession(request, context);
+  const db = createDb(getEnv(context).DB);
+  const form = await request.formData();
+  const intent = String(form.get("intent") ?? "");
+  const tab = String(form.get("tab") ?? "overview");
+
+  if (intent === "update_org_status") {
+    const status = String(form.get("status") ?? "");
+    if (!isOrgStatus(status)) return { error: "Invalid organisation status." };
+    const result = await updateOrganisationStatus(db, params.orgId, status);
+    if ("error" in result) return result;
+    throw redirect(`/admin/clients/${params.orgId}?tab=${tab}`);
+  }
+
+  if (intent === "mark_live") {
+    const result = await markClientWebsiteLive(db, params.orgId);
+    if ("error" in result) return result;
+    throw redirect(`/admin/clients/${params.orgId}?tab=${tab}`);
+  }
+
+  if (intent === "unmark_live") {
+    const result = await unmarkClientWebsiteLive(db, params.orgId);
+    if ("error" in result) return result;
+    throw redirect(`/admin/clients/${params.orgId}?tab=${tab}`);
+  }
+
+  return { error: "Unknown action." };
+}
+
 function statusTone(status: string): "success" | "warning" | "danger" | "neutral" {
   if (status === "active" || status === "connected" || status === "paid") {
     return "success";
@@ -56,14 +92,22 @@ function statusTone(status: string): "success" | "warning" | "danger" | "neutral
 
 export default function AdminClientDetailPage({
   loaderData,
+  actionData,
 }: Route.ComponentProps) {
   const { client } = loaderData;
   const [params] = useSearchParams();
+  const navigation = useNavigation();
+  const busy = navigation.state !== "idle";
   const tab = TABS.some((t) => t.id === params.get("tab"))
     ? (params.get("tab") as (typeof TABS)[number]["id"])
     : "overview";
   const data = client.onboarding.data;
   const primary = client.members[0];
+  const isLive = client.domainTasks.some((t) => t.status === "connected");
+  const liveDomain =
+    client.domainTasks.find((t) => t.status === "connected")?.domainName ??
+    client.domainTasks[0]?.domainName ??
+    null;
 
   return (
     <div className="iwfw-admin-page">
@@ -79,6 +123,9 @@ export default function AdminClientDetailPage({
         </div>
         <div style={{ display: "grid", gap: "0.35rem", justifyItems: "end" }}>
           <Badge tone={statusTone(client.org.status)}>{client.org.status}</Badge>
+          <Badge tone={isLive ? "success" : "warning"}>
+            {isLive ? "Website live" : "Not live yet"}
+          </Badge>
           <Badge tone="neutral">{client.stageLabel}</Badge>
         </div>
       </header>
@@ -101,6 +148,74 @@ export default function AdminClientDetailPage({
 
       {tab === "overview" ? (
         <div className="iwfw-admin-grid">
+          <section className="iwfw-admin-panel">
+            <div className="iwfw-admin-panel__head">
+              <h2>Status &amp; launch</h2>
+            </div>
+            <p className="iwfw-admin-muted" style={{ marginBottom: "0.85rem" }}>
+              When the site is ready for the customer, mark it live. That
+              completes their “Go live” stage.
+              {liveDomain ? ` Domain: ${liveDomain}.` : ""}
+            </p>
+            {actionData && "error" in actionData && actionData.error ? (
+              <p className="iwfw-start__error" role="alert">
+                {actionData.error}
+              </p>
+            ) : null}
+            <Form method="post" className="iwfw-start__form" style={{ marginBottom: "1rem" }}>
+              <input type="hidden" name="intent" value="update_org_status" />
+              <input type="hidden" name="tab" value="overview" />
+              <label className="iwfw-field">
+                <span>Organisation status</span>
+                <select
+                  className="iwfw-control"
+                  name="status"
+                  defaultValue={client.org.status}
+                >
+                  <option value="prospect">Prospect</option>
+                  <option value="active">Active</option>
+                  <option value="cancelling">Cancelling</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="churned">Churned</option>
+                </select>
+              </label>
+              <button
+                type="submit"
+                className="iwfw-btn iwfw-btn--outline"
+                disabled={busy}
+              >
+                {busy ? "Saving…" : "Save status"}
+              </button>
+            </Form>
+            <div className="iwfw-admin-actions">
+              {!isLive ? (
+                <Form method="post">
+                  <input type="hidden" name="intent" value="mark_live" />
+                  <input type="hidden" name="tab" value="overview" />
+                  <button
+                    type="submit"
+                    className="iwfw-btn iwfw-btn--green"
+                    disabled={busy}
+                  >
+                    {busy ? "Updating…" : "Mark website live"}
+                  </button>
+                </Form>
+              ) : (
+                <Form method="post">
+                  <input type="hidden" name="intent" value="unmark_live" />
+                  <input type="hidden" name="tab" value="overview" />
+                  <button
+                    type="submit"
+                    className="iwfw-btn iwfw-btn--outline"
+                    disabled={busy}
+                  >
+                    {busy ? "Updating…" : "Mark not live yet"}
+                  </button>
+                </Form>
+              )}
+            </div>
+          </section>
+
           <section className="iwfw-admin-panel">
             <div className="iwfw-admin-panel__head">
               <h2>Where they are</h2>

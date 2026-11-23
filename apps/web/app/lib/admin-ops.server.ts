@@ -29,6 +29,21 @@ import {
   type DomainTaskSnapshot,
 } from "./customer-progress";
 import { categoryLabel, isUploadCategory } from "./image-sniff";
+import { newId } from "./ids";
+
+export const ORG_STATUSES = [
+  "prospect",
+  "active",
+  "cancelling",
+  "cancelled",
+  "churned",
+] as const;
+
+export type OrgStatus = (typeof ORG_STATUSES)[number];
+
+export function isOrgStatus(value: string): value is OrgStatus {
+  return (ORG_STATUSES as readonly string[]).includes(value);
+}
 
 type Db = ReturnType<typeof createDb>;
 
@@ -160,6 +175,7 @@ export async function listAdminClients(db: Db) {
   const subs = await db.select().from(subscriptions).all();
   const mems = await db.select().from(memberships).all();
   const users = await db.select().from(user).all();
+  const domainTasks = await db.select().from(domainRegistrationTasks).all();
 
   const subByOrg = new Map<string, (typeof subs)[number]>();
   for (const s of subs) {
@@ -168,6 +184,12 @@ export async function listAdminClients(db: Db) {
       subByOrg.set(s.organisationId, s);
     }
   }
+
+  const liveByOrg = new Set(
+    domainTasks
+      .filter((t) => t.status === "connected")
+      .map((t) => t.organisationId),
+  );
 
   const userById = new Map(users.map((u) => [u.id, u]));
   const membersByOrg = new Map<string, string[]>();
@@ -187,6 +209,7 @@ export async function listAdminClients(db: Db) {
       id: o.id,
       tradingName: o.tradingName,
       status: o.status,
+      websiteLive: liveByOrg.has(o.id),
       stripeCustomerId: o.stripeCustomerId,
       createdAt: o.createdAt ? o.createdAt.toISOString() : null,
       contactName: primaryUser?.name ?? null,
@@ -364,6 +387,125 @@ export async function updateTransferTaskStatus(
     return { ok: true as const };
   }
   return { error: "Unknown transfer action." };
+}
+
+export async function updateOrganisationStatus(
+  db: Db,
+  organisationId: string,
+  status: OrgStatus,
+) {
+  const org = await db
+    .select()
+    .from(organisations)
+    .where(eq(organisations.id, organisationId))
+    .get();
+  if (!org) return { error: "Client not found." };
+
+  await db
+    .update(organisations)
+    .set({ status, updatedAt: new Date() })
+    .where(eq(organisations.id, organisationId));
+  return { ok: true as const };
+}
+
+/**
+ * Mark the customer's website as live (journey “Go live” = domain connected).
+ * Updates the latest domain task, or creates one from the brief if missing.
+ */
+export async function markClientWebsiteLive(
+  db: Db,
+  organisationId: string,
+) {
+  const org = await db
+    .select()
+    .from(organisations)
+    .where(eq(organisations.id, organisationId))
+    .get();
+  if (!org) return { error: "Client not found." };
+
+  const now = new Date();
+  const existing = await db
+    .select()
+    .from(domainRegistrationTasks)
+    .where(eq(domainRegistrationTasks.organisationId, organisationId))
+    .orderBy(desc(domainRegistrationTasks.createdAt))
+    .get();
+
+  if (existing) {
+    await db
+      .update(domainRegistrationTasks)
+      .set({
+        status: "connected",
+        registeredAt: existing.registeredAt ?? now,
+        connectedAt: now,
+        updatedAt: now,
+      })
+      .where(eq(domainRegistrationTasks.id, existing.id));
+  } else {
+    const profile = await db
+      .select()
+      .from(onboardingProfiles)
+      .where(eq(onboardingProfiles.organisationId, organisationId))
+      .get();
+    const data = parseOnboardingData(profile?.dataJson);
+    const domainName =
+      data.domain.preferredDomain.trim() ||
+      data.domain.existingDomain.trim() ||
+      `${org.tradingName.toLowerCase().replace(/[^a-z0-9]+/g, "") || "site"}.co.uk`;
+    const domainMode =
+      data.domain.mode === "existing" ? "existing" : "new";
+
+    await db.insert(domainRegistrationTasks).values({
+      id: newId("dom"),
+      organisationId,
+      domainName,
+      domainMode,
+      status: "connected",
+      registeredAt: now,
+      connectedAt: now,
+      createdAt: now,
+      updatedAt: now,
+      adminNotes: "Marked live from client folder",
+    });
+  }
+
+  // Paid clients should be active once the site is live.
+  if (org.status === "prospect") {
+    await db
+      .update(organisations)
+      .set({ status: "active", updatedAt: now })
+      .where(eq(organisations.id, organisationId));
+  }
+
+  return { ok: true as const };
+}
+
+/** Move the site back off “live” (domain task → in_progress). */
+export async function unmarkClientWebsiteLive(
+  db: Db,
+  organisationId: string,
+) {
+  const existing = await db
+    .select()
+    .from(domainRegistrationTasks)
+    .where(eq(domainRegistrationTasks.organisationId, organisationId))
+    .orderBy(desc(domainRegistrationTasks.createdAt))
+    .get();
+  if (!existing) {
+    return { error: "No domain / launch task to update." };
+  }
+  if (existing.status !== "connected") {
+    return { error: "Website is not marked live." };
+  }
+  await db
+    .update(domainRegistrationTasks)
+    .set({
+      status: "in_progress",
+      connectedAt: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(domainRegistrationTasks.id, existing.id));
+  return { ok: true as const };
 }
 
 export async function getAdminClientDetail(db: Db, organisationId: string) {
