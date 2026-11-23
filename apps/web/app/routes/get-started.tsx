@@ -51,7 +51,7 @@ export default function GetStartedPackage({ loaderData }: Route.ComponentProps) 
         <p className="iwfw-start__lead">
           {loaderData.addingSite
             ? "Start a fresh brief for another business or brand. You’ll get a separate site and subscription after payment."
-            : "Answer a short questionnaire, choose a domain, then pay securely. We create your account automatically after Stripe confirms payment — no signup first."}
+            : "Answer a short questionnaire, choose a domain, then pay securely. We create your account after payment is confirmed — no signup first."}
         </p>
       </header>
 
@@ -79,12 +79,12 @@ export default function GetStartedPackage({ loaderData }: Route.ComponentProps) 
               fee · cancel anytime.
             </li>
             <li>
-              Domains are checked live, then registered <strong>manually</strong>{" "}
-              by our team after payment — never auto-purchased.
+              Domains are checked live, then registered by our team after
+              payment.
             </li>
             <li>
-              After payment, we create your organisation and send an account
-              activation link (no plaintext passwords).
+              After payment, we create your account and email a secure activation
+              link.
             </li>
           </ul>
         </div>

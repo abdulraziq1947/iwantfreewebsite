@@ -1,9 +1,10 @@
-import { Form, Link } from "react-router";
+import { Link } from "react-router";
 import { Panel, Badge } from "@iwfw/ui";
 import { createDb, desc, eq, domainRegistrationTasks } from "@iwfw/db";
 import { getEnv } from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
 import { getCustomerWorkspace } from "../lib/customer-org.server";
+import { domainTaskLabel } from "../lib/customer-progress";
 import type { Route } from "./+types/dashboard.domain";
 
 export function meta(_args: Route.MetaArgs) {
@@ -28,6 +29,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 export default function DomainPage({ loaderData }: Route.ComponentProps) {
   const domain = loaderData.workspace.onboarding?.data.domain;
   const task = loaderData.task;
+  const statusLabel = task ? domainTaskLabel(task.status) : null;
 
   return (
     <div className="iwfw-dash-page">
@@ -35,11 +37,11 @@ export default function DomainPage({ loaderData }: Route.ComponentProps) {
         <div>
           <h1>Domain</h1>
           <p>
-            We purchase and connect domains manually after payment. Nothing is
-            bought automatically.
+            After payment, our team registers or connects your domain and keeps
+            you updated here.
           </p>
         </div>
-        {task && <Badge>{task.status.replaceAll("_", " ")}</Badge>}
+        {statusLabel ? <Badge>{statusLabel}</Badge> : null}
       </header>
 
       <Panel>
@@ -60,11 +62,16 @@ export default function DomainPage({ loaderData }: Route.ComponentProps) {
           </div>
           <div>
             <dt>Domain</dt>
-            <dd>{task?.domainName || domain?.preferredDomain || domain?.existingDomain || "—"}</dd>
+            <dd>
+              {task?.domainName ||
+                domain?.preferredDomain ||
+                domain?.existingDomain ||
+                "—"}
+            </dd>
           </div>
           <div>
-            <dt>Registration task</dt>
-            <dd>{task ? task.status.replaceAll("_", " ") : "None yet"}</dd>
+            <dt>Status</dt>
+            <dd>{statusLabel ?? "Not started yet"}</dd>
           </div>
           <div>
             <dt>Registered</dt>
@@ -84,9 +91,9 @@ export default function DomainPage({ loaderData }: Route.ComponentProps) {
           </div>
         </dl>
         <p className="iwfw-dash-fine">
-          Availability at checkout was provisional. Our team completes registrar
-          purchase and DNS setup — you will see status updates here. You already
-          chose this domain when you ordered.
+          Domain availability at checkout is provisional. We’ll complete
+          registration and DNS setup for you — status updates appear on this
+          page.
         </p>
         <div className="iwfw-dash-inline-actions">
           <Link to="/dashboard/onboarding" className="iwfw-btn iwfw-btn--outline">

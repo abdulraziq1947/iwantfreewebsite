@@ -32,10 +32,6 @@ export default function Pricing() {
           <li>Weekly Google Business Profile post</li>
           <li>Google review replies</li>
         </ul>
-        <p className="iwfw-pricing__note">
-          Optional Google Rank Tracking (£9.99/month) will be offered only once
-          that feature is operational.
-        </p>
         <div className="iwfw-pricing__cta">
           <Link to="/get-started" className="iwfw-btn iwfw-btn--green">
             Get My Website Today

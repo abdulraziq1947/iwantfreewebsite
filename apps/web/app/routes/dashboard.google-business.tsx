@@ -28,7 +28,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const db = createDb(getEnv(context).DB);
   const workspace = await getCustomerWorkspace(db, auth);
   if (!workspace.primary || !workspace.onboarding) {
-    return { error: "No organisation found." };
+    return { error: "No website account found." };
   }
 
   const form = await request.formData();

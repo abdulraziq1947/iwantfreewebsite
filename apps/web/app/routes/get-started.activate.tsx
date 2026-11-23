@@ -84,7 +84,7 @@ export default function ActivateAccount({
         <h1>Choose your password</h1>
         <p className="iwfw-start__lead">
           Your subscription is confirmed. Set a password to open your dashboard.
-          We never email plaintext passwords.
+          We never send your password by email.
         </p>
       </header>
 

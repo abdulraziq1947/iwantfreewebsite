@@ -4,22 +4,23 @@ import type { Route } from "./+types/privacy";
 
 export function meta(_args: Route.MetaArgs) {
   return [
-    { title: "Privacy Policy (draft) — iwantfreewebsite.com" },
-    { name: "robots", content: "noindex" },
+    { title: "Privacy Policy — iwantfreewebsite.com" },
+    {
+      name: "description",
+      content:
+        "How iwantfreewebsite.com handles personal data for UK business customers.",
+    },
   ];
 }
 
 export default function PrivacyPage() {
   return (
     <main className="iwfw-legal">
-      <p className="iwfw-legal__draft">
-        DRAFT FOR REVIEW — not final legal advice. Aligned with terms version{" "}
-        {TERMS_VERSION}. Do not treat as published until you approve.
-      </p>
       <h1>Privacy Policy</h1>
       <p className="iwfw-legal__lead">
-        This draft explains how iwantfreewebsite.com handles personal data for
-        UK business customers and website visitors.
+        This policy explains how iwantfreewebsite.com handles personal data for
+        UK business customers and website visitors. Aligned with terms version{" "}
+        {TERMS_VERSION}.
       </p>
 
       <section>
@@ -36,16 +37,15 @@ export default function PrivacyPage() {
       <section>
         <h2>2. Data we collect</h2>
         <ul>
-          <li>Account details (name, email, password hash via our auth provider).</li>
+          <li>Account details (name, email, and secure password storage).</li>
           <li>
-            Business and onboarding information you submit (contact details,
-            address, services, website preferences, domain preferences, Google
-            Business Profile details).
+            Business and order information you submit (contact details, address,
+            services, website preferences, domain preferences, Google Business
+            Profile details).
           </li>
           <li>
-            Billing-related identifiers from our payment provider (for example
-            Stripe customer and subscription IDs). We do not store full card
-            numbers.
+            Billing identifiers from our payment provider (for example Stripe
+            customer and subscription IDs). We do not store full card numbers.
           </li>
           <li>
             Technical data such as IP address and device information for
@@ -64,7 +64,8 @@ export default function PrivacyPage() {
           <li>To deliver and support the managed website service.</li>
           <li>To process subscription payments and prevent fraud.</li>
           <li>
-            To manage cancellation and manual website/domain transfer tasks.
+            To manage cancellation and help transfer your website and domain if
+            you leave.
           </li>
           <li>To send service messages; marketing only with consent.</li>
           <li>To meet legal and accounting obligations.</li>
@@ -74,9 +75,9 @@ export default function PrivacyPage() {
       <section>
         <h2>4. Sharing</h2>
         <p>
-          We use processors such as hosting/infrastructure (Cloudflare),
-          authentication, payment (Stripe), and transactional email (planned:
-          Resend). We do not sell your personal data.
+          We use trusted processors such as hosting and infrastructure
+          (Cloudflare), authentication, payment (Stripe), and email delivery. We
+          do not sell your personal data.
         </p>
       </section>
 
@@ -85,9 +86,8 @@ export default function PrivacyPage() {
         <p>
           We keep account and service data while you are a customer. After
           cancellation we preserve website, domain, email and file assets until
-          manual transfer is completed (or you instruct otherwise). Longer
-          retention may apply where required by law. Exact post-transfer
-          deletion periods will be confirmed before production go-live.
+          transfer is completed (or you instruct otherwise). Longer retention
+          may apply where required by law.
         </p>
       </section>
 

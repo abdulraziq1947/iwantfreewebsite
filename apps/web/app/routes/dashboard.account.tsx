@@ -56,8 +56,8 @@ export default function AccountPage({ loaderData }: Route.ComponentProps) {
         <Panel>
           <h2>Security</h2>
           <p className="iwfw-dash-copy">
-            Password and two-factor settings will be editable here shortly. For
-            now, contact support if you need a password reset.
+            Need to reset your password? Contact support and we’ll help you
+            securely.
           </p>
           <a href="mailto:support@iwantfreewebsite.com" className="iwfw-btn iwfw-btn--outline">
             Contact support

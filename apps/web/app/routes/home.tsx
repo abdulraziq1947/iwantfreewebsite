@@ -218,8 +218,8 @@ export default function Home() {
           <details>
             <summary>Do you buy the domain for me?</summary>
             <p>
-              You choose the domain. We purchase and renew it manually after
-              payment — nothing is bought automatically.
+              You choose the domain. After payment, we register and renew it for
+              you.
             </p>
           </details>
         </div>

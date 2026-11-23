@@ -154,7 +154,9 @@ export default function GetStartedReview({
               <dd>
                 {loaderData.domainName}{" "}
                 <span className="iwfw-start__fine">
-                  ({loaderData.domainMode === "existing" ? "owned by you" : "new — manual registration"})
+                  ({loaderData.domainMode === "existing"
+                    ? "you already own this"
+                    : "we’ll register it after payment"})
                 </span>
               </dd>
             </div>
@@ -181,8 +183,11 @@ export default function GetStartedReview({
           </ul>
           {loaderData.domainRecheck && (
             <p className="iwfw-start__fine">
-              Domain recheck: {loaderData.domainRecheck.availability} —{" "}
-              {loaderData.domainRecheck.message}
+              {loaderData.domainRecheck.availability === "available"
+                ? "Domain still looks available."
+                : loaderData.domainRecheck.availability === "unavailable"
+                  ? "This domain may no longer be available — go back to choose another."
+                  : loaderData.domainRecheck.message}
             </p>
           )}
           <p className="iwfw-start__fine">{loaderData.disclaimer}</p>
@@ -193,8 +198,10 @@ export default function GetStartedReview({
           <ul className="iwfw-start__policy">
             <li>No minimum term and no cancellation penalty.</li>
             <li>Access continues until the end of the current paid period.</li>
-            <li>Website and domain transfers stay manual after cancellation.</li>
-            <li>No account is created until Stripe confirms payment.</li>
+            <li>
+              If you leave later, we’ll help transfer your website and domain.
+            </li>
+            <li>Your account is created after payment is confirmed.</li>
           </ul>
 
           <Form method="post" className="iwfw-start__form">
@@ -224,8 +231,8 @@ export default function GetStartedReview({
             )}
             {!loaderData.stripeConfigured && (
               <p className="iwfw-start__error" role="status">
-                Stripe test Checkout is not configured (needs sk_test_ key and
-                STRIPE_PRICE_ID).
+                Checkout isn’t available right now. Please try again shortly or
+                contact support@iwantfreewebsite.com.
               </p>
             )}
 
@@ -238,12 +245,12 @@ export default function GetStartedReview({
                 className="iwfw-btn iwfw-btn--green"
                 disabled={busy || !loaderData.stripeConfigured}
               >
-                {busy ? "Redirecting to Stripe…" : "Pay £39.99/month securely"}
+                {busy ? "Redirecting…" : "Pay £39.99/month securely"}
               </button>
             </div>
             <p className="iwfw-start__fine">
-              Stripe test mode. The success page is not proof of payment —
-              webhooks confirm your order.
+              You’ll be taken to our secure payment page to complete your
+              subscription.
             </p>
           </Form>
         </section>

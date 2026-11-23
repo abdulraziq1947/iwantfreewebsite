@@ -58,10 +58,10 @@ export function gbpAccessSummary(
   if (granted) {
     return {
       state: "granted",
-      label: "GMB access granted",
+      label: "Google Business access confirmed",
       detail: profileUrl
-        ? `Manager access confirmed${profileUrl ? ` · ${profileUrl}` : ""}.`
-        : "Manager access confirmed by the team.",
+        ? `Manager access is active · ${profileUrl}`
+        : "Manager access is active for weekly posts and review help.",
       granted: true,
       awaitingCustomer: false,
       awaitingStaff: false,
@@ -73,9 +73,9 @@ export function gbpAccessSummary(
   if (outcome === "invitation_sent") {
     return {
       state: "invite_sent",
-      label: "Invite sent — awaiting accept",
+      label: "Invite sent — we’re confirming access",
       detail:
-        "Customer says the Manager invite was sent. Staff still need to accept it in Google and mark access granted.",
+        "You’ve sent the Manager invite. We’ll confirm it on our side shortly.",
       granted: false,
       awaitingCustomer: false,
       awaitingStaff: true,
@@ -87,8 +87,8 @@ export function gbpAccessSummary(
   if (outcome === "help_requested") {
     return {
       state: "help_requested",
-      label: "Customer needs help with GMB",
-      detail: "Customer asked for help inviting us as Manager.",
+      label: "We’ll help with Google Business",
+      detail: "You’ve asked for help inviting us as Manager — our team will follow up.",
       granted: false,
       awaitingCustomer: false,
       awaitingStaff: true,
@@ -101,7 +101,7 @@ export function gbpAccessSummary(
     return {
       state: "no_profile",
       label: "No Google Business profile yet",
-      detail: "Customer doesn’t have a profile — optional for now, or help them create one.",
+      detail: "That’s fine for now — we can help you set one up later if you want.",
       granted: false,
       awaitingCustomer: false,
       awaitingStaff: false,
@@ -112,9 +112,9 @@ export function gbpAccessSummary(
 
   return {
     state: "not_started",
-    label: "GMB access not granted",
+    label: "Google Business Manager access needed",
     detail:
-      "Customer hasn’t confirmed a Manager invite yet. Helpful for weekly posts and review replies.",
+      "Invite us as Manager so we can handle weekly posts and review replies.",
     granted: false,
     awaitingCustomer: true,
     awaitingStaff: false,
@@ -242,12 +242,12 @@ export function buildAttentionBoard(options: {
       owner: "customer",
       severity: "waiting",
       to: "/dashboard/google-business",
-      cta: "View GMB status",
+      cta: "View Google Business",
     });
   } else if (gbp.state === "not_started" && !options.needsSubscription) {
     staff.push({
       id: "gbp-chase",
-      title: "GMB access not granted yet",
+      title: "Google Business access not confirmed yet",
       body: "Optional but useful — customer has not confirmed a Manager invite.",
       owner: "staff",
       severity: "info",

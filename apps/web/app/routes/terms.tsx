@@ -4,22 +4,22 @@ import type { Route } from "./+types/terms";
 
 export function meta(_args: Route.MetaArgs) {
   return [
-    { title: "Terms & Conditions (draft) — iwantfreewebsite.com" },
-    { name: "robots", content: "noindex" },
+    { title: "Terms & Conditions — iwantfreewebsite.com" },
+    {
+      name: "description",
+      content:
+        "Terms for the iwantfreewebsite.com managed website subscription.",
+    },
   ];
 }
 
 export default function TermsPage() {
   return (
     <main className="iwfw-legal">
-      <p className="iwfw-legal__draft">
-        DRAFT FOR REVIEW — not final legal advice. Version {TERMS_VERSION}. Do
-        not treat as published until you approve.
-      </p>
       <h1>Terms &amp; Conditions</h1>
       <p className="iwfw-legal__lead">
-        These draft terms describe the managed website subscription offered by
-        iwantfreewebsite.com for UK businesses.
+        These terms describe the managed website subscription offered by
+        iwantfreewebsite.com for UK businesses. Version {TERMS_VERSION}.
       </p>
 
       <section>
@@ -28,18 +28,19 @@ export default function TermsPage() {
           We provide a managed business website package for{" "}
           <strong>£39.99 per month</strong> (inclusive of VAT where applicable),
           with a <strong>£0 upfront website design fee</strong>. The package
-          typically includes a professionally built website, hosting,
-          assistance with domain registration/renewal (manual), one business
-          email mailbox, weekly Google Business Profile posting support, help
-          with Google review replies, and UK-based support, as described at
-          checkout.
+          typically includes a professionally built website, hosting, help with
+          domain registration and renewal, one business email mailbox, weekly
+          Google Business Profile posting support, help with Google review
+          replies, and UK-based support, as described at checkout.
         </p>
       </section>
 
       <section>
         <h2>2. Contract length and cancellation</h2>
         <ul>
-          <li>There is <strong>no minimum commitment</strong>.</li>
+          <li>
+            There is <strong>no minimum commitment</strong>.
+          </li>
           <li>
             You may <strong>cancel anytime</strong> from your customer
             dashboard. There is <strong>no cancellation penalty</strong>.
@@ -49,8 +50,7 @@ export default function TermsPage() {
             <strong>end of the current paid billing period</strong>.
           </li>
           <li>
-            We instruct Stripe (or our payment provider) so that{" "}
-            <strong>further renewals do not occur</strong> after that date.
+            Further renewals will not occur after that date.
           </li>
           <li>
             Unless required by law, we do not automatically refund the remainder
@@ -60,38 +60,31 @@ export default function TermsPage() {
       </section>
 
       <section>
-        <h2>3. Ownership and manual transfer after cancellation</h2>
+        <h2>3. Ownership and transfer after cancellation</h2>
         <p>
           Subject to these Terms and any third-party registrar or hosting rules,
-          you retain ownership of your website and domain assets associated with
-          the subscription.
+          you retain ownership of your website content and domain associated
+          with the subscription.
         </p>
         <ul>
           <li>
-            Transfers are <strong>manual</strong>. We do not operate an
-            automated asset-transfer system.
+            If you cancel, we will help transfer your website and domain to you.
+            Transfers are handled by our team (not automated).
           </li>
           <li>
-            When cancellation is scheduled, we create an{" "}
-            <strong>internal asset transfer task</strong>, notify our admin
-            team, and show transfer status in your dashboard:{" "}
+            Your dashboard shows transfer progress as{" "}
             <strong>Pending</strong>, <strong>In progress</strong>, or{" "}
-            <strong>Completed</strong>.
-          </li>
-          <li>
-            When transfer is completed, we record the completion date and notify
-            you.
+            <strong>Completed</strong>. We notify you when it is done.
           </li>
           <li>
             We do <strong>not</strong> automatically delete websites, domains,
-            email mailboxes or customer files when a subscription ends. Assets
-            are preserved until the manual transfer is completed (or you instruct
-            otherwise in writing).
+            email mailboxes or your files when a subscription ends. Assets are
+            preserved until transfer is completed (or you instruct otherwise in
+            writing).
           </li>
           <li>
-            We do <strong>not</strong> promise an exact transfer timeframe until
-            an operational SLA is published. Timescales depend on registrar
-            processes, DNS, and cooperation from you where needed.
+            Transfer timescales depend on registrar processes, DNS, and your
+            cooperation where needed. We will keep you updated.
           </li>
         </ul>
       </section>
@@ -100,9 +93,9 @@ export default function TermsPage() {
         <h2>4. Domains and email</h2>
         <p>
           Domain selection does not reserve or guarantee availability. Domains
-          are purchased and renewed manually after payment, subject to
-          availability and registrar rules. Email provisioning depends on domain
-          DNS being correctly configured.
+          are registered and renewed after payment, subject to availability and
+          registrar rules. Email depends on domain DNS being correctly
+          configured.
         </p>
       </section>
 
@@ -120,8 +113,7 @@ export default function TermsPage() {
         <h2>6. Fees and taxes</h2>
         <p>
           Prices are shown in GBP. The advertised £39.99/month is inclusive of
-          VAT where applicable. Tax treatment for live billing will be confirmed
-          before production payments are enabled.
+          VAT where applicable.
         </p>
       </section>
 
@@ -130,8 +122,6 @@ export default function TermsPage() {
         <p>
           We provide the service with reasonable care and skill. Nothing in
           these Terms excludes liability that cannot be excluded under UK law.
-          Draft wording on liability caps will be finalised with your legal
-          review before publication.
         </p>
       </section>
 
@@ -139,7 +129,7 @@ export default function TermsPage() {
         <h2>8. Privacy</h2>
         <p>
           How we handle personal data is described in our{" "}
-          <Link to="/privacy">Privacy Policy</Link> (also draft for review).
+          <Link to="/privacy">Privacy Policy</Link>.
         </p>
       </section>
 

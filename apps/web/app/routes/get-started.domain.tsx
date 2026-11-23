@@ -137,8 +137,8 @@ export default function GetStartedDomain({
         <p className="iwfw-start__kicker">Step 4 of 5 · Domain</p>
         <h1>Find your web address</h1>
         <p className="iwfw-start__lead">
-          Search .co.uk, .com or .uk — or tell us a domain you already own. We
-          register new domains manually after payment.
+          Search .co.uk, .com or .uk — or tell us a domain you already own. We’ll
+          register new domains for you after payment.
         </p>
         <div className="iwfw-order-progress" aria-hidden>
           <span style={{ width: "80%" }} />
@@ -211,7 +211,7 @@ export default function GetStartedDomain({
               <span>
                 <strong>Register a new domain</strong>
                 <br />
-                We purchase it manually after payment — never automatically.
+                We’ll register it for you after payment.
               </span>
             </label>
             <label className="iwfw-check">

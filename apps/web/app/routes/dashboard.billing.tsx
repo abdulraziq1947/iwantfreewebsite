@@ -58,7 +58,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const db = createDb(getEnv(context).DB);
   const workspace = await getCustomerWorkspace(db, auth);
   if (!workspace.primary) {
-    return { error: "No organisation found." };
+    return { error: "No website account found." };
   }
 
   const form = await request.formData();
@@ -101,6 +101,39 @@ function formatMoney(pence: number, currency = "GBP"): string {
   }).format(pence / 100);
 }
 
+function subscriptionStatusLabel(status: string): string {
+  switch (status) {
+    case "active":
+      return "Active";
+    case "trialing":
+      return "Trial";
+    case "past_due":
+      return "Payment past due";
+    case "unpaid":
+      return "Unpaid";
+    case "canceled":
+    case "cancelled":
+      return "Cancelled";
+    case "incomplete":
+      return "Incomplete";
+    default:
+      return status.replaceAll("_", " ");
+  }
+}
+
+function transferStatusLabel(status: string): string {
+  switch (status) {
+    case "pending":
+      return "Pending";
+    case "in_progress":
+      return "In progress";
+    case "completed":
+      return "Completed";
+    default:
+      return status.replaceAll("_", " ");
+  }
+}
+
 export default function BillingPage({
   loaderData,
   actionData,
@@ -127,15 +160,15 @@ export default function BillingPage({
         <Badge tone={orgStatusTone(status)}>{orgStatusLabel(status)}</Badge>
       </header>
 
-      <section className="iwfw-admin-panel" style={{ marginBottom: "1rem" }}>
-        <div className="iwfw-admin-panel__head">
+      <section className="iwfw-dash-panel">
+        <div className="iwfw-dash-panel-head">
           <h2>Invoices</h2>
         </div>
         {invoiceError ? (
           <p className="iwfw-dash-fine">{invoiceError}</p>
         ) : invoices.length === 0 ? (
           <p className="iwfw-dash-fine">
-            Invoices appear here after Stripe confirms a payment.
+            Invoices appear here after your first payment.
           </p>
         ) : (
           <ul className="iwfw-invoice-list">
@@ -143,7 +176,7 @@ export default function BillingPage({
               <li key={inv.id}>
                 <div>
                   <strong>
-                    {inv.number || inv.id}{" "}
+                    {inv.number || "Invoice"}{" "}
                     <Badge
                       tone={
                         inv.status === "paid"
@@ -156,7 +189,7 @@ export default function BillingPage({
                       {inv.status || "—"}
                     </Badge>
                   </strong>
-                  <p className="iwfw-dash-fine" style={{ margin: "0.2rem 0 0" }}>
+                  <p className="iwfw-dash-fine iwfw-dash-fine--tight">
                     Billed {formatDate(inv.createdAt)}
                     {inv.periodStart && inv.periodEnd
                       ? ` · period ${formatDate(inv.periodStart)} → ${formatDate(inv.periodEnd)}`
@@ -168,11 +201,11 @@ export default function BillingPage({
                       : ""}
                   </p>
                 </div>
-                <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                <div className="iwfw-dash-inline-actions">
                   {inv.invoicePdfUrl ? (
                     <a
                       href={`/dashboard/billing/invoice/${inv.id}.pdf`}
-                      className="iwfw-btn iwfw-btn--green iwfw-admin__btn-sm"
+                      className="iwfw-btn iwfw-btn--green iwfw-btn--sm"
                     >
                       Download PDF
                     </a>
@@ -182,7 +215,7 @@ export default function BillingPage({
                       href={inv.hostedInvoiceUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="iwfw-btn iwfw-btn--outline iwfw-admin__btn-sm"
+                      className="iwfw-btn iwfw-btn--outline iwfw-btn--sm"
                     >
                       View online
                     </a>
@@ -203,7 +236,7 @@ export default function BillingPage({
           <ul className="iwfw-dash-list">
             <li>Managed business website</li>
             <li>Hosting &amp; maintenance</li>
-            <li>Domain help (manual purchase/renewal)</li>
+            <li>Domain help</li>
             <li>One business email mailbox</li>
             <li>Weekly Google Business Profile post</li>
             <li>Review reply help</li>
@@ -212,20 +245,24 @@ export default function BillingPage({
           {subscription ? (
             <dl className="iwfw-dash-dl">
               <div>
-                <dt>Subscription status</dt>
-                <dd>{subscription.status}</dd>
+                <dt>Status</dt>
+                <dd>{subscriptionStatusLabel(subscription.status)}</dd>
               </div>
               <div>
-                <dt>Current period ends</dt>
+                <dt>
+                  {subscription.cancelAtPeriodEnd
+                    ? "Ends on"
+                    : "Renews / period ends"}
+                </dt>
                 <dd>{formatDate(subscription.currentPeriodEnd)}</dd>
               </div>
               <div>
-                <dt>Cancel at period end</dt>
-                <dd>{subscription.cancelAtPeriodEnd ? "Yes" : "No"}</dd>
-              </div>
-              <div>
-                <dt>Stripe reference</dt>
-                <dd>{subscription.stripeSubscriptionId}</dd>
+                <dt>Cancellation</dt>
+                <dd>
+                  {subscription.cancelAtPeriodEnd
+                    ? "Scheduled at period end"
+                    : "Not scheduled"}
+                </dd>
               </div>
             </dl>
           ) : status === "prospect" ? (
@@ -237,8 +274,8 @@ export default function BillingPage({
             </Link>
           ) : (
             <p className="iwfw-dash-copy">
-              Subscription details will appear here once Stripe confirms your
-              payment via webhook.
+              Subscription details will appear here once your payment is
+              confirmed.
             </p>
           )}
         </Panel>
@@ -252,8 +289,8 @@ export default function BillingPage({
             scheduled cancellation before the period ends.
           </p>
           <p className="iwfw-dash-copy">
-            When the subscription actually ends, we create one manual asset
-            transfer task. We do not auto-delete or transfer websites, domains,
+            When your subscription ends, we help transfer your website and
+            domain to you. We do not automatically delete your site, domain,
             email or files.
           </p>
 
@@ -276,7 +313,7 @@ export default function BillingPage({
                 className="iwfw-btn iwfw-btn--outline"
                 disabled={busy}
               >
-                {busy ? "Updating…" : "Cancel at period end"}
+                {busy ? "Updating…" : "Cancel at end of billing period"}
               </button>
             </Form>
           )}
@@ -301,38 +338,29 @@ export default function BillingPage({
 
           {!activeLike && (
             <p className="iwfw-dash-fine">
-              Cancellation controls appear when you have an active Stripe
-              subscription.
+              Cancellation controls appear when you have an active subscription.
             </p>
           )}
 
-          <h2 className="iwfw-start__subhead">Asset transfer</h2>
           {transfer ? (
-            <dl className="iwfw-dash-dl">
-              <div>
-                <dt>Status</dt>
-                <dd>{transfer.status.replace("_", " ")}</dd>
-              </div>
-              <div>
-                <dt>Created</dt>
-                <dd>{formatDate(transfer.createdAt)}</dd>
-              </div>
-              <div>
-                <dt>Completed</dt>
-                <dd>{formatDate(transfer.completedAt)}</dd>
-              </div>
-            </dl>
-          ) : (
-            <p className="iwfw-dash-fine">
-              No transfer task yet. A task is created when the subscription ends
-              (not when cancel is only scheduled).
-            </p>
-          )}
-
-          <p className="iwfw-dash-fine">
-            Optional Google Rank Tracking (£9.99/month) remains disabled until
-            that feature is operational.
-          </p>
+            <>
+              <h2 className="iwfw-start__subhead">Website transfer</h2>
+              <dl className="iwfw-dash-dl">
+                <div>
+                  <dt>Status</dt>
+                  <dd>{transferStatusLabel(transfer.status)}</dd>
+                </div>
+                <div>
+                  <dt>Started</dt>
+                  <dd>{formatDate(transfer.createdAt)}</dd>
+                </div>
+                <div>
+                  <dt>Completed</dt>
+                  <dd>{formatDate(transfer.completedAt)}</dd>
+                </div>
+              </dl>
+            </>
+          ) : null}
         </Panel>
       </div>
     </div>

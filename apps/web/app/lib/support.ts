@@ -48,9 +48,9 @@ export function ticketStatusLabel(status: string): string {
     case "open":
       return "Open";
     case "awaiting_customer":
-      return "Awaiting customer";
+      return "Waiting for you";
     case "awaiting_staff":
-      return "Awaiting staff";
+      return "We’re on it";
     case "resolved":
       return "Resolved";
     case "closed":
