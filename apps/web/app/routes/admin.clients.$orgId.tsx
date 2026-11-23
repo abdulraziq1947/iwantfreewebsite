@@ -426,7 +426,12 @@ export default function AdminClientDetailPage({
               ["Preferred", data.domain.preferredDomain],
               ["Existing", data.domain.existingDomain],
               ["Email local part", data.email.localPart],
-              ["GBP", data.gbp.outcome || data.gbp.profileUrl || "—"],
+              [
+                "GBP / GMB",
+                data.gbp.accessGranted
+                  ? `Access granted${data.gbp.profileUrl ? ` · ${data.gbp.profileUrl}` : ""}`
+                  : data.gbp.outcome || data.gbp.profileUrl || "Not granted",
+              ],
             ]}
           />
           <BriefCard
