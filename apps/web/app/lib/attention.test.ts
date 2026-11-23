@@ -62,5 +62,28 @@ describe("attention board", () => {
     expect(board.gbp.granted).toBe(true);
     expect(board.customer.some((i) => i.id === "gbp-invite")).toBe(false);
     expect(board.staff.some((i) => i.id === "build-live")).toBe(false);
+    expect(board.customerPendingCount).toBe(0);
+  });
+
+  it("has no customer pending items after invite sent and nothing else required", () => {
+    const data = emptyOnboardingData();
+    data.gbp.outcome = "invitation_sent";
+    const board = buildAttentionBoard({
+      needsSubscription: false,
+      briefReady: true,
+      domainTask: {
+        domainName: "acme.co.uk",
+        domainMode: "new",
+        status: "pending",
+        registeredAt: null,
+        connectedAt: null,
+      },
+      data,
+      uploadCount: 0,
+      openDomainCount: 1,
+    });
+    expect(board.customerPendingCount).toBe(0);
+    expect(board.customer.every((i) => i.severity !== "action")).toBe(true);
+    expect(board.staffPendingCount).toBeGreaterThan(0);
   });
 });

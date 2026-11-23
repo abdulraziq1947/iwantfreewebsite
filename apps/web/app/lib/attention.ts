@@ -254,21 +254,14 @@ export function buildAttentionBoard(options: {
     });
   }
 
+  // Images are helpful for staff, but optional for the customer — do not
+  // treat as a customer “needs attention” action (that keeps the card open).
   if (
     !options.needsSubscription &&
     options.briefReady &&
     !isLive &&
     uploadCount === 0
   ) {
-    customer.push({
-      id: "images",
-      title: "Add images (helpful)",
-      body: "Upload logos, photos or brand assets so we can finish the design faster.",
-      owner: "customer",
-      severity: "info",
-      to: "/dashboard/media",
-      cta: "Upload images",
-    });
     staff.push({
       id: "no-images",
       title: "No customer images yet",
@@ -314,15 +307,6 @@ export function buildAttentionBoard(options: {
     !isLive &&
     options.domainTask?.status !== "unavailable"
   ) {
-    if (customer.every((i) => i.severity !== "action")) {
-      customer.push({
-        id: "waiting-build",
-        title: "We’re building your website",
-        body: "Nothing more required from you for go-live — we’ll notify you when it’s live.",
-        owner: "customer",
-        severity: "waiting",
-      });
-    }
     staff.push({
       id: "build-live",
       title: "Website build / go-live in progress",
@@ -343,10 +327,7 @@ export function buildAttentionBoard(options: {
     staff,
     customerPendingCount,
     staffPendingCount,
-    hasAttention:
-      customerPendingCount > 0 ||
-      staffPendingCount > 0 ||
-      customer.some((i) => i.severity !== "waiting") ||
-      staff.length > 0,
+    /** True when the viewer still has action items (customer or staff). */
+    hasAttention: customerPendingCount > 0 || staffPendingCount > 0,
   };
 }

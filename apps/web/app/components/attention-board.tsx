@@ -78,8 +78,20 @@ export function AttentionBoardCard({
   title?: string;
   gbpActions?: ReactNode;
 }) {
+  const pending =
+    perspective === "customer"
+      ? board.customerPendingCount
+      : board.staffPendingCount;
+
+  // Customers only see this when they still have something to do.
+  if (perspective === "customer" && pending === 0) {
+    return null;
+  }
+
   const primary =
-    perspective === "customer" ? board.customer : board.staff;
+    perspective === "customer"
+      ? board.customer.filter((i) => i.severity === "action")
+      : board.staff;
   const secondary =
     perspective === "customer"
       ? board.staff.filter(
@@ -95,11 +107,6 @@ export function AttentionBoardCard({
     perspective === "customer"
       ? "Pending on our side"
       : "Waiting on customer";
-
-  const pending =
-    perspective === "customer"
-      ? board.customerPendingCount
-      : board.staffPendingCount;
 
   return (
     <section
