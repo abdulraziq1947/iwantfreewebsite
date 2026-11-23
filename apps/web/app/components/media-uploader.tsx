@@ -33,6 +33,8 @@ type MediaUploaderProps = {
   organisationId?: string;
   title?: string;
   description?: string;
+  /** Lock uploads to one category and hide the type selector. */
+  fixedCategory?: UploadCategory;
 };
 
 function formatBytes(n: number) {
@@ -46,10 +48,13 @@ export function MediaUploader({
   organisationId,
   title = "Upload images",
   description = "JPG, PNG or WebP · max 10 MB each · stored privately until your site is built.",
+  fixedCategory,
 }: MediaUploaderProps) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [category, setCategory] = useState<UploadCategory>("logo");
+  const [category, setCategory] = useState<UploadCategory>(
+    fixedCategory ?? "logo",
+  );
   const [uploads, setUploads] = useState<UploadDto[]>([]);
   const [queue, setQueue] = useState<QueuedFile[]>([]);
   const [ready, setReady] = useState(mode === "organisation");
@@ -57,6 +62,7 @@ export function MediaUploader({
   const [dragging, setDragging] = useState(false);
   const uploadingRef = useRef(false);
   const previewUrlsRef = useRef<Set<string>>(new Set());
+  const activeCategory = fixedCategory ?? category;
 
   const listUrl =
     mode === "organisation" && organisationId
@@ -132,7 +138,7 @@ export function MediaUploader({
           next.push({
             localId: crypto.randomUUID(),
             file,
-            category,
+            category: activeCategory,
             progress: 0,
             status: "error",
             error: "File exceeds 10 MB.",
@@ -143,7 +149,7 @@ export function MediaUploader({
         next.push({
           localId: crypto.randomUUID(),
           file,
-          category,
+          category: activeCategory,
           progress: 0,
           status: "queued",
           previewUrl,
@@ -151,7 +157,7 @@ export function MediaUploader({
       }
       setQueue((prev) => [...prev, ...next]);
     },
-    [category],
+    [activeCategory],
   );
 
   const uploadOne = useCallback(
@@ -277,6 +283,9 @@ export function MediaUploader({
   }
 
   const visibleQueue = queue.filter((q) => q.status !== "done");
+  const visibleUploads = fixedCategory
+    ? uploads.filter((u) => u.category === fixedCategory)
+    : uploads;
 
   return (
     <section className="iwfw-uploader" aria-label={title}>
@@ -291,21 +300,23 @@ export function MediaUploader({
         </p>
       )}
 
-      <div className="iwfw-uploader__toolbar">
-        <label className="iwfw-field iwfw-uploader__category">
-          <span>Image type</span>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value as UploadCategory)}
-          >
-            {UPLOAD_CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {categoryLabel(c)}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+      {!fixedCategory && (
+        <div className="iwfw-uploader__toolbar">
+          <label className="iwfw-field iwfw-uploader__category">
+            <span>Image type</span>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value as UploadCategory)}
+            >
+              {UPLOAD_CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {categoryLabel(c)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
 
       <div
         className={`iwfw-uploader__drop${dragging ? " is-dragging" : ""}${!ready ? " is-disabled" : ""}`}
@@ -411,9 +422,9 @@ export function MediaUploader({
         </ul>
       )}
 
-      {uploads.length > 0 && (
+      {visibleUploads.length > 0 && (
         <ul className="iwfw-uploader__grid">
-          {uploads.map((u) => (
+          {visibleUploads.map((u) => (
             <li key={u.id} className="iwfw-uploader__card">
               <a
                 href={u.contentUrl}
@@ -451,7 +462,7 @@ export function MediaUploader({
         </ul>
       )}
 
-      {ready && uploads.length === 0 && visibleQueue.length === 0 && (
+      {ready && visibleUploads.length === 0 && visibleQueue.length === 0 && (
         <p className="iwfw-uploader__empty">No images uploaded yet.</p>
       )}
     </section>

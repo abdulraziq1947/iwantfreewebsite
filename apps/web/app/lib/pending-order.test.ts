@@ -33,7 +33,6 @@ describe("order questionnaire", () => {
     };
     data.services.list = "Analysis";
     data.about.introduction = "We help businesses.";
-    data.website.preferredPages = "Home, About, Contact";
     expect(validateQuestionnaireStep(1, data)).toBeNull();
   });
 

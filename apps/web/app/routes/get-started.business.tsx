@@ -136,14 +136,7 @@ export default function GetStartedBusiness({
           placeholder={"Boiler repairs\nBathroom installation\nEmergency call-outs"}
           hint="One service per line works best."
         />
-        <QuestionnaireField
-          label="Service descriptions"
-          name="descriptions"
-          multiline
-          rows={3}
-          defaultValue={data.services.descriptions}
-          placeholder="Short detail for each service if you have it"
-        />
+        <input type="hidden" name="descriptions" value={data.services.descriptions} />
 
         <h2 className="iwfw-start__subhead">About &amp; hours</h2>
         <QuestionnaireField
@@ -186,14 +179,10 @@ export default function GetStartedBusiness({
         />
 
         <h2 className="iwfw-start__subhead">Website preferences</h2>
-        <QuestionnaireField
-          label="Preferred pages"
+        <input
+          type="hidden"
           name="preferredPages"
-          required
-          multiline
-          rows={3}
-          defaultValue={data.website.preferredPages}
-          placeholder="Home, Services, About, Contact…"
+          value={data.website.preferredPages}
         />
         <QuestionnaireField
           label="Design preferences"

@@ -90,7 +90,7 @@ export function categoryLabel(category: UploadCategory): string {
     case "team_photo":
       return "Team photograph";
     case "portfolio":
-      return "Portfolio / project image";
+      return "Project image";
     case "other":
       return "Other website image";
   }
