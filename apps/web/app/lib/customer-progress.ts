@@ -60,14 +60,13 @@ export function websiteStageLabel(options: {
   switch (options.domainStatus) {
     case "connected":
       return "Almost live";
+    case "unavailable":
+      return "Needs a quick decision";
     case "registered":
     case "in_progress":
-      return "We’re building it";
-    case "unavailable":
-      return "Domain needs attention";
     case "pending":
     default:
-      return "We’re on it";
+      return "We’re working on it";
   }
 }
 
@@ -132,7 +131,7 @@ export function buildStatusBanner(options: {
     return {
       kicker: "You’re all set",
       title: "Nothing more for you to do right now",
-      body: "Your domain is connected and we’re finishing launch. We’ll get back to you when the site is ready.",
+      body: "Your website is nearly ready. We’ll get back to you when it’s live.",
       meta: domain ? `${name} · ${domain}` : name,
     };
   }
@@ -141,12 +140,15 @@ export function buildStatusBanner(options: {
     kicker: "You’re all set",
     title: "Nothing more for you to do right now",
     body: domain
-      ? `We’ve got your brief and ${domain} is with our team. We’ll start work shortly and get back to you once the website is live.`
-      : "We’ve got your brief. Our team will start work shortly and get back to you once the website is live.",
+      ? `We’ve got everything we need for ${domain}. Our team is working on your website and will get back to you once it’s live.`
+      : "We’ve got everything we need. Our team is working on your website and will get back to you once it’s live.",
     meta: name,
   };
 }
 
+/**
+ * Customer-facing journey — keep domain work behind “we’re working on your website”.
+ */
 export function buildJourneyStages(options: {
   needsSubscription: boolean;
   briefReady: boolean;
@@ -154,19 +156,9 @@ export function buildJourneyStages(options: {
 }): JourneyStage[] {
   const { needsSubscription, briefReady, domainTask } = options;
   const domainStatus = domainTask?.status;
-  const domainDone =
-    domainStatus === "connected" || domainStatus === "registered";
-  const domainCurrent =
-    !needsSubscription &&
-    briefReady &&
-    Boolean(domainTask) &&
-    !domainDone &&
-    domainStatus !== "cancelled";
-  const buildCurrent =
-    !needsSubscription &&
-    briefReady &&
-    (domainDone || domainStatus === "in_progress");
   const liveDone = domainStatus === "connected";
+  const workingCurrent =
+    !needsSubscription && briefReady && !liveDone && domainStatus !== "unavailable";
 
   const paymentState: JourneyStage["state"] = needsSubscription
     ? "current"
@@ -176,25 +168,22 @@ export function buildJourneyStages(options: {
     : briefReady
       ? "done"
       : "current";
-  const domainState: JourneyStage["state"] = needsSubscription
+  const workingState: JourneyStage["state"] = needsSubscription
     ? "upcoming"
     : !briefReady
       ? "upcoming"
-      : domainDone
+      : liveDone
         ? "done"
-        : domainCurrent
-          ? "current"
-          : "upcoming";
-  const buildState: JourneyStage["state"] = needsSubscription
-    ? "upcoming"
-    : liveDone
-      ? "done"
-      : buildCurrent
-        ? "current"
-        : domainDone
+        : workingCurrent
           ? "current"
           : "upcoming";
   const liveState: JourneyStage["state"] = liveDone ? "done" : "upcoming";
+
+  const workingDetail = liveDone
+    ? "Build complete — finishing launch checks."
+    : domainTask?.domainName
+      ? `Including ${domainTask.domainName}, hosting and setup — handled by our team.`
+      : "Domain, hosting and setup are handled by our team.";
 
   return [
     {
@@ -207,32 +196,17 @@ export function buildJourneyStages(options: {
     },
     {
       id: "brief",
-      title: "Website brief received",
+      title: "Brief received",
       detail: briefReady
-        ? "We already have your questionnaire answers from checkout."
+        ? "Your checkout answers are with the team."
         : "We’ll use the details you submitted when you ordered.",
       state: briefState,
     },
     {
-      id: "domain",
-      title:
-        domainTask?.domainMode === "existing"
-          ? "Connect your domain"
-          : "Register your domain",
-      detail: domainTask
-        ? `${domainTask.domainName} — ${domainTaskLabel(domainTask.status)}`
-        : "Our team handles purchase and DNS manually after payment.",
-      state: domainState,
-    },
-    {
-      id: "build",
-      title: "We build your website",
-      detail: liveDone
-        ? "Build complete — finishing launch checks."
-        : buildCurrent
-          ? "Our team is building from your brief and photos."
-          : "Our team handles this next — no extra forms from you.",
-      state: buildState,
+      id: "working",
+      title: "We’re working on your website",
+      detail: workingDetail,
+      state: workingState,
     },
     {
       id: "live",
@@ -278,7 +252,7 @@ export function buildCustomerActions(options: {
   if (needsGbpInvite(options.data)) {
     actions.push({
       id: "gbp",
-      title: "Optional: Google Business access",
+      title: "Google Business access",
       body: "If you’d like us to handle weekly posts and review replies, give us Manager access on your Google Business Profile.",
       to: "/dashboard/google-business",
       cta: "Give Manager access",

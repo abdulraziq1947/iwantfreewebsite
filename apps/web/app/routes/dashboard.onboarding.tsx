@@ -1,5 +1,4 @@
 import { Link } from "react-router";
-import { Badge, Panel } from "@iwfw/ui";
 import { createDb } from "@iwfw/db";
 import { getEnv } from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
@@ -7,7 +6,6 @@ import { getCustomerWorkspace } from "../lib/customer-org.server";
 import {
   buildJourneyStages,
   buildStatusBanner,
-  domainTaskLabel,
   needsGbpInvite,
   websiteStageLabel,
 } from "../lib/customer-progress";
@@ -21,7 +19,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
   const db = createDb(getEnv(context).DB);
   const workspace = await getCustomerWorkspace(db, auth);
-  return { workspace, userName: auth.name };
+  return { workspace };
 }
 
 export default function ProgressPage({ loaderData }: Route.ComponentProps) {
@@ -50,57 +48,48 @@ export default function ProgressPage({ loaderData }: Route.ComponentProps) {
     data?.domain.preferredDomain ||
     data?.domain.existingDomain ||
     "—";
+  const paidAndReady = !workspace.needsSubscription && workspace.briefReady;
 
   return (
-    <div className="iwfw-dash-page">
-      <header className="iwfw-dash-page__header">
-        <div>
-          <p className="iwfw-dash-kicker">Progress</p>
+    <div className="iwfw-dash-page iwfw-dash-home">
+      <header className="iwfw-dash-home__hero">
+        <div className="iwfw-dash-home__hero-copy">
+          <p className="iwfw-dash-home__eyebrow">Progress</p>
           <h1>What’s happening</h1>
-          <p>
-            A simple view of your order. You already sent the brief at checkout —
-            there’s no second questionnaire here.
+          <p className="iwfw-dash-home__lead">
+            Your brief is already with us. This page shows where things stand —
+            not another form to fill in.
           </p>
         </div>
-        <Badge tone={workspace.needsSubscription ? "warning" : "success"}>
-          {stageLabel}
-        </Badge>
+        <div className="iwfw-dash-home__hero-side">
+          <span className="iwfw-dash-home__pill">{stageLabel}</span>
+        </div>
       </header>
 
-      <Panel
-        className={
-          !workspace.needsSubscription && workspace.briefReady
-            ? "iwfw-dash-focus iwfw-dash-focus--ready"
-            : "iwfw-dash-focus"
-        }
+      <section
+        className={`iwfw-dash-status ${paidAndReady ? "is-ready" : ""}`}
+        aria-label="Current status"
       >
-        <p className="iwfw-dash-focus__kicker">{banner.kicker}</p>
-        <h2>{banner.title}</h2>
-        <p>{banner.body}</p>
-        {showGbp && (
-          <div className="iwfw-dash-callout__actions">
-            <Link
-              to="/dashboard/google-business"
-              className="iwfw-btn iwfw-btn--green"
-            >
-              Give Manager access
-            </Link>
-            <Link to="/dashboard" className="iwfw-btn iwfw-btn--outline">
-              Back to overview
-            </Link>
-          </div>
-        )}
-      </Panel>
+        <div className="iwfw-dash-status__copy">
+          <p className="iwfw-dash-status__kicker">{banner.kicker}</p>
+          <h2>{banner.title}</h2>
+          <p>{banner.body}</p>
+        </div>
+        <div className="iwfw-dash-status__actions">
+          <Link to="/dashboard" className="iwfw-btn iwfw-btn--outline">
+            Back to overview
+          </Link>
+        </div>
+      </section>
 
       {showGbp && (
-        <Panel className="iwfw-dash-optional">
-          <div className="iwfw-dash-optional__copy">
-            <p className="iwfw-dash-focus__kicker">Optional · meantime</p>
+        <section className="iwfw-dash-gbp" aria-label="Optional Google Business">
+          <div className="iwfw-dash-gbp__copy">
+            <p className="iwfw-dash-gbp__kicker">Optional · while we build</p>
             <h2>Google Business Profile</h2>
             <p>
-              While we build, you can invite us as Manager if you’d like weekly
-              posts and help with review replies. Skip this if you don’t need it
-              yet.
+              Give us Manager access if you’d like weekly posts and help with
+              reviews. Skip it if you don’t need that yet.
             </p>
           </div>
           <Link
@@ -109,72 +98,69 @@ export default function ProgressPage({ loaderData }: Route.ComponentProps) {
           >
             Give Manager access
           </Link>
-        </Panel>
+        </section>
       )}
 
-      <div className="iwfw-dash-split">
-        <Panel>
+      <section className="iwfw-dash-steps" aria-label="What happens next">
+        <div className="iwfw-dash-steps__head">
           <h2>What happens next</h2>
-          <ol className="iwfw-dash-timeline">
-            {stages.map((stage) => (
-              <li
-                key={stage.id}
-                className={`iwfw-dash-timeline__item is-${stage.state}`}
-              >
-                <span className="iwfw-dash-timeline__marker" aria-hidden />
-                <div>
-                  <strong>{stage.title}</strong>
-                  <p>{stage.detail}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </Panel>
+          <p>We’ll handle domain, hosting and launch for you.</p>
+        </div>
+        <ol className="iwfw-dash-steps__list">
+          {stages.map((stage, index) => (
+            <li
+              key={stage.id}
+              className={`iwfw-dash-steps__item is-${stage.state}`}
+            >
+              <span className="iwfw-dash-steps__index" aria-hidden>
+                {stage.state === "done" ? "✓" : index + 1}
+              </span>
+              <div>
+                <strong>{stage.title}</strong>
+                <p>{stage.detail}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
 
-        <Panel>
-          <h2>Your brief (from checkout)</h2>
-          <dl className="iwfw-dash-dl">
-            <div>
-              <dt>Business</dt>
-              <dd>
-                {data?.business.tradingName ||
-                  workspace.primary?.tradingName ||
-                  "—"}
-              </dd>
-            </div>
-            <div>
-              <dt>Contact</dt>
-              <dd>
-                {[data?.business.contactName, data?.business.email]
-                  .filter(Boolean)
-                  .join(" · ") || "—"}
-              </dd>
-            </div>
-            <div>
-              <dt>Services</dt>
-              <dd className="iwfw-dash-pre">
-                {data?.services.list?.trim() || "—"}
-              </dd>
-            </div>
-            <div>
-              <dt>Domain</dt>
-              <dd>
-                {domainName}
-                {workspace.domainTask
-                  ? ` · ${domainTaskLabel(workspace.domainTask.status)}`
-                  : ""}
-              </dd>
-            </div>
-          </dl>
-          <p className="iwfw-dash-fine">
-            Need a change? Message support — we won’t ask you to fill the same
-            form again.
-          </p>
-          <Link to="/dashboard/support" className="iwfw-btn iwfw-btn--outline">
-            Contact support
-          </Link>
-        </Panel>
-      </div>
+      <section className="iwfw-dash-brief">
+        <div className="iwfw-dash-brief__head">
+          <h2>Your brief</h2>
+          <p>From checkout — contact support if anything needs changing.</p>
+        </div>
+        <dl className="iwfw-dash-brief__grid">
+          <div>
+            <dt>Business</dt>
+            <dd>
+              {data?.business.tradingName ||
+                workspace.primary?.tradingName ||
+                "—"}
+            </dd>
+          </div>
+          <div>
+            <dt>Contact</dt>
+            <dd>
+              {[data?.business.contactName, data?.business.email]
+                .filter(Boolean)
+                .join(" · ") || "—"}
+            </dd>
+          </div>
+          <div>
+            <dt>Domain</dt>
+            <dd>{domainName}</dd>
+          </div>
+          <div>
+            <dt>Services</dt>
+            <dd className="iwfw-dash-pre">
+              {data?.services.list?.trim() || "—"}
+            </dd>
+          </div>
+        </dl>
+        <Link to="/dashboard/support" className="iwfw-btn iwfw-btn--outline">
+          Contact support
+        </Link>
+      </section>
     </div>
   );
 }

@@ -33,10 +33,10 @@ describe("customer progress", () => {
       tradingName: "Acme",
     });
     expect(banner.title).toMatch(/nothing more/i);
-    expect(banner.body).toMatch(/get back to you/i);
+    expect(banner.body).toMatch(/working on your website|get back to you/i);
   });
 
-  it("marks payment and brief done after subscribe", () => {
+  it("hides domain as its own stage and shows working on website", () => {
     const stages = buildJourneyStages({
       needsSubscription: false,
       briefReady: true,
@@ -48,9 +48,16 @@ describe("customer progress", () => {
         connectedAt: null,
       },
     });
-    expect(stages.find((s) => s.id === "payment")?.state).toBe("done");
-    expect(stages.find((s) => s.id === "brief")?.state).toBe("done");
-    expect(stages.find((s) => s.id === "domain")?.state).toBe("current");
+    expect(stages.map((s) => s.id)).toEqual([
+      "payment",
+      "brief",
+      "working",
+      "live",
+    ]);
+    expect(stages.find((s) => s.id === "working")?.title).toMatch(
+      /working on your website/i,
+    );
+    expect(stages.find((s) => s.id === "working")?.state).toBe("current");
   });
 
   it("surfaces optional GBP manager access for paid customers", () => {
@@ -74,6 +81,6 @@ describe("customer progress", () => {
         briefReady: true,
         domainStatus: "pending",
       }),
-    ).toBe("We’re on it");
+    ).toBe("We’re working on it");
   });
 });
