@@ -1,5 +1,4 @@
 import { Link } from "react-router";
-import { Badge, Panel } from "@iwfw/ui";
 import { createDb } from "@iwfw/db";
 import { getEnv } from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
@@ -7,7 +6,6 @@ import { getCustomerWorkspace } from "../lib/customer-org.server";
 import {
   buildJourneyStages,
   buildStatusBanner,
-  domainTaskLabel,
   needsGbpInvite,
   websiteStageLabel,
 } from "../lib/customer-progress";
@@ -45,34 +43,34 @@ export default function WebsitePage({ loaderData }: Route.ComponentProps) {
   const showGbp =
     !workspace.needsSubscription &&
     needsGbpInvite(workspace.onboarding?.data);
+  const paidAndReady = !workspace.needsSubscription && workspace.briefReady;
 
   return (
-    <div className="iwfw-dash-page">
-      <header className="iwfw-dash-page__header">
-        <div>
+    <div className="iwfw-dash-page iwfw-dash-home">
+      <header className="iwfw-dash-home__hero">
+        <div className="iwfw-dash-home__hero-copy">
+          <p className="iwfw-dash-home__eyebrow">Website</p>
           <h1>Your website</h1>
-          <p>
-            Track build progress after payment. Your questionnaire from checkout
-            is already with the team.
+          <p className="iwfw-dash-home__lead">
+            Build progress after payment. Domain and launch stay with our team.
           </p>
         </div>
-        <Badge tone={workspace.needsSubscription ? "warning" : "success"}>
-          {stage}
-        </Badge>
+        <div className="iwfw-dash-home__hero-side">
+          <span className="iwfw-dash-home__pill">{stage}</span>
+        </div>
       </header>
 
-      <Panel
-        className={
-          !workspace.needsSubscription && workspace.briefReady
-            ? "iwfw-dash-focus iwfw-dash-focus--ready"
-            : "iwfw-dash-focus"
-        }
+      <section
+        className={`iwfw-dash-status ${paidAndReady ? "is-ready" : ""}`}
+        aria-label="Current status"
       >
-        <p className="iwfw-dash-focus__kicker">{banner.kicker}</p>
-        <h2>{banner.title}</h2>
-        <p>{banner.body}</p>
+        <div className="iwfw-dash-status__copy">
+          <p className="iwfw-dash-status__kicker">{banner.kicker}</p>
+          <h2>{banner.title}</h2>
+          <p>{banner.body}</p>
+        </div>
         {showGbp && (
-          <div className="iwfw-dash-callout__actions">
+          <div className="iwfw-dash-status__actions">
             <Link
               to="/dashboard/google-business"
               className="iwfw-btn iwfw-btn--green"
@@ -81,86 +79,39 @@ export default function WebsitePage({ loaderData }: Route.ComponentProps) {
             </Link>
           </div>
         )}
-      </Panel>
+      </section>
 
-      <div className="iwfw-dash-split">
-        <Panel>
-          <h2>Status</h2>
-          <dl className="iwfw-dash-dl">
-            <div>
-              <dt>Business</dt>
-              <dd>{workspace.primary?.tradingName ?? "—"}</dd>
-            </div>
-            <div>
-              <dt>Build stage</dt>
-              <dd>{stage}</dd>
-            </div>
-            <div>
-              <dt>Brief</dt>
-              <dd>
-                {workspace.briefReady
-                  ? "Received at checkout"
-                  : "Waiting for order details"}
-              </dd>
-            </div>
-            <div>
-              <dt>Domain</dt>
-              <dd>
-                {workspace.domainTask
-                  ? `${workspace.domainTask.domainName} · ${domainTaskLabel(workspace.domainTask.status)}`
-                  : "Assigned after payment"}
-              </dd>
-            </div>
-            <div>
-              <dt>Live URL</dt>
-              <dd>
-                {workspace.domainTask?.status === "connected"
-                  ? "Connected — ask support if you need the link"
-                  : "Shared at go-live"}
-              </dd>
-            </div>
-          </dl>
-        </Panel>
+      <section className="iwfw-dash-steps" aria-label="What happens next">
+        <div className="iwfw-dash-steps__head">
+          <h2>What happens next</h2>
+          <p>We’ll share a preview before go-live.</p>
+        </div>
+        <ol className="iwfw-dash-steps__list">
+          {stages.map((item, index) => (
+            <li
+              key={item.id}
+              className={`iwfw-dash-steps__item is-${item.state}`}
+            >
+              <span className="iwfw-dash-steps__index" aria-hidden>
+                {item.state === "done" ? "✓" : index + 1}
+              </span>
+              <div>
+                <strong>{item.title}</strong>
+                <p>{item.detail}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
 
-        <Panel>
-          <h2>What we’ll do</h2>
-          <ul className="iwfw-dash-list">
-            <li>Build from your checkout brief and uploaded images</li>
-            <li>Register or connect the domain manually</li>
-            <li>Send a preview for your approval before launch</li>
-            <li>Set up business email once DNS is ready</li>
-          </ul>
-          <div className="iwfw-dash-inline-actions">
-            {workspace.needsSubscription ? (
-              <Link to="/get-started" className="iwfw-btn iwfw-btn--green">
-                View package
-              </Link>
-            ) : (
-              <Link to="/dashboard/onboarding" className="iwfw-btn iwfw-btn--blue">
-                See full progress
-              </Link>
-            )}
-            <Link to="/dashboard/media" className="iwfw-btn iwfw-btn--outline">
-              Update images
-            </Link>
-          </div>
-        </Panel>
+      <div className="iwfw-dash-inline-actions">
+        <Link to="/dashboard/media" className="iwfw-btn iwfw-btn--outline">
+          Update images
+        </Link>
+        <Link to="/dashboard/onboarding" className="iwfw-btn iwfw-btn--outline">
+          View progress
+        </Link>
       </div>
-
-      <ol className="iwfw-dash-timeline">
-        {stages.map((item) => (
-          <li
-            key={item.id}
-            className={`iwfw-dash-timeline__item is-${item.state}`}
-          >
-            <span className="iwfw-dash-timeline__marker" aria-hidden />
-            <div>
-              <strong>{item.title}</strong>
-              <p>{item.detail}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
     </div>
   );
 }
