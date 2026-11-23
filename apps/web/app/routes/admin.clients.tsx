@@ -52,6 +52,7 @@ export default function AdminClientsPage({ loaderData }: Route.ComponentProps) {
                   <th>Business</th>
                   <th>Contact</th>
                   <th>Org status</th>
+                  <th>Website</th>
                   <th>Subscription</th>
                   <th>Renews</th>
                   <th>Joined</th>
@@ -74,6 +75,11 @@ export default function AdminClientsPage({ loaderData }: Route.ComponentProps) {
                     </td>
                     <td>
                       <Badge tone={statusTone(c.status)}>{c.status}</Badge>
+                    </td>
+                    <td>
+                      <Badge tone={c.websiteLive ? "success" : "warning"}>
+                        {c.websiteLive ? "Live" : "Not live"}
+                      </Badge>
                     </td>
                     <td>
                       {c.subscriptionStatus ? (
