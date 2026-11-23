@@ -44,16 +44,30 @@ function mapMailbox(
   };
 }
 
+function isMissingMailboxTable(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return (
+    message.includes("organisation_mailboxes") &&
+    (message.includes("no such table") || message.includes("SQLITE_ERROR"))
+  );
+}
+
 export async function getOrganisationMailbox(
   db: Db,
   organisationId: string,
 ): Promise<OrganisationMailbox | null> {
-  const row = await db
-    .select()
-    .from(organisationMailboxes)
-    .where(eq(organisationMailboxes.organisationId, organisationId))
-    .get();
-  return row ? mapMailbox(row) : null;
+  try {
+    const row = await db
+      .select()
+      .from(organisationMailboxes)
+      .where(eq(organisationMailboxes.organisationId, organisationId))
+      .get();
+    return row ? mapMailbox(row) : null;
+  } catch (error) {
+    // Deploy-before-migrate must not take down the whole customer dashboard.
+    if (isMissingMailboxTable(error)) return null;
+    throw error;
+  }
 }
 
 function optionalPort(value: FormDataEntryValue | null): number | null {
@@ -123,49 +137,59 @@ export async function upsertOrganisationMailbox(
     provisionedAt: status === "active" ? now : null,
   };
 
-  const existing = await db
-    .select()
-    .from(organisationMailboxes)
-    .where(eq(organisationMailboxes.organisationId, organisationId))
-    .get();
+  try {
+    const existing = await db
+      .select()
+      .from(organisationMailboxes)
+      .where(eq(organisationMailboxes.organisationId, organisationId))
+      .get();
 
-  const wasActive = existing?.status === "active";
+    const wasActive = existing?.status === "active";
 
-  if (existing) {
-    await db
-      .update(organisationMailboxes)
-      .set({
+    if (existing) {
+      await db
+        .update(organisationMailboxes)
+        .set({
+          ...payload,
+          provisionedAt:
+            status === "active"
+              ? (existing.provisionedAt ?? now)
+              : existing.provisionedAt,
+        })
+        .where(eq(organisationMailboxes.id, existing.id));
+    } else {
+      await db.insert(organisationMailboxes).values({
+        id: newId("mbox"),
+        organisationId,
         ...payload,
-        provisionedAt:
+        createdAt: now,
+      });
+    }
+
+    const notifyCustomer = form.get("notifyCustomer") === "on";
+    if (notifyCustomer || (status === "active" && !wasActive)) {
+      await notifyCustomerNeedsAttention(db, {
+        organisationId,
+        title:
           status === "active"
-            ? (existing.provisionedAt ?? now)
-            : existing.provisionedAt,
-      })
-      .where(eq(organisationMailboxes.id, existing.id));
-  } else {
-    await db.insert(organisationMailboxes).values({
-      id: newId("mbox"),
-      organisationId,
-      ...payload,
-      createdAt: now,
-    });
-  }
+            ? "Your business email is ready"
+            : "Business email details updated",
+        body:
+          status === "active"
+            ? `${emailAddress} is set up. Open Email in your dashboard for webmail and phone/computer setup details.`
+            : `We’ve updated mailbox details for ${emailAddress}. Check the Email page in your dashboard.`,
+        href: "/dashboard/email",
+      });
+    }
 
-  const notifyCustomer = form.get("notifyCustomer") === "on";
-  if (notifyCustomer || (status === "active" && !wasActive)) {
-    await notifyCustomerNeedsAttention(db, {
-      organisationId,
-      title:
-        status === "active"
-          ? "Your business email is ready"
-          : "Business email details updated",
-      body:
-        status === "active"
-          ? `${emailAddress} is set up. Open Email in your dashboard for webmail and phone/computer setup details.`
-          : `We’ve updated mailbox details for ${emailAddress}. Check the Email page in your dashboard.`,
-      href: "/dashboard/email",
-    });
+    return { ok: true as const };
+  } catch (error) {
+    if (isMissingMailboxTable(error)) {
+      return {
+        error:
+          "Mailbox storage isn’t ready yet. Apply D1 migration 0009_organisation_mailboxes, then try again.",
+      };
+    }
+    throw error;
   }
-
-  return { ok: true as const };
 }
