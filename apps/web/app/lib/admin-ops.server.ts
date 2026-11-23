@@ -39,6 +39,7 @@ import {
   notifyWebsiteNotLive,
 } from "./notifications.server";
 import { buildAttentionBoard } from "./attention";
+import { getOrganisationMailbox } from "./mailbox.server";
 
 export const ORG_STATUSES = [
   "prospect",
@@ -814,6 +815,7 @@ export async function getAdminClientDetail(db: Db, organisationId: string) {
     openDomainCount,
     openTransferCount,
   });
+  const mailbox = await getOrganisationMailbox(db, organisationId);
   const required = [
     ...attention.staff
       .filter((i) => i.severity === "action")
@@ -847,6 +849,7 @@ export async function getAdminClientDetail(db: Db, organisationId: string) {
     briefReady,
     needsSubscription,
     gbpNeeded: needsGbpInvite(onboardingData),
+    mailbox,
     onboarding: {
       currentStep: profile?.currentStep ?? 0,
       completedAt: profile?.completedAt

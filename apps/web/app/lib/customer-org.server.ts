@@ -18,6 +18,7 @@ import {
   type DomainTaskSnapshot,
 } from "./customer-progress";
 import { buildAttentionBoard } from "./attention";
+import { getOrganisationMailbox } from "./mailbox.server";
 
 export async function getCustomerWorkspace(
   db: ReturnType<typeof createDb>,
@@ -42,6 +43,7 @@ export async function getCustomerWorkspace(
       needsSubscription: true,
       briefReady: false,
       uploadCount: 0,
+      mailbox: null,
       attention: buildAttentionBoard({
         needsSubscription: true,
         briefReady: false,
@@ -128,6 +130,8 @@ export async function getCustomerWorkspace(
     uploadCount,
   });
 
+  const mailbox = await getOrganisationMailbox(db, primary.id);
+
   return {
     orgs: orgs.map((o) => ({
       id: o.id,
@@ -155,6 +159,7 @@ export async function getCustomerWorkspace(
     needsSubscription: !hasPaidAccess,
     briefReady,
     uploadCount,
+    mailbox,
     attention,
   };
 }

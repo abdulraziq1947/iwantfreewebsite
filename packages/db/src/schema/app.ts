@@ -340,6 +340,53 @@ export const domainRegistrationTasks = sqliteTable(
   ],
 );
 
+/** Per-customer mailbox access details (set by staff once provisioned). */
+export const organisationMailboxes = sqliteTable(
+  "organisation_mailboxes",
+  {
+    id: text("id").primaryKey(),
+    organisationId: text("organisation_id")
+      .notNull()
+      .references(() => organisations.id, { onDelete: "cascade" }),
+    emailAddress: text("email_address").notNull(),
+    username: text("username"),
+    webmailUrl: text("webmail_url"),
+    imapHost: text("imap_host"),
+    imapPort: integer("imap_port").default(993),
+    imapSecurity: text("imap_security", {
+      enum: ["ssl", "starttls", "none"],
+    }).default("ssl"),
+    smtpHost: text("smtp_host"),
+    smtpPort: integer("smtp_port").default(465),
+    smtpSecurity: text("smtp_security", {
+      enum: ["ssl", "starttls", "none"],
+    }).default("ssl"),
+    popHost: text("pop_host"),
+    popPort: integer("pop_port").default(995),
+    popSecurity: text("pop_security", {
+      enum: ["ssl", "starttls", "none"],
+    }).default("ssl"),
+    status: text("status", {
+      enum: ["pending", "active", "suspended"],
+    })
+      .notNull()
+      .default("pending"),
+    /** Shown to the customer (e.g. password delivery note). */
+    customerNotes: text("customer_notes"),
+    adminNotes: text("admin_notes"),
+    provisionedAt: integer("provisioned_at", { mode: "timestamp_ms" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+  },
+  (t) => [
+    uniqueIndex("organisation_mailboxes_org_uidx").on(t.organisationId),
+  ],
+);
+
 export const accountActivationTokens = sqliteTable(
   "account_activation_tokens",
   {
