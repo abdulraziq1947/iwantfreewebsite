@@ -45,6 +45,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     accessGranted: Boolean(data.gbp.accessGranted),
   };
 
+  const previousOutcome = workspace.onboarding.data.gbp.outcome;
   await db
     .update(onboardingProfiles)
     .set({
@@ -52,6 +53,21 @@ export async function action({ request, context }: Route.ActionArgs) {
       updatedAt: new Date(),
     })
     .where(eq(onboardingProfiles.id, workspace.onboarding.id));
+
+  if (
+    data.gbp.outcome &&
+    data.gbp.outcome !== previousOutcome &&
+    !data.gbp.accessGranted
+  ) {
+    const { notifyStaffGbpCustomerUpdate } = await import(
+      "../lib/notifications.server"
+    );
+    await notifyStaffGbpCustomerUpdate(db, {
+      organisationId: workspace.primary.id,
+      tradingName: workspace.primary.tradingName,
+      outcome: data.gbp.outcome,
+    });
+  }
 
   return { ok: true, saved: true };
 }

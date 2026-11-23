@@ -31,7 +31,13 @@ import {
 } from "./customer-progress";
 import { categoryLabel, isUploadCategory } from "./image-sniff";
 import { newId } from "./ids";
-import { notifyWebsiteLive } from "./support.server";
+import {
+  notifyCustomerDomainUpdate,
+  notifyCustomerStatusUpdate,
+  notifyGbpAccessGranted,
+  notifyWebsiteLive,
+  notifyWebsiteNotLive,
+} from "./notifications.server";
 import { buildAttentionBoard } from "./attention";
 
 export const ORG_STATUSES = [
@@ -384,10 +390,22 @@ export async function updateDomainTaskStatus(
     return { ok: true as const };
   }
   if (intent === "mark_unavailable") {
+    const task = await db
+      .select()
+      .from(domainRegistrationTasks)
+      .where(eq(domainRegistrationTasks.id, taskId))
+      .get();
     await db
       .update(domainRegistrationTasks)
       .set({ status: "unavailable", updatedAt: now })
       .where(eq(domainRegistrationTasks.id, taskId));
+    if (task) {
+      await notifyCustomerDomainUpdate(db, {
+        organisationId: task.organisationId,
+        domainName: task.domainName,
+        status: "unavailable",
+      });
+    }
     return { ok: true as const };
   }
   return { error: "Unknown domain action." };
@@ -436,6 +454,14 @@ export async function updateOrganisationStatus(
     .update(organisations)
     .set({ status, updatedAt: new Date() })
     .where(eq(organisations.id, organisationId));
+
+  if (org.status !== status) {
+    await notifyCustomerStatusUpdate(db, {
+      organisationId,
+      tradingName: org.tradingName,
+      status,
+    });
+  }
   return { ok: true as const };
 }
 
@@ -452,7 +478,14 @@ export async function setGbpAccessGranted(
     .get();
   if (!profile) return { error: "No onboarding profile for this client." };
 
+  const org = await db
+    .select()
+    .from(organisations)
+    .where(eq(organisations.id, organisationId))
+    .get();
+
   const data = parseOnboardingData(profile.dataJson);
+  const wasGranted = Boolean(data.gbp.accessGranted);
   data.gbp = {
     ...data.gbp,
     accessGranted: granted,
@@ -468,6 +501,13 @@ export async function setGbpAccessGranted(
       updatedAt: new Date(),
     })
     .where(eq(onboardingProfiles.id, profile.id));
+
+  if (granted && !wasGranted && org) {
+    await notifyGbpAccessGranted(db, {
+      organisationId,
+      tradingName: org.tradingName,
+    });
+  }
 
   return { ok: true as const };
 }
@@ -591,6 +631,18 @@ export async function unmarkClientWebsiteLive(
       updatedAt: new Date(),
     })
     .where(eq(domainRegistrationTasks.id, existing.id));
+
+  const org = await db
+    .select()
+    .from(organisations)
+    .where(eq(organisations.id, organisationId))
+    .get();
+  if (org) {
+    await notifyWebsiteNotLive(db, {
+      organisationId,
+      tradingName: org.tradingName,
+    });
+  }
   return { ok: true as const };
 }
 

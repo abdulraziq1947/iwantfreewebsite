@@ -282,6 +282,17 @@ export async function createCheckoutForPendingOrder(options: {
     })
     .where(eq(pendingOrders.id, order.id));
 
+  try {
+    const { notifyStaffNewProspect } = await import("./notifications.server");
+    await notifyStaffNewProspect(options.db, {
+      tradingName: order.tradingName || "New business",
+      email: order.email,
+      orderId: order.id,
+    });
+  } catch {
+    // Non-fatal
+  }
+
   return { url: session.url };
 }
 

@@ -42,5 +42,6 @@ export const CUSTOMER_NAV = [
   { to: "/dashboard/email", label: "Email" },
   { to: "/dashboard/google-business", label: "Google Business" },
   { to: "/dashboard/support", label: "Support" },
+  { to: "/dashboard/notifications", label: "Notifications" },
   { to: "/dashboard/account", label: "Account" },
 ] as const;
