@@ -4,50 +4,43 @@
 
 | Role | Scope |
 | --- | --- |
-| Platform Owner | Full access + feature flags + financials |
-| Administrator | Customers, billing ops, domains, staff assignment |
-| Website Developer | Website projects, previews, content, deploys |
-| GBP Manager | GBP tasks, drafts, evidence |
+| Platform Owner | Full access + feature flags |
+| Administrator | Customers, billing ops, domains |
+| Website Developer | Website projects, previews |
+| GBP Manager | GBP tasks |
 | Support Agent | Tickets, limited customer read |
 | Customer | Customer dashboard only |
 
-VA accounts typically use GBP Manager and/or Support Agent — never Platform Owner by default.
+Staff must enroll MFA before using `/admin` (except `/admin/security/mfa`).
 
-## Admin modules
+## Admin modules (shipped)
 
-- Customer management (org, users, status)
-- Subscriptions & entitlements (read + limited manual grants)
-- Onboarding progress
-- **Domain purchase queue** (manual buy checklist, recheck, record purchase)
-- **Domain renewal queue** (60/30/14/7 day tasks, escalation)
-- Email provisioning status
-- Website projects & deploy status
-- GBP invite acceptance queue (`Invitation Sent` → manual verify → `Connected`)
-- GBP help / no-profile assist queue
-- GBP task board (weekly posts, review replies, evidence, activity logs)
-- Rank tracking subscriptions & DataForSEO usage (when live)
-- Staff management
-- Support tickets
-- Financial reporting (MRR, churn, domain COGS)
-- Activity / audit logs
-- Notifications / overdue views
-- Feature flags (`rank_tracking_checkout_enabled`)
+| Module | Route | Notes |
+| --- | --- | --- |
+| Overview | `/admin` | Ops snapshot |
+| Clients | `/admin/clients` | Search, live/not-live, attention filters |
+| Client folder | `/admin/clients/:orgId` | Brief, mark live/preview, mailbox, notify, billing |
+| Ops tasks | `/admin/ops` | GBP weekly + domain renewal reminders (manual generate; no auto-publish/purchase) |
+| Subscriptions | `/admin/subscriptions` | Stripe-synced status |
+| Orders | `/admin/orders` | Pending order funnel |
+| Domains | `/admin/domains` | Manual registration queue + renews-at date |
+| Transfers | `/admin/transfers` | Cancel → asset transfer tracking |
+| Support | `/admin/support` | Tickets |
+| Notifications | `/admin/notifications` | Staff feed |
+| Images | `/admin/media` | Upload review |
+| MFA | `/admin/security/mfa` | Enrollment |
 
-## Domain ops UI (critical)
+## Audit logs
 
-For each purchase task show:
+Sensitive actions write to `audit_logs` (mark live, preview, mailbox upsert, org status, ops task changes, domain renews-at). Passwords are redacted.
 
-- Domain, org, payment status, registrant JSON
-- Last check result (availability, tier, prices)
-- Buttons: Recheck, Mark Customer Action Required, Record Purchased, Mark Failed
-- **No** “Auto Register” control
+## Domain & GBP ops
 
-Renewal queue sorted by expiry; SLA badges (red if <7 days and incomplete).
+- Domains are **never** purchased automatically.
+- Set renews-at on the Domains queue; generate renewal reminder tasks from Ops.
+- Generate this week’s GBP post/review tasks from Ops; complete/cancel manually.
+- No “Auto Register” or “Auto Publish” controls.
 
-## Cancelled-during-build queue
+## Deploy discipline
 
-List websites with `cancelled_before_complete` for capacity and courtesy follow-up.
-
-## New customer notification
-
-On first `invoice.paid` / Checkout completed: notify Platform Owner + Admin (email + in-app).
+Apply D1 migrations before Worker deploy. `/api/health` returns 503 if required tables (including `ops_tasks`) are missing. See `docs/PRODUCTION_DEPLOYMENT.md`.

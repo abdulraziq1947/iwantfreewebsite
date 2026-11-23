@@ -6,6 +6,7 @@ import { requireStaffSession } from "../lib/session.server";
 import { formatAdminDate } from "../lib/admin-ops";
 import {
   ensureDomainRenewalTasks,
+  ensureOverdueWebsiteTasks,
   ensureWeeklyGbpTasks,
   listOpenOpsTasks,
   updateOpsTaskStatus,
@@ -54,6 +55,21 @@ export async function action({ request, context }: Route.ActionArgs) {
     return {
       ok: true as const,
       message: `Renewal tasks: ${result.created} created, ${result.skipped} skipped.`,
+    };
+  }
+
+  if (intent === "ensure_overdue") {
+    const result = await ensureOverdueWebsiteTasks(db);
+    await writeAuditLog(db, {
+      actorUserId: auth.userId,
+      action: "ops.ensure_website_overdue",
+      entityType: "ops_tasks",
+      diff: result,
+      ip,
+    });
+    return {
+      ok: true as const,
+      message: `Overdue websites: ${result.created} created, ${result.skipped} skipped.`,
     };
   }
 
@@ -127,6 +143,12 @@ export default function AdminOpsPage({
           <input type="hidden" name="intent" value="ensure_renewals" />
           <button type="submit" className="iwfw-btn iwfw-btn--outline" disabled={busy}>
             {busy ? "Working…" : "Generate domain renewal reminders"}
+          </button>
+        </Form>
+        <Form method="post">
+          <input type="hidden" name="intent" value="ensure_overdue" />
+          <button type="submit" className="iwfw-btn iwfw-btn--outline" disabled={busy}>
+            {busy ? "Working…" : "Flag overdue websites"}
           </button>
         </Form>
       </div>

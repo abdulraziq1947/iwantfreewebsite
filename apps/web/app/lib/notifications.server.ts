@@ -155,6 +155,37 @@ export async function notifyWebsiteNotLive(
   });
 }
 
+export async function notifyWebsitePreviewReady(
+  db: Db,
+  options: {
+    organisationId: string;
+    tradingName: string;
+    previewUrl: string;
+  },
+) {
+  await notifyOrgMembers(db, {
+    organisationId: options.organisationId,
+    kind: "website_update",
+    title: "Website preview ready",
+    body: `A preview of ${options.tradingName} is ready to review at ${options.previewUrl}. Tell us any changes before we go live.`,
+    href: "/dashboard/website",
+  });
+}
+
+export async function notifyPaymentFailed(
+  db: Db,
+  options: { organisationId: string; tradingName?: string | null },
+) {
+  const name = options.tradingName?.trim() || "your account";
+  await notifyOrgMembers(db, {
+    organisationId: options.organisationId,
+    kind: "needs_attention",
+    title: "Payment failed — update your card",
+    body: `We couldn’t take the latest payment for ${name}. Please update your payment method so your website and services stay active.`,
+    href: "/dashboard/billing",
+  });
+}
+
 export async function notifyGbpAccessGranted(
   db: Db,
   options: { organisationId: string; tradingName: string },

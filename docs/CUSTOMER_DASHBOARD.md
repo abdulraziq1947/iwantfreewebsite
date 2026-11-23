@@ -3,45 +3,46 @@
 ## Access
 
 - Authenticated users with `customer` membership on an organisation.
-- Server-side checks: session + `organisation_id` scope on every loader/action.
+- Server-side checks: session + organisation scope on every loader/action.
 - Customers never see other organisations’ data.
 
-## Sections
+## Navigation (shipped)
 
-| Area | Contents |
-| --- | --- |
-| Overview | Status chips: website, domain, email, GBP, billing |
-| Website | Progress, preview link, live link, change requests, approvals |
-| Domain | Requested name, status timeline, expiry, renewal info, DNS help |
-| Email | Provisioning status, webmail instructions, quota |
-| Google Business | Status **Action Required** / **Invitation Sent** / **Connected**; Manager email + invite steps; help / no-profile actions; weekly post + review reply history with evidence (staff-recorded, not API-verified) |
-| Rank tracking | **Only if entitlement active**; charts organic vs maps; else hidden or “not included” |
-| Billing | Plan, next bill, cancel anytime CTA, invoices, payment method |
-| Support | Tickets |
-| Files | Uploads list + upload |
-| Business info | Edit profile fields (re-queues review if live site) |
-| Notifications | In-app feed |
+| Area | Route | Contents |
+| --- | --- | --- |
+| Overview | `/dashboard` | Journey stages, status banner, attention board, SLA copy |
+| Website | `/dashboard/website` | Preview URL (pre-live) and live URL (after mark-live) |
+| Images | `/dashboard/media` | Customer uploads |
+| Billing | `/dashboard/billing` | Plan, invoices, Stripe Customer Portal (card), cancel/resume, transfer status |
+| Domain | `/dashboard/domain` | Requested domain + staff-owned status |
+| Email | `/dashboard/email` | Preference + mailbox credentials with Show/Copy |
+| Google Business | `/dashboard/google-business` | Manager invite / status (not automated posting) |
+| Support | `/dashboard/support` | Tickets |
+| Notifications | `/dashboard/notifications` | In-app feed |
+| Account | `/dashboard/account` | Profile + password reset link |
+
+`/dashboard/onboarding` redirects to Overview (Progress nav removed).
 
 ## Billing UX copy
 
 - “£39.99/month. No minimum contract. Cancel anytime.”
-- Cancel flow shows effective date and offboarding facts.
-- Rank add-on purchase button **absent** unless feature flag enabled.
+- Cancel schedules end of current paid period; resume available until then.
+- Payment method updates go through Stripe Customer Portal.
+- Rank add-on purchase button **absent** (feature flag off).
 
-## Google Business status rules
+## Google Business
 
-- **Action Required** — invite not done, help requested, no profile, or blocked.
-- **Invitation Sent** — customer self-reported invite; awaiting staff acceptance. Copy must state confirmation is pending.
-- **Connected** — only after admin/VA **manual** accept + verify in Google. Never set Connected from the customer confirmation click alone.
+- Customer confirms Manager invite / help needed.
+- Staff track weekly posts and review replies on `/admin/ops` — customers do not see an automated post history yet.
+- Attention items for GBP are deferred until the website is live.
 
-## Cancel-before-complete UX
+## Website preview & live
 
-If website `cancelled_before_complete`:
-
-- Clear message that production is paused/stopped.
-- Export/download content available.
-- Reactivate CTA if still within policies.
+- Staff set `preview_url` before go-live; customer opens Preview CTA.
+- Staff mark live separately (`live_url` + `connected`); customer gets congratulations notification.
+- Soft go-live window from `GO_LIVE_SLA_LABEL` (default “5–10 working days”) — not a hard SLA.
 
 ## Accessibility & mobile
 
-- Primary use on phones by tradespeople — large tap targets, simple language, minimal jargon.
+- Primary use on phones — large tap targets, simple language.
+- Desktop public topbar includes Log in for logged-out visitors.

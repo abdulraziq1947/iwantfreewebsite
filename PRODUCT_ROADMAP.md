@@ -48,7 +48,7 @@ Do not conflate the two in metrics or UX.
 | FB-02 | ✅ Migrate-before-deploy runbook + health schema gate |
 | FB-01 | ✅ Gated live Stripe path — **blocked on prod credential/webhook approval** |
 | FB-03, FB-04, FB-06, FB-34 | ✅ Marketing/funnel/GBP copy + portfolio review doc |
-| FB-19 | Next (docs sync) |
+| FB-19 | ✅ README + dashboard docs synced |
 
 **Exit criteria:** Live Checkout succeeds end-to-end on production; package includes and How-it-works match the product; deploy checklist includes D1.
 
@@ -93,11 +93,10 @@ Do not conflate the two in metrics or UX.
 Pick **one** track based on sales promises you want to keep hard:
 
 **D1 — Google Business delivery** (FB-20)  
-Staff task board for weekly posts / review replies; customer sees last activity.  
-*Or* keep soft marketing copy (FB-06) and skip D1.
+✅ Staff ops task board (manual generate/complete). Next: customer-visible last activity if marketing stays hard.
 
 **D2 — Domain lifecycle** (FB-21)  
-Renewal reminder Cron + admin queue; still **no** auto-purchase.
+✅ renews-at + reminder tasks. Next: Cron automation; still **no** auto-purchase.
 
 **D3 — Hosted website product** (FB-31)  
 Template → preview → approve → live on Workers hosting (`docs/WEBSITE_PROVISIONING.md`). Largest investment; replaces “paste live URL” as the long-term model.
@@ -110,7 +109,7 @@ Template → preview → approve → live on Workers hosting (`docs/WEBSITE_PROV
 
 | Backlog | Notes |
 | --- | --- |
-| FB-33 | Analytics on funnel + activation |
+| FB-33 | ✅ Lightweight `product_events` + admin 30d KPIs |
 | FB-30 | Annual plan if churn/cash warrants |
 | FB-29 | Rank tracking only after acceptance tests |
 | FB-32 | Trade SEO landers |

@@ -5,6 +5,7 @@ import { getEnv } from "../lib/env.server";
 import { requireStaffSession } from "../lib/session.server";
 import { formatAdminDate } from "../lib/admin-ops";
 import { getAdminOverview } from "../lib/admin-ops.server";
+import { summariseProductEvents } from "../lib/analytics.server";
 import type { Route } from "./+types/admin._index";
 
 export function meta(_args: Route.MetaArgs) {
@@ -14,11 +15,16 @@ export function meta(_args: Route.MetaArgs) {
 export async function loader({ request, context }: Route.LoaderArgs) {
   await requireStaffSession(request, context);
   const db = createDb(getEnv(context).DB);
-  return getAdminOverview(db);
+  const [overview, analytics] = await Promise.all([
+    getAdminOverview(db),
+    summariseProductEvents(db, 30),
+  ]);
+  return { ...overview, analytics };
 }
 
 export default function AdminHome({ loaderData }: Route.ComponentProps) {
-  const { kpis } = loaderData;
+  const { kpis, analytics } = loaderData;
+  const counts = analytics.counts;
 
   return (
     <div className="iwfw-admin-page">
@@ -32,6 +38,31 @@ export default function AdminHome({ loaderData }: Route.ComponentProps) {
           </p>
         </div>
       </header>
+
+      <section className="iwfw-admin-kpis" aria-label="Funnel last 30 days">
+        <Kpi
+          label="Signups · 30d"
+          value={String(counts.signup_completed ?? 0)}
+          hint="Account created"
+        />
+        <Kpi
+          label="Checkouts started"
+          value={String(counts.checkout_started ?? 0)}
+          hint={`${counts.checkout_completed ?? 0} completed`}
+        />
+        <Kpi
+          label="Activations"
+          value={String(counts.activation_completed ?? 0)}
+          hint="Password set from email"
+        />
+        <Kpi
+          label="Cancels / fails"
+          value={String(
+            (counts.subscription_cancelled ?? 0) + (counts.payment_failed ?? 0),
+          )}
+          hint={`${counts.payment_failed ?? 0} payment failed`}
+        />
+      </section>
 
       <section className="iwfw-admin-kpis" aria-label="Key metrics">
         <Kpi

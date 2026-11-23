@@ -243,3 +243,70 @@ export async function setDomainRenewsAt(
     .where(eq(domainRegistrationTasks.id, taskId));
   return { ok: true as const };
 }
+
+/**
+ * Flag paid sites still not live after the soft SLA window (default 10 days).
+ * Creates website_overdue ops tasks — does not change customer-facing promises.
+ */
+export async function ensureOverdueWebsiteTasks(
+  db: Db,
+  options?: { afterDays?: number },
+) {
+  const afterDays = options?.afterDays ?? 10;
+  const cutoff = new Date(Date.now() - afterDays * 24 * 60 * 60 * 1000);
+
+  const orgs = await db
+    .select()
+    .from(organisations)
+    .where(inArray(organisations.status, ["active", "cancelling"]))
+    .all();
+  const domains = await db.select().from(domainRegistrationTasks).all();
+  const liveOrgs = new Set(
+    domains.filter((t) => t.status === "connected").map((t) => t.organisationId),
+  );
+  const candidates = orgs.filter(
+    (o) =>
+      !liveOrgs.has(o.id) &&
+      o.createdAt &&
+      o.createdAt <= cutoff,
+  );
+  if (candidates.length === 0) return { created: 0, skipped: 0 };
+
+  const existing = await db
+    .select()
+    .from(opsTasks)
+    .where(
+      and(
+        inArray(
+          opsTasks.organisationId,
+          candidates.map((c) => c.id),
+        ),
+        eq(opsTasks.kind, "website_overdue"),
+        inArray(opsTasks.status, ["pending", "in_progress"]),
+      ),
+    )
+    .all();
+
+  let created = 0;
+  let skipped = 0;
+  const now = new Date();
+  for (const org of candidates) {
+    if (existing.some((t) => t.organisationId === org.id)) {
+      skipped += 1;
+      continue;
+    }
+    await db.insert(opsTasks).values({
+      id: newId("ops"),
+      organisationId: org.id,
+      kind: "website_overdue",
+      status: "pending",
+      title: `Website overdue — ${org.tradingName}`,
+      notes: `Paid / active for more than ${afterDays} days without mark-live. Check brief, domain and build progress.`,
+      dueAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+    created += 1;
+  }
+  return { created, skipped };
+}

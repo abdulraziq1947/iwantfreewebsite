@@ -280,6 +280,22 @@ Branch: `cursor/saas-improvements-18f7` · Europe/London
 **Tests:** `@iwfw/web` 84 unit tests pass; typecheck green.  
 **Migration:** `0012_ops_tasks` must be applied before deploy (health check requires `ops_tasks`).
 
+### Batch 4 + ops extras (completed in code)
+
+| ID | Status | Notes |
+| --- | --- | --- |
+| FB-19 | Done | README + `docs/CUSTOMER_DASHBOARD.md` + `docs/ADMIN_DASHBOARD.md` |
+| FB-33 | Done | `product_events` + admin funnel KPIs (30d) |
+| FB-05 / FB-14 / FB-25 | Deferred | No confirmed multi-org usage / edit pain / funnel evidence |
+| Payment recovery | Done | `invoice.payment_failed` syncs sub + customer notify |
+| Preview notify | Done | Customer notification when preview URL set |
+| Overdue websites | Done | Ops “Flag overdue websites” (≥10 days paid, not live) |
+| Profitability | Done | Staff-entered costs on client Billing tab |
+
+**Tests:** unit suite green after Batch 4.  
+**Migrations:** apply `0012` + `0013` before deploy.  
+**Still blocked (need approval):** live Stripe unlock, production migrate/deploy, secret rotation.
+
 ---
 
 ## Related artefacts

@@ -113,5 +113,12 @@ Every item includes **acceptance criteria**. Items marked `[verified]` are groun
 | FB-20 GBP weekly ops task board (manual generate, no auto-publish) | Done |
 | FB-21 Domain renews-at + renewal reminder tasks (no auto-purchase) | Done |
 | FB-28 Audit logs for mark-live / mailbox / org status / ops | Done |
+| FB-19 README + customer/admin dashboard docs synced | Done |
+| FB-33 Product events (signup/checkout/activation/cancel/payment_failed) | Done |
+| FB-05 / FB-14 / FB-25 | Deferred — no multi-org usage or confirmed funnel/edit pain yet |
+| Ops: payment_failed notify + portal CTA path | Done |
+| Ops: preview progress notify | Done |
+| Ops: overdue website flags | Done |
+| Ops: per-org cost → profit estimate | Done |
 
 When closing a backlog item, move it here with PR/date.

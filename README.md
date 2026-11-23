@@ -1,27 +1,38 @@
 # iwantfreewebsite.com
 
-Cloudflare-native SaaS platform for managed UK business websites.
+Cloudflare-native SaaS for managed UK business websites.
 
 **£39.99/month. No upfront website fee. No minimum contract. Cancel anytime.**
 
-Planning docs: [`docs/README.md`](./docs/README.md)
+Planning & audit: [`docs/README.md`](./docs/README.md) · [`WEBSITE_AUDIT.md`](./WEBSITE_AUDIT.md) · [`FEATURE_BACKLOG.md`](./FEATURE_BACKLOG.md) · [`PRODUCT_ROADMAP.md`](./PRODUCT_ROADMAP.md)
 
-## Phase 1 status
+## What is shipped
 
-Foundation only: monorepo, React Router on Workers, D1 + Drizzle, Better Auth, RBAC, design system, layouts, health checks, local tooling.
-
-**Not in Phase 1:** Stripe, domain purchasing, MXroute, DataForSEO, production deploys.
+| Area | Status |
+| --- | --- |
+| Marketing site + pricing + legal | Live |
+| Pay-first get-started → Stripe Checkout | Live (test mode; live gated by `STRIPE_ALLOW_LIVE`) |
+| Activation email + set password | Live (Resend) |
+| Customer dashboard (journey, website preview/live, billing, email, GBP, support) | Live |
+| Stripe Customer Portal (update card) + cancel/resume | Live |
+| Self-serve password reset | Live |
+| Admin client folders, queues, ops tasks (GBP / renewals) | Live |
+| Staff MFA enrollment gate | Live |
+| Mailbox credentials (encrypted at rest) | Live |
+| D1 migrate-before-deploy + `/api/health` schema check | Live |
+| Automated domain buy / site builder / GBP auto-post | **Not built** (manual ops) |
+| Rank tracking add-on | Flagged off |
 
 ## Monorepo layout
 
 ```
 apps/web          React Router + Cloudflare Workers app
-apps/jobs         Jobs worker stub (Cron/Queues later)
+apps/jobs         Jobs worker stub (Cron later)
 packages/db       Drizzle schema + D1 migrations
 packages/auth     Better Auth factory + RBAC helpers
 packages/ui       Shared UI components
 packages/config   Zod env schemas + role constants
-docs/             Architecture planning documents
+docs/             Architecture + ops documents
 ```
 
 ## Prerequisites
@@ -36,7 +47,8 @@ docs/             Architecture planning documents
 pnpm install
 cp .env.example apps/web/.dev.vars
 # Edit apps/web/.dev.vars — set BETTER_AUTH_SECRET (32+ chars)
-# Optional: BOOTSTRAP_OWNER_EMAIL=you@example.com to grant platform_owner on signup
+# Optional: BOOTSTRAP_OWNER_EMAIL=you@example.com to grant platform_owner on login
+# Optional Stripe test keys + RESEND_API_KEY for checkout / emails
 
 pnpm db:migrate:local
 pnpm dev
@@ -54,7 +66,9 @@ Health: `http://localhost:5173/api/health`
 | `pnpm lint` | ESLint |
 | `pnpm test` | Vitest unit tests |
 | `pnpm db:migrate:local` | Apply D1 migrations to local DB |
-| `pnpm --filter @iwfw/db generate` | Regenerate Drizzle SQL (review before commit) |
+| `pnpm db:migrate:production` | Apply migrations to production D1 (**approval required**) |
+
+**Always migrate D1 before deploying Worker code that needs new tables.** See [`docs/PRODUCTION_DEPLOYMENT.md`](./docs/PRODUCTION_DEPLOYMENT.md).
 
 ## Environments
 
@@ -62,28 +76,30 @@ Defined in `apps/web/wrangler.jsonc`:
 
 | Env | Worker name | Notes |
 | --- | --- | --- |
-| default / development | `iwantfreewebsite` | Local D1 placeholder ID; matches dashboard Git Worker name |
-| `staging` | `iwantfreewebsite-staging` | Requires real D1 ID (not created yet) |
-| `production` | `iwantfreewebsite` / `--env production` | Requires approval + real D1 ID |
+| default / development | `iwantfreewebsite` | Local D1 |
+| `staging` | `iwantfreewebsite-staging` | Keep migration head aligned with production |
+| `production` | `iwantfreewebsite` | Requires approval; never activate live Stripe without verification |
 
 Workers Builds must use **root directory `apps/web`**. See [`docs/WORKERS_BUILDS_INVESTIGATION.md`](./docs/WORKERS_BUILDS_INVESTIGATION.md).
 
-Secrets (never commit): `BETTER_AUTH_SECRET`, later Stripe/MXroute/DataForSEO keys via `wrangler secret put`.
+Secrets (never commit): `BETTER_AUTH_SECRET`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`, optional `MAILBOX_ENCRYPTION_KEY`.  
+Vars: `APP_URL`, `APP_ENV`, `STRIPE_PRICE_ID`, optional `STRIPE_ALLOW_LIVE`, `GO_LIVE_SLA_LABEL`.
 
 ## Auth & roles
 
 - Email/password via Better Auth (`/api/auth/*`)
 - Customer memberships → `/dashboard` (org-scoped)
-- Staff `platform_roles` → `/admin`
-- Two-factor plugin enabled for staff MFA (enable per user via Better Auth two-factor APIs)
+- Staff `platform_roles` → `/admin` (MFA required)
+- Password reset: `/forgot-password` + `/reset-password`
 - Feature flag `rank_tracking_checkout_enabled` defaults **false**
 
 ## Security notes
 
 - Do not commit `.dev.vars`, `.env`, or production secrets
 - Do not create paid Cloudflare resources or deploy production without approval
-- Do not run live Stripe / registrar / MXroute operations in Phase 1
+- Do not set `STRIPE_ALLOW_LIVE=true` until live credentials and webhook are verified
+- Mailbox passwords are encrypted at rest; never log them
 
-## Next manual setup (before staging)
+## Docs
 
-See [`docs/PHASE1_MANUAL_SETUP.md`](./docs/PHASE1_MANUAL_SETUP.md) for the exact Cloudflare permissions and resources required. **Do not create them until approved.**
+Start at [`docs/README.md`](./docs/README.md). Prefer code + `WEBSITE_AUDIT.md` when older phase docs disagree.

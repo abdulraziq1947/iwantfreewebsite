@@ -651,6 +651,17 @@ export async function markClientWebsiteLive(
     liveUrl,
   });
 
+  try {
+    const { trackProductEvent } = await import("./analytics.server");
+    await trackProductEvent(db, {
+      name: "website_marked_live",
+      organisationId,
+      properties: { liveUrl },
+    });
+  } catch {
+    // Non-fatal
+  }
+
   return { ok: true as const, liveUrl };
 }
 
@@ -742,6 +753,26 @@ export async function setClientWebsitePreview(
         updatedAt: now,
       })
       .where(eq(domainRegistrationTasks.id, existing.id));
+    if (previewUrl && previewUrl !== existing.previewUrl) {
+      try {
+        const { notifyWebsitePreviewReady } = await import(
+          "./notifications.server"
+        );
+        await notifyWebsitePreviewReady(db, {
+          organisationId,
+          tradingName: org.tradingName,
+          previewUrl,
+        });
+        const { trackProductEvent } = await import("./analytics.server");
+        await trackProductEvent(db, {
+          name: "website_preview_shared",
+          organisationId,
+          properties: { previewUrl },
+        });
+      } catch {
+        // Non-fatal
+      }
+    }
     return { ok: true as const, previewUrl };
   }
 
@@ -768,6 +799,27 @@ export async function setClientWebsitePreview(
     updatedAt: now,
     adminNotes: "Preview URL set from client folder",
   });
+
+  if (previewUrl) {
+    try {
+      const { notifyWebsitePreviewReady } = await import(
+        "./notifications.server"
+      );
+      await notifyWebsitePreviewReady(db, {
+        organisationId,
+        tradingName: org.tradingName,
+        previewUrl,
+      });
+      const { trackProductEvent } = await import("./analytics.server");
+      await trackProductEvent(db, {
+        name: "website_preview_shared",
+        organisationId,
+        properties: { previewUrl },
+      });
+    } catch {
+      // Non-fatal
+    }
+  }
 
   return { ok: true as const, previewUrl };
 }

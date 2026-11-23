@@ -344,6 +344,45 @@ export const domainRegistrationTasks = sqliteTable(
   ],
 );
 
+/** Lightweight product analytics (signup, checkout, activation, cancel). */
+export const productEvents = sqliteTable(
+  "product_events",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    organisationId: text("organisation_id").references(() => organisations.id, {
+      onDelete: "set null",
+    }),
+    userId: text("user_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    propertiesJson: text("properties_json"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+  },
+  (t) => [
+    index("product_events_name_idx").on(t.name),
+    index("product_events_created_at_idx").on(t.createdAt),
+    index("product_events_org_id_idx").on(t.organisationId),
+  ],
+);
+
+/** Simple per-org operating cost inputs for profitability estimates. */
+export const organisationCosts = sqliteTable("organisation_costs", {
+  organisationId: text("organisation_id")
+    .primaryKey()
+    .references(() => organisations.id, { onDelete: "cascade" }),
+  domainAnnualPence: integer("domain_annual_pence").notNull().default(0),
+  mailboxMonthlyPence: integer("mailbox_monthly_pence").notNull().default(0),
+  hostingMonthlyPence: integer("hosting_monthly_pence").notNull().default(0),
+  otherMonthlyPence: integer("other_monthly_pence").notNull().default(0),
+  notes: text("notes"),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+});
+
 /**
  * Staff operational tasks (GBP weekly posts, review replies, domain renewals).
  * No auto-purchase or auto-publish — status tracking only.

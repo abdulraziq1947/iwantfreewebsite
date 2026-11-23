@@ -293,6 +293,17 @@ export async function createCheckoutForPendingOrder(options: {
     // Non-fatal
   }
 
+  try {
+    const { trackProductEvent } = await import("./analytics.server");
+    await trackProductEvent(options.db, {
+      name: "checkout_started",
+      organisationId: order.organisationId,
+      properties: { pendingOrderId: order.id },
+    });
+  } catch {
+    // Non-fatal
+  }
+
   return { url: session.url };
 }
 
@@ -521,6 +532,18 @@ export async function setSubscriptionCancelAtPeriodEnd(options: {
     organisationId: options.organisationId,
     stripeSubscription: updated,
   });
+
+  try {
+    const { trackProductEvent } = await import("./analytics.server");
+    await trackProductEvent(options.db, {
+      name: options.cancelAtPeriodEnd
+        ? "subscription_cancelled"
+        : "subscription_resumed",
+      organisationId: options.organisationId,
+    });
+  } catch {
+    // Non-fatal
+  }
 
   return { ok: true };
 }

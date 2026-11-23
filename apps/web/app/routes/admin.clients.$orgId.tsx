@@ -18,6 +18,11 @@ import { upsertOrganisationMailbox } from "../lib/mailbox.server";
 import { mailboxStatusLabel } from "../lib/mailbox";
 import { listOrganisationInvoices } from "../lib/billing.server";
 import { writeAuditLog, clientIpFromRequest } from "../lib/audit-log.server";
+import {
+  getOrganisationCostEstimate,
+  penceFromPoundsInput,
+  upsertOrganisationCosts,
+} from "../lib/org-costs.server";
 import { AttentionBoardCard } from "../components/attention-board";
 import type { Route } from "./+types/admin.clients.$orgId";
 
@@ -50,7 +55,13 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
     db,
     organisationId: params.orgId,
   });
-  return { client, invoices: invoices.invoices, invoiceError: invoices.error };
+  const costs = await getOrganisationCostEstimate(db, params.orgId);
+  return {
+    client,
+    invoices: invoices.invoices,
+    invoiceError: invoices.error,
+    costs,
+  };
 }
 
 export async function action({ request, context, params }: Route.ActionArgs) {
@@ -177,6 +188,25 @@ export async function action({ request, context, params }: Route.ActionArgs) {
       ip,
     });
     throw redirect(`/admin/clients/${params.orgId}?tab=email`);
+  }
+
+  if (intent === "save_costs") {
+    await upsertOrganisationCosts(db, params.orgId, {
+      domainAnnualPence: penceFromPoundsInput(form.get("domainAnnual")),
+      mailboxMonthlyPence: penceFromPoundsInput(form.get("mailboxMonthly")),
+      hostingMonthlyPence: penceFromPoundsInput(form.get("hostingMonthly")),
+      otherMonthlyPence: penceFromPoundsInput(form.get("otherMonthly")),
+      notes: String(form.get("costNotes") ?? ""),
+    });
+    await writeAuditLog(db, {
+      actorUserId: staff.userId,
+      organisationId: params.orgId,
+      action: "org.costs_update",
+      entityType: "organisation_costs",
+      entityId: params.orgId,
+      ip,
+    });
+    throw redirect(`/admin/clients/${params.orgId}?tab=billing`);
   }
 
   return { error: "Unknown action." };
@@ -920,6 +950,88 @@ export default function AdminClientDetailPage({
 
       {tab === "billing" ? (
         <div className="iwfw-admin-grid">
+          <section className="iwfw-admin-panel">
+            <div className="iwfw-admin-panel__head">
+              <h2>Profitability estimate</h2>
+            </div>
+            <p className="iwfw-admin-muted">
+              Simple estimate from £39.99/mo revenue minus staff-entered
+              operating costs. Not accounting software.
+            </p>
+            <dl className="iwfw-dash-dl">
+              <div>
+                <dt>Revenue / month</dt>
+                <dd>{formatGbpFromPence(loaderData.costs.revenuePence)}</dd>
+              </div>
+              <div>
+                <dt>Est. costs / month</dt>
+                <dd>{formatGbpFromPence(loaderData.costs.costMonthlyPence)}</dd>
+              </div>
+              <div>
+                <dt>Est. profit / month</dt>
+                <dd>{formatGbpFromPence(loaderData.costs.profitMonthlyPence)}</dd>
+              </div>
+            </dl>
+            <Form method="post" className="iwfw-start__form">
+              <input type="hidden" name="intent" value="save_costs" />
+              <input type="hidden" name="tab" value="billing" />
+              <label className="iwfw-field">
+                <span>Domain cost £ / year</span>
+                <input
+                  className="iwfw-control"
+                  name="domainAnnual"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={(loaderData.costs.domainAnnualPence / 100).toFixed(2)}
+                />
+              </label>
+              <label className="iwfw-field">
+                <span>Mailbox £ / month</span>
+                <input
+                  className="iwfw-control"
+                  name="mailboxMonthly"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={(loaderData.costs.mailboxMonthlyPence / 100).toFixed(2)}
+                />
+              </label>
+              <label className="iwfw-field">
+                <span>Hosting £ / month</span>
+                <input
+                  className="iwfw-control"
+                  name="hostingMonthly"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={(loaderData.costs.hostingMonthlyPence / 100).toFixed(2)}
+                />
+              </label>
+              <label className="iwfw-field">
+                <span>Other £ / month</span>
+                <input
+                  className="iwfw-control"
+                  name="otherMonthly"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={(loaderData.costs.otherMonthlyPence / 100).toFixed(2)}
+                />
+              </label>
+              <label className="iwfw-field">
+                <span>Notes</span>
+                <input
+                  className="iwfw-control"
+                  name="costNotes"
+                  defaultValue={loaderData.costs.notes ?? ""}
+                />
+              </label>
+              <button type="submit" className="iwfw-btn iwfw-btn--outline" disabled={busy}>
+                {busy ? "Saving…" : "Save costs"}
+              </button>
+            </Form>
+          </section>
           <section className="iwfw-admin-panel">
             <div className="iwfw-admin-panel__head">
               <h2>Subscriptions</h2>
