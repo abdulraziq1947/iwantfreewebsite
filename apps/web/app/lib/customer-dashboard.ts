@@ -34,7 +34,6 @@ export function orgStatusTone(
 
 export const CUSTOMER_NAV = [
   { to: "/dashboard", label: "Overview", end: true },
-  { to: "/dashboard/onboarding", label: "Progress" },
   { to: "/dashboard/website", label: "Website" },
   { to: "/dashboard/media", label: "Images" },
   { to: "/dashboard/billing", label: "Billing" },

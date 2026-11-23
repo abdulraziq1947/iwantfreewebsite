@@ -96,8 +96,8 @@ export default function DomainPage({ loaderData }: Route.ComponentProps) {
           page.
         </p>
         <div className="iwfw-dash-inline-actions">
-          <Link to="/dashboard/onboarding" className="iwfw-btn iwfw-btn--outline">
-            Back to progress
+          <Link to="/dashboard" className="iwfw-btn iwfw-btn--outline">
+            Back to overview
           </Link>
           <Link to="/dashboard/support" className="iwfw-btn iwfw-btn--outline">
             Contact support

@@ -607,7 +607,7 @@ export async function markClientWebsiteLive(
   return { ok: true as const, liveUrl };
 }
 
-/** Move the site back off “live” (domain task → in_progress). */
+/** Move the site back off “live” (domain task → in_progress). Preserves previewUrl. */
 export async function unmarkClientWebsiteLive(
   db: Db,
   organisationId: string,
@@ -646,6 +646,83 @@ export async function unmarkClientWebsiteLive(
     });
   }
   return { ok: true as const };
+}
+
+/**
+ * Set or clear a customer-facing preview URL without marking the site live.
+ */
+export async function setClientWebsitePreview(
+  db: Db,
+  organisationId: string,
+  options: { previewUrl?: string | null },
+) {
+  const org = await db
+    .select()
+    .from(organisations)
+    .where(eq(organisations.id, organisationId))
+    .get();
+  if (!org) return { error: "Client not found." };
+
+  const raw = (options.previewUrl ?? "").trim();
+  const previewUrl = raw ? normaliseLiveUrl(raw) : null;
+  if (raw && !previewUrl) {
+    return { error: "Enter a valid preview URL." };
+  }
+
+  const now = new Date();
+  const existing = await db
+    .select()
+    .from(domainRegistrationTasks)
+    .where(eq(domainRegistrationTasks.organisationId, organisationId))
+    .orderBy(desc(domainRegistrationTasks.createdAt))
+    .get();
+
+  if (existing) {
+    if (existing.status === "connected") {
+      return {
+        error:
+          "Site is already live. Unmark live first if you need to share a preview instead.",
+      };
+    }
+    await db
+      .update(domainRegistrationTasks)
+      .set({
+        previewUrl,
+        status:
+          existing.status === "pending" || existing.status === "unavailable"
+            ? "in_progress"
+            : existing.status,
+        updatedAt: now,
+      })
+      .where(eq(domainRegistrationTasks.id, existing.id));
+    return { ok: true as const, previewUrl };
+  }
+
+  const profile = await db
+    .select()
+    .from(onboardingProfiles)
+    .where(eq(onboardingProfiles.organisationId, organisationId))
+    .get();
+  const data = parseOnboardingData(profile?.dataJson);
+  const domainName =
+    data.domain.preferredDomain.trim() ||
+    data.domain.existingDomain.trim() ||
+    `${org.tradingName.toLowerCase().replace(/[^a-z0-9]+/g, "") || "site"}.co.uk`;
+  const domainMode = data.domain.mode === "existing" ? "existing" : "new";
+
+  await db.insert(domainRegistrationTasks).values({
+    id: newId("dom"),
+    organisationId,
+    domainName,
+    domainMode,
+    status: "in_progress",
+    previewUrl,
+    createdAt: now,
+    updatedAt: now,
+    adminNotes: "Preview URL set from client folder",
+  });
+
+  return { ok: true as const, previewUrl };
 }
 
 export async function getAdminClientDetail(
@@ -751,6 +828,7 @@ export async function getAdminClientDetail(
         connectedAt: latestDomain.connectedAt
           ? latestDomain.connectedAt.toISOString()
           : null,
+        previewUrl: latestDomain.previewUrl ?? null,
         liveUrl: latestDomain.liveUrl ?? null,
       }
     : null;
@@ -894,6 +972,7 @@ export async function getAdminClientDetail(
       domainMode: t.domainMode,
       status: t.status,
       adminNotes: t.adminNotes,
+      previewUrl: t.previewUrl,
       liveUrl: t.liveUrl,
       registeredAt: t.registeredAt ? t.registeredAt.toISOString() : null,
       connectedAt: t.connectedAt ? t.connectedAt.toISOString() : null,

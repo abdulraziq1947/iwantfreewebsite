@@ -188,8 +188,8 @@ export default function GoogleBusinessPage({
             Access is marked connected only after our team accepts the invite in
             Google.
           </p>
-          <Link to="/dashboard/onboarding" className="iwfw-btn iwfw-btn--outline">
-            Back to progress
+          <Link to="/dashboard" className="iwfw-btn iwfw-btn--outline">
+            Back to overview
           </Link>
         </Panel>
       </div>

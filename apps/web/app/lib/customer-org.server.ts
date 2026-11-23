@@ -113,6 +113,7 @@ export async function getCustomerWorkspace(
         connectedAt: taskRow.connectedAt
           ? new Date(taskRow.connectedAt).toISOString()
           : null,
+        previewUrl: taskRow.previewUrl ?? null,
         liveUrl: taskRow.liveUrl ?? null,
       }
     : null;

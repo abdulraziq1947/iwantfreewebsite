@@ -55,11 +55,33 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 function CopyRow({ label, value }: { label: string; value: string }) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setCopied(false);
+    }
+  }
   return (
     <div>
       <dt>{label}</dt>
-      <dd>
+      <dd className="iwfw-mail-copy-row">
         <code className="iwfw-dash-code">{value}</code>
+        {value && value !== "—" ? (
+          <button
+            type="button"
+            className="iwfw-btn iwfw-btn--outline iwfw-btn--sm"
+            onClick={copy}
+          >
+            {copied ? "Copied" : "Copy"}
+          </button>
+        ) : null}
+        <span className="iwfw-sr-only" aria-live="polite">
+          {copied ? `${label} copied to clipboard` : ""}
+        </span>
       </dd>
     </div>
   );
@@ -67,6 +89,16 @@ function CopyRow({ label, value }: { label: string; value: string }) {
 
 function PasswordRow({ value }: { value: string }) {
   const [visible, setVisible] = useState(false);
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setCopied(false);
+    }
+  }
   return (
     <div className="iwfw-mail-password">
       <dt>Password</dt>
@@ -81,6 +113,16 @@ function PasswordRow({ value }: { value: string }) {
         >
           {visible ? "Hide" : "Show"}
         </button>
+        <button
+          type="button"
+          className="iwfw-btn iwfw-btn--outline iwfw-btn--sm"
+          onClick={copy}
+        >
+          {copied ? "Copied" : "Copy"}
+        </button>
+        <span className="iwfw-sr-only" aria-live="polite">
+          {copied ? "Password copied to clipboard" : ""}
+        </span>
       </dd>
     </div>
   );
@@ -123,8 +165,8 @@ export default function EmailPage({
             {mailboxStatusLabel(mailbox.status)}
           </Badge>
         ) : (
-          <Link to="/dashboard/onboarding" className="iwfw-btn iwfw-btn--outline">
-            Back to progress
+          <Link to="/dashboard" className="iwfw-btn iwfw-btn--outline">
+            Back to overview
           </Link>
         )}
       </header>

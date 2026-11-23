@@ -324,6 +324,8 @@ export const domainRegistrationTasks = sqliteTable(
       .notNull()
       .default("pending"),
     adminNotes: text("admin_notes"),
+    /** Staging/preview URL customers can review before go-live. */
+    previewUrl: text("preview_url"),
     /** Public URL shown to the customer once the site is live. */
     liveUrl: text("live_url"),
     registeredAt: integer("registered_at", { mode: "timestamp_ms" }),

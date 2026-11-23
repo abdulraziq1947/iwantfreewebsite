@@ -610,6 +610,52 @@ export async function listOrganisationInvoices(options: {
   }
 }
 
+/**
+ * Stripe Customer Portal session so the customer can update payment methods.
+ * Returns a hosted URL; caller should redirect.
+ */
+export async function createBillingPortalSession(options: {
+  config: WorkerEnvConfig;
+  db: Db;
+  organisationId: string;
+  returnUrl: string;
+}): Promise<{ url: string } | { error: string }> {
+  const org = await options.db
+    .select()
+    .from(organisations)
+    .where(eq(organisations.id, options.organisationId))
+    .get();
+  if (!org?.stripeCustomerId) {
+    return {
+      error:
+        "No Stripe customer on this account yet. Complete a subscription first.",
+    };
+  }
+  const stripe = getStripe(options.config);
+  if (!stripe) {
+    return { error: "Billing portal is unavailable right now." };
+  }
+  try {
+    const session = await stripe.billingPortal.sessions.create({
+      customer: org.stripeCustomerId,
+      return_url: options.returnUrl,
+    });
+    if (!session.url) {
+      return { error: "Could not open the billing portal." };
+    }
+    return { url: session.url };
+  } catch (error) {
+    log("error", "billing_portal_failed", {
+      organisationId: options.organisationId,
+      error: error instanceof Error ? error.message : "unknown",
+    });
+    return {
+      error:
+        "Could not open the billing portal. If this keeps happening, contact support.",
+    };
+  }
+}
+
 /** Resolve a single invoice PDF URL after membership/staff checks in the route. */
 export async function getOrganisationInvoicePdfUrl(options: {
   config: WorkerEnvConfig;

@@ -235,6 +235,41 @@ Tokens in `@iwfw/ui` (accent blue, CTA green, Plus Jakarta). Drift: `iwfw-btn` v
 
 ---
 
+## Implementation progress (post-audit)
+
+Branch: `cursor/saas-improvements-18f7` · Europe/London
+
+### Batch 1 — Launch readiness (completed in code; live Stripe not activated)
+
+| ID | Status | Notes |
+| --- | --- | --- |
+| FB-01 | Done (gated) | `STRIPE_ALLOW_LIVE` required for live keys/webhooks; default off |
+| FB-02 / FB-22 | Done | `PRODUCTION_DEPLOYMENT.md` + `/api/health` required-table check |
+| FB-03 / FB-04 / FB-06 / FB-34 | Done | Package/homepage/GBP copy; `docs/PORTFOLIO_REVIEW.md` |
+| FB-15 | Done | Staff MFA page + `/admin` gate |
+| FB-16 | Done | AES-GCM mailbox passwords; decrypt for Show UI |
+| FB-12 | Done | GBP customer attention deferred until live |
+
+**Tests:** `@iwfw/web` 78+ unit tests pass; package typechecks green.  
+**Blockers:** Production migrate apply, live Stripe secrets/webhook, MFA enrollment for existing staff — need explicit approval.
+
+### Batch 2 — Customer experience (completed in code)
+
+| ID | Status | Notes |
+| --- | --- | --- |
+| FB-07 | Done | `preview_url` migration `0011`; admin set; customer preview CTA |
+| FB-08 | Done | Stripe Billing Portal from `/dashboard/billing` |
+| FB-09 | Done | `/forgot-password` + `/reset-password` via Better Auth + Resend |
+| FB-10 | Done | `GO_LIVE_SLA_LABEL` on Overview/Website banners |
+| FB-11 | Done | Progress nav removed; `/dashboard/onboarding` → `/dashboard` |
+| FB-17 | Done | Copy buttons on mailbox fields |
+| FB-24 | Done | Desktop topbar Log in |
+
+**Tests:** `@iwfw/web` 79 unit tests pass; typecheck green.  
+**Deps:** Resend for reset emails; Stripe Portal configuration in Stripe Dashboard.
+
+---
+
 ## Related artefacts
 
 - Ranked work: [`FEATURE_BACKLOG.md`](./FEATURE_BACKLOG.md)  

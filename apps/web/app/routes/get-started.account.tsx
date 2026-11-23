@@ -192,6 +192,9 @@ export default function GetStartedAccount({
                 autoComplete="current-password"
               />
             </label>
+            <p className="iwfw-start__fine">
+              <Link to="/forgot-password">Forgot password?</Link>
+            </p>
           </>
         ) : (
           <>

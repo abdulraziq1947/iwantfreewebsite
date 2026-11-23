@@ -22,10 +22,14 @@ Do not conflate the two in metrics or UX.
 | --- | --- |
 | Marketing site + pricing + legal | Live |
 | Pay-first get-started funnel | Live |
-| Stripe Checkout + webhooks | **Test mode enforced** |
-| Customer dashboard + journey stages | Live |
+| Stripe Checkout + webhooks | Test mode default; **live gated by `STRIPE_ALLOW_LIVE`** (off until approved) |
+| Customer dashboard + journey stages | Live (Overview = journey home; Progress redirects) |
+| Website preview before go-live | Live (`preview_url` on domain task) |
+| Stripe Customer Portal (card update) | Live |
+| Self-serve password reset | Live (requires Resend) |
+| Staff MFA gate | Live |
+| Mailbox credential sharing (encrypted at rest) | Live |
 | Admin client folder + queues | Live |
-| Mailbox credential sharing | Live |
 | Support tickets + notifications | Live |
 | Cancel / resume billing | Live |
 | Automated domain buy / site builder / GBP posting | **Not built** (manual ops) |
@@ -41,10 +45,10 @@ Do not conflate the two in metrics or UX.
 
 | Backlog | Outcome |
 | --- | --- |
-| FB-02 | Migrate-before-deploy runbook (+ habit) |
-| FB-01 | Live Stripe path with verified webhook |
-| FB-03, FB-04, FB-06 | Marketing/funnel copy matches ops reality |
-| FB-19 | README + customer docs synced |
+| FB-02 | ✅ Migrate-before-deploy runbook + health schema gate |
+| FB-01 | ✅ Gated live Stripe path — **blocked on prod credential/webhook approval** |
+| FB-03, FB-04, FB-06, FB-34 | ✅ Marketing/funnel/GBP copy + portfolio review doc |
+| FB-19 | Next (docs sync) |
 
 **Exit criteria:** Live Checkout succeeds end-to-end on production; package includes and How-it-works match the product; deploy checklist includes D1.
 
@@ -56,11 +60,12 @@ Do not conflate the two in metrics or UX.
 
 | Backlog | Outcome |
 | --- | --- |
-| FB-10 | Expected go-live window |
-| FB-07 | Preview URL before mark-live |
-| FB-11, FB-12 | Simpler nav; GBP attention deferred pre-live |
-| FB-08, FB-09 | Card update + password reset without support |
-| FB-17, FB-18 | Email copy UX + better error/loading |
+| FB-10 | ✅ Expected go-live window |
+| FB-07 | ✅ Preview URL before mark-live |
+| FB-11, FB-12 | ✅ Simpler nav; GBP attention deferred pre-live |
+| FB-08, FB-09 | ✅ Card update + password reset without support |
+| FB-17, FB-24 | ✅ Email copy UX + desktop Log in |
+| FB-18 | Deferred this cycle |
 
 **Exit criteria:** Customers can state when to expect live + open a preview; billing self-serve covers card + cancel; support volume for password/card drops.
 

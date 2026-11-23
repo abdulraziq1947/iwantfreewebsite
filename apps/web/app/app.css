@@ -259,6 +259,19 @@ h3 {
   font-size: 0.86rem;
 }
 
+.iwfw-topbar__login {
+  display: none;
+  color: var(--iwfw-ink);
+  font-weight: 800;
+  font-size: 0.92rem;
+  text-decoration: none;
+  padding: 0.45rem 0.35rem;
+}
+
+.iwfw-topbar__login:hover {
+  color: var(--iwfw-accent);
+}
+
 @media (max-width: 399px) {
   .iwfw-topbar__actions > .iwfw-btn {
     display: none;
@@ -327,6 +340,10 @@ h3 {
   }
 
   .iwfw-topbar__phone span {
+    display: inline;
+  }
+
+  .iwfw-topbar__login {
     display: inline;
   }
 
@@ -4753,6 +4770,25 @@ h3 {
 
 .iwfw-mail-access .iwfw-dash-dl {
   margin-bottom: 0.75rem;
+}
+
+.iwfw-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.iwfw-mail-copy-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .iwfw-mail-password dd {

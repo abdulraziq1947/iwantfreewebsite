@@ -8,6 +8,7 @@ import {
   getAdminClientDetail,
   isOrgStatus,
   markClientWebsiteLive,
+  setClientWebsitePreview,
   setGbpAccessGranted,
   unmarkClientWebsiteLive,
   updateOrganisationStatus,
@@ -77,6 +78,15 @@ export async function action({ request, context, params }: Route.ActionArgs) {
 
   if (intent === "unmark_live") {
     const result = await unmarkClientWebsiteLive(db, params.orgId);
+    if ("error" in result) return result;
+    throw redirect(`/admin/clients/${params.orgId}?tab=${tab}`);
+  }
+
+  if (intent === "set_preview") {
+    const previewUrl = String(form.get("previewUrl") ?? "").trim();
+    const result = await setClientWebsitePreview(db, params.orgId, {
+      previewUrl: previewUrl || null,
+    });
     if ("error" in result) return result;
     throw redirect(`/admin/clients/${params.orgId}?tab=${tab}`);
   }
@@ -242,37 +252,66 @@ export default function AdminClientDetailPage({
               </button>
             </Form>
             {!isLive ? (
-              <Form method="post" className="iwfw-start__form">
-                <input type="hidden" name="intent" value="mark_live" />
-                <input type="hidden" name="tab" value="overview" />
-                <label className="iwfw-field">
-                  <span>Live website URL</span>
-                  <input
-                    className="iwfw-control"
-                    type="url"
-                    name="liveUrl"
-                    placeholder={
-                      liveDomain
-                        ? `https://${liveDomain}`
-                        : "https://example.co.uk"
-                    }
-                    defaultValue={
-                      liveDomain ? `https://${liveDomain}` : undefined
-                    }
-                  />
-                </label>
-                <p className="iwfw-admin-muted">
-                  Customers see this link and get a congratulations
-                  notification.
-                </p>
-                <button
-                  type="submit"
-                  className="iwfw-btn iwfw-btn--green"
-                  disabled={busy}
-                >
-                  {busy ? "Updating…" : "Mark website live"}
-                </button>
-              </Form>
+              <>
+                <Form method="post" className="iwfw-start__form">
+                  <input type="hidden" name="intent" value="set_preview" />
+                  <input type="hidden" name="tab" value="overview" />
+                  <label className="iwfw-field">
+                    <span>Preview URL (before go-live)</span>
+                    <input
+                      className="iwfw-control"
+                      type="url"
+                      name="previewUrl"
+                      placeholder="https://preview.example.com/…"
+                      defaultValue={
+                        client.domainTasks[0]?.previewUrl ?? undefined
+                      }
+                    />
+                  </label>
+                  <p className="iwfw-admin-muted">
+                    Customers can open this while the site is still being
+                    finished. Clear the field and save to remove it.
+                  </p>
+                  <button
+                    type="submit"
+                    className="iwfw-btn iwfw-btn--outline"
+                    disabled={busy}
+                  >
+                    {busy ? "Saving…" : "Save preview URL"}
+                  </button>
+                </Form>
+                <Form method="post" className="iwfw-start__form">
+                  <input type="hidden" name="intent" value="mark_live" />
+                  <input type="hidden" name="tab" value="overview" />
+                  <label className="iwfw-field">
+                    <span>Live website URL</span>
+                    <input
+                      className="iwfw-control"
+                      type="url"
+                      name="liveUrl"
+                      placeholder={
+                        liveDomain
+                          ? `https://${liveDomain}`
+                          : "https://example.co.uk"
+                      }
+                      defaultValue={
+                        liveDomain ? `https://${liveDomain}` : undefined
+                      }
+                    />
+                  </label>
+                  <p className="iwfw-admin-muted">
+                    Customers see this link and get a congratulations
+                    notification. Mark live only when DNS and content are ready.
+                  </p>
+                  <button
+                    type="submit"
+                    className="iwfw-btn iwfw-btn--green"
+                    disabled={busy}
+                  >
+                    {busy ? "Updating…" : "Mark website live"}
+                  </button>
+                </Form>
+              </>
             ) : (
               <div className="iwfw-admin-actions">
                 {client.domainTasks.find((t) => t.status === "connected")

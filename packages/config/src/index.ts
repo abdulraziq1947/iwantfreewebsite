@@ -72,6 +72,11 @@ export type WorkerEnvConfig = z.infer<typeof workerEnvSchema>;
 export const DEFAULT_RESEND_FROM_EMAIL = "accounts@iwantfreewebsite.com";
 export const DEFAULT_GO_LIVE_SLA_LABEL = "5–10 working days";
 
+/** Customer-facing go-live window (never a hard contractual promise). */
+export function goLiveSlaLabel(config: WorkerEnvConfig): string {
+  return config.GO_LIVE_SLA_LABEL?.trim() || DEFAULT_GO_LIVE_SLA_LABEL;
+}
+
 export function isStripeTestSecretKey(
   key: string | null | undefined,
 ): boolean {

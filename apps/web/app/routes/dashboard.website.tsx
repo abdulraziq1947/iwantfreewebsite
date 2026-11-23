@@ -1,13 +1,14 @@
 import { Link } from "react-router";
 import { createDb } from "@iwfw/db";
-import {getEnv, getConfig} from "../lib/env.server";
+import { goLiveSlaLabel } from "@iwfw/config";
+import { getEnv, getConfig } from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
 import { getCustomerWorkspace } from "../lib/customer-org.server";
 import {
-  buildJourneyStages,
   buildStatusBanner,
   liveWebsiteUrl,
   needsGbpInvite,
+  previewWebsiteUrl,
   websiteStageLabel,
 } from "../lib/customer-progress";
 import type { Route } from "./+types/dashboard.website";
@@ -18,23 +19,20 @@ export function meta(_args: Route.MetaArgs) {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
+  const config = getConfig(context);
   const db = createDb(getEnv(context).DB);
-  const workspace = await getCustomerWorkspace(db, auth, getConfig(context));
-  return { workspace };
+  const workspace = await getCustomerWorkspace(db, auth, config);
+  return { workspace, goLiveSla: goLiveSlaLabel(config) };
 }
 
 export default function WebsitePage({ loaderData }: Route.ComponentProps) {
-  const { workspace } = loaderData;
-  const stages = buildJourneyStages({
-    needsSubscription: workspace.needsSubscription,
-    briefReady: workspace.briefReady,
-    domainTask: workspace.domainTask,
-  });
+  const { workspace, goLiveSla } = loaderData;
   const banner = buildStatusBanner({
     needsSubscription: workspace.needsSubscription,
     briefReady: workspace.briefReady,
     domainTask: workspace.domainTask,
     tradingName: workspace.primary?.tradingName,
+    goLiveSlaLabel: goLiveSla,
   });
   const stage = websiteStageLabel({
     needsSubscription: workspace.needsSubscription,
@@ -47,6 +45,7 @@ export default function WebsitePage({ loaderData }: Route.ComponentProps) {
   const paidAndReady = !workspace.needsSubscription && workspace.briefReady;
   const isLive = workspace.domainTask?.status === "connected";
   const liveUrl = liveWebsiteUrl(workspace.domainTask);
+  const previewUrl = previewWebsiteUrl(workspace.domainTask);
 
   return (
     <div className="iwfw-dash-page iwfw-dash-home">
@@ -57,7 +56,9 @@ export default function WebsitePage({ loaderData }: Route.ComponentProps) {
           <p className="iwfw-dash-home__lead">
             {isLive
               ? "Your site is live. Open the link below anytime."
-              : "Build progress after payment. Domain and launch stay with our team."}
+              : previewUrl
+                ? "Your preview is ready — review it and tell us any changes before we publish."
+                : "Preview and live links appear here. Domain and launch stay with our team."}
           </p>
         </div>
         <div className="iwfw-dash-home__hero-side">
@@ -79,6 +80,18 @@ export default function WebsitePage({ loaderData }: Route.ComponentProps) {
                 {liveUrl}
               </a>
             </p>
+          ) : previewUrl ? (
+            <p className="iwfw-dash-status__live-url">
+              <a href={previewUrl} target="_blank" rel="noreferrer">
+                {previewUrl}
+              </a>
+            </p>
+          ) : null}
+          {!isLive && paidAndReady && !previewUrl ? (
+            <p className="iwfw-dash-fine">
+              Typical go-live: about {goLiveSla} after we have everything we
+              need. This is a usual timeframe, not a guaranteed deadline.
+            </p>
           ) : null}
         </div>
         <div className="iwfw-dash-status__actions">
@@ -91,6 +104,15 @@ export default function WebsitePage({ loaderData }: Route.ComponentProps) {
             >
               Visit live site
             </a>
+          ) : previewUrl ? (
+            <a
+              href={previewUrl}
+              className="iwfw-btn iwfw-btn--green"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open preview
+            </a>
           ) : showGbp ? (
             <Link
               to="/dashboard/google-business"
@@ -98,45 +120,13 @@ export default function WebsitePage({ loaderData }: Route.ComponentProps) {
             >
               Give Manager access
             </Link>
-          ) : null}
+          ) : (
+            <Link to="/dashboard" className="iwfw-btn iwfw-btn--outline">
+              Back to overview
+            </Link>
+          )}
         </div>
       </section>
-
-      <section className="iwfw-dash-steps" aria-label="What happens next">
-        <div className="iwfw-dash-steps__head">
-          <h2>What happens next</h2>
-          <p>
-            {isLive
-              ? "All stages complete — your website is live."
-              : "We’ll share a preview before go-live."}
-          </p>
-        </div>
-        <ol className="iwfw-dash-steps__list">
-          {stages.map((item, index) => (
-            <li
-              key={item.id}
-              className={`iwfw-dash-steps__item is-${item.state}`}
-            >
-              <span className="iwfw-dash-steps__index" aria-hidden>
-                {item.state === "done" ? "✓" : index + 1}
-              </span>
-              <div>
-                <strong>{item.title}</strong>
-                <p>{item.detail}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <div className="iwfw-dash-inline-actions">
-        <Link to="/dashboard/media" className="iwfw-btn iwfw-btn--outline">
-          Update images
-        </Link>
-        <Link to="/dashboard/onboarding" className="iwfw-btn iwfw-btn--outline">
-          View progress
-        </Link>
-      </div>
     </div>
   );
 }
