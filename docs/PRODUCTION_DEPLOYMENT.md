@@ -60,7 +60,7 @@ Pause Builds until `main` contains Phase 1 + production D1 UUID and secrets are 
 4. **Workers Builds** root must be `apps/web` with `CLOUDFLARE_ENV=production` build command and production branch **`main`**. See [`WORKERS_BUILDS_INVESTIGATION.md`](./WORKERS_BUILDS_INVESTIGATION.md).
 5. **Custom domain** `iwantfreewebsite.com` must resolve to this Worker and match `APP_URL` for Better Auth cookies / `trustedOrigins`.
 6. **Do not** point production Builds at the staging branch or staging build command (`CLOUDFLARE_ENV=staging`).
-7. **Do not** set `STRIPE_ALLOW_LIVE=true` until live keys + webhook are verified in a separate approval.
+7. Live Stripe unlock: set live `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` (secrets), live `STRIPE_PRICE_ID` (var), then `STRIPE_ALLOW_LIVE=true`. Confirm with `GET /api/stripe/ready` before taking real payments.
 
 ---
 
@@ -115,7 +115,7 @@ Migrations live under `packages/db/migrations/` (`0000` … current journal head
 | `APP_ENV` | `production` |
 | `APP_URL` | `https://iwantfreewebsite.com` (must match the live public origin) |
 | `STRIPE_PRICE_ID` | Live £39.99 GBP monthly Price ID |
-| `STRIPE_ALLOW_LIVE` | **Do not set `true` until live keys + webhook verified** (FB-01) |
+| `STRIPE_ALLOW_LIVE` | `"true"` only after live keys + webhook verified (FB-01). Check `/api/stripe/ready`. |
 
 ### Live Stripe unlock (FB-01) — requires explicit approval
 
@@ -143,7 +143,7 @@ Short form:
 2. **Migrate D1 first** (`pnpm run db:migrate:production`) while the current Worker stays live.
 3. Merge approved PR to `main` / deploy Worker (`pnpm run deploy:production` or Builds).
 4. Smoke: `/api/health` (`schema.ok`), customer login + dashboard + mailbox Show, staff MFA enroll if needed.
-5. Leave `STRIPE_ALLOW_LIVE` unset/false.
+5. Live Stripe: confirm `GET /api/stripe/ready` is `ok: true` after `STRIPE_ALLOW_LIVE=true`.
 6. Remove `BOOTSTRAP_OWNER_EMAIL` if it is still present after owner exists.
 
 ---
