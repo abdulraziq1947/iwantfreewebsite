@@ -7,12 +7,21 @@ import { BrandLogo } from "../components/brand-logo";
 import { NotificationBell } from "../components/notification-bell";
 import { countCustomerUnreadTickets } from "../lib/support.server";
 import { getNotificationsFeed } from "../lib/notifications.server";
+import {
+  pickActiveOrganisationId,
+  readActiveOrganisationPreference,
+  withActiveOrg,
+} from "../lib/active-org";
 import type { Route } from "./+types/customer-layout";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
   const db = createDb(getEnv(context).DB);
   const organisationIds = auth.memberships.map((m) => m.organisationId);
+  const activeOrganisationId = pickActiveOrganisationId(
+    organisationIds,
+    readActiveOrganisationPreference(request),
+  );
   const [ticketUnread, feed] = await Promise.all([
     countCustomerUnreadTickets(db, organisationIds),
     getNotificationsFeed(db, auth.userId, 12),
@@ -21,6 +30,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     user: { name: auth.name, email: auth.email },
     isStaff: auth.staffRoles.length > 0,
     organisationIds,
+    activeOrganisationId,
     supportUnread: ticketUnread,
     notifyUnread: feed.unread,
     notifications: feed.items,
@@ -29,13 +39,19 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 export default function CustomerLayout({ loaderData }: Route.ComponentProps) {
   const { pathname } = useLocation();
+  const activeOrg = loaderData.activeOrganisationId;
+  const navTo = (to: string) => withActiveOrg(to, activeOrg);
 
   return (
     <div className="iwfw-dash">
       <header className="iwfw-dash__topbar">
         <div className="iwfw-dash__topbar-inner">
           <div className="iwfw-dash__brand">
-            <Link to="/dashboard" className="iwfw-dash__logo" aria-label="Dashboard home">
+            <Link
+              to={navTo("/dashboard")}
+              className="iwfw-dash__logo"
+              aria-label="Dashboard home"
+            >
               <BrandLogo size={28} withWordmark />
             </Link>
             <span className="iwfw-dash__eyebrow">Your account</span>
@@ -72,7 +88,7 @@ export default function CustomerLayout({ loaderData }: Route.ComponentProps) {
           {CUSTOMER_NAV.map((item) => (
             <NavLink
               key={item.to}
-              to={item.to}
+              to={navTo(item.to)}
               end={"end" in item ? item.end : false}
               className={({ isActive }) =>
                 `iwfw-dash__nav-link${isActive ? " is-active" : ""}`
@@ -109,7 +125,7 @@ export default function CustomerLayout({ loaderData }: Route.ComponentProps) {
             return (
               <Link
                 key={item.to}
-                to={item.to}
+                to={navTo(item.to)}
                 className={`iwfw-dash__chip${active ? " is-active" : ""}`}
               >
                 {item.label}

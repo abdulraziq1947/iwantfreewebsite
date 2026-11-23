@@ -10,13 +10,13 @@
 
 | Area | Route | Contents |
 | --- | --- | --- |
-| Overview | `/dashboard` | Journey stages, status banner, attention board, SLA copy |
-| Website | `/dashboard/website` | Preview URL (pre-live) and live URL (after mark-live) |
-| Images | `/dashboard/media` | Customer uploads |
+| Overview | `/dashboard` | Journey stages, status banner, attention board, SLA copy, website switcher |
+| Website | `/dashboard/website` | Preview/live URLs + **New website** + multi-site list/select |
+| Images | `/dashboard/media` | Uploads scoped to the selected website (`?org=` / cookie) |
 | Billing | `/dashboard/billing` | Plan, invoices, Stripe Customer Portal (card), cancel/resume, transfer status |
-| Domain | `/dashboard/domain` | Requested domain + staff-owned status |
-| Email | `/dashboard/email` | Preference + mailbox credentials with Show/Copy |
-| Google Business | `/dashboard/google-business` | Manager invite / status (not automated posting) |
+| Domain | `/dashboard/domain` | Requested domain + staff-owned status (per selected website) |
+| Email | `/dashboard/email` | Preference + mailbox credentials with Show/Copy (per website) |
+| Google Business | `/dashboard/google-business` | Manager invite / status for the selected website |
 | Support | `/dashboard/support` | Tickets |
 | Notifications | `/dashboard/notifications` | In-app feed |
 | Account | `/dashboard/account` | Profile + password reset link |
@@ -30,11 +30,18 @@
 - Payment method updates go through Stripe Customer Portal.
 - Rank add-on purchase button **absent** (feature flag off).
 
+## Multiple websites
+
+- Each paid organisation is a separate website.
+- Customers pick the active website with the switcher (`?org=` persisted in `iwfw_active_org`).
+- Images and Google Business updates always save against the selected website so staff see the right client folder.
+
 ## Google Business
 
-- Customer confirms Manager invite / help needed.
+- Customer confirms Manager invite / help needed **per website**.
 - Staff track weekly posts and review replies on `/admin/ops` — customers do not see an automated post history yet.
 - Attention items for GBP are deferred until the website is live.
+- Admin client folders and `/admin/media` label assets with the website trading name.
 
 ## Website preview & live
 

@@ -1,9 +1,12 @@
+import { data } from "react-router";
 import { Panel } from "@iwfw/ui";
-import { createDb } from "@iwfw/db";
 import { MediaUploader } from "../components/media-uploader";
-import {getEnv, getConfig} from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
-import { getCustomerWorkspace } from "../lib/customer-org.server";
+import { loadCustomerWorkspace } from "../lib/customer-workspace.server";
+import {
+  NewWebsiteButton,
+  WebsiteSwitcher,
+} from "../components/website-switcher";
 import type { Route } from "./+types/dashboard.media";
 
 export function meta(_args: Route.MetaArgs) {
@@ -12,18 +15,25 @@ export function meta(_args: Route.MetaArgs) {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
-  const db = createDb(getEnv(context).DB);
-  const workspace = await getCustomerWorkspace(db, auth, getConfig(context));
-  return {
-    organisationId: workspace.primary?.id ?? null,
-    tradingName: workspace.primary?.tradingName ?? null,
-  };
+  const { workspace, headers } = await loadCustomerWorkspace(
+    request,
+    context,
+    auth,
+  );
+  return data(
+    {
+      organisationId: workspace.primary?.id ?? null,
+      tradingName: workspace.primary?.tradingName ?? null,
+      orgs: workspace.orgs,
+    },
+    headers ? { headers } : undefined,
+  );
 }
 
 export default function DashboardMediaPage({
   loaderData,
 }: Route.ComponentProps) {
-  const { organisationId, tradingName } = loaderData;
+  const { organisationId, tradingName, orgs } = loaderData;
 
   return (
     <div className="iwfw-dash-page">
@@ -31,12 +41,18 @@ export default function DashboardMediaPage({
         <div>
           <h1>Images</h1>
           <p>
-            Manage logos and photos for{" "}
-            {tradingName ? <strong>{tradingName}</strong> : "your website"}.
-            Only you and our build team can view these files.
+            Upload logos and photos for the selected website. Our build team
+            only uses files linked to that site.
           </p>
         </div>
+        {orgs.length > 0 ? <NewWebsiteButton /> : null}
       </header>
+
+      <WebsiteSwitcher
+        orgs={orgs}
+        activeId={organisationId}
+        hint="Choose which website these images belong to before uploading."
+      />
 
       {!organisationId ? (
         <Panel>
@@ -47,12 +63,16 @@ export default function DashboardMediaPage({
           </p>
         </Panel>
       ) : (
-        <Panel>
+        <Panel key={organisationId}>
           <MediaUploader
             mode="organisation"
             organisationId={organisationId}
-            title="Your website images"
-            description="Add or replace logos, business photos, team shots and portfolio images. Files are private and served only through authorised links."
+            title={
+              tradingName
+                ? `Images for ${tradingName}`
+                : "Your website images"
+            }
+            description="Add or replace logos, business photos, team shots and portfolio images for this website only. Files are private and served only through authorised links."
           />
         </Panel>
       )}

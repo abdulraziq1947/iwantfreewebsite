@@ -1,10 +1,10 @@
-import { Link } from "react-router";
+import { data, Link } from "react-router";
 import { Panel, Badge } from "@iwfw/ui";
-import { createDb, desc, eq, domainRegistrationTasks } from "@iwfw/db";
-import {getEnv, getConfig} from "../lib/env.server";
+import { desc, eq, domainRegistrationTasks } from "@iwfw/db";
 import { requireAuth } from "../lib/session.server";
-import { getCustomerWorkspace } from "../lib/customer-org.server";
+import { loadCustomerWorkspace } from "../lib/customer-workspace.server";
 import { domainTaskLabel } from "../lib/customer-progress";
+import { WebsiteSwitcher } from "../components/website-switcher";
 import type { Route } from "./+types/dashboard.domain";
 
 export function meta(_args: Route.MetaArgs) {
@@ -13,8 +13,11 @@ export function meta(_args: Route.MetaArgs) {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
-  const db = createDb(getEnv(context).DB);
-  const workspace = await getCustomerWorkspace(db, auth, getConfig(context));
+  const { db, workspace, headers } = await loadCustomerWorkspace(
+    request,
+    context,
+    auth,
+  );
   const task = workspace.primary
     ? await db
         .select()
@@ -23,7 +26,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         .orderBy(desc(domainRegistrationTasks.createdAt))
         .get()
     : null;
-  return { workspace, task };
+  return data({ workspace, task }, headers ? { headers } : undefined);
 }
 
 export default function DomainPage({ loaderData }: Route.ComponentProps) {
@@ -43,6 +46,12 @@ export default function DomainPage({ loaderData }: Route.ComponentProps) {
         </div>
         {statusLabel ? <Badge>{statusLabel}</Badge> : null}
       </header>
+
+      <WebsiteSwitcher
+        orgs={loaderData.workspace.orgs}
+        activeId={loaderData.workspace.primary?.id}
+        hint="Domain status is shown for the selected website."
+      />
 
       <Panel>
         <dl className="iwfw-dash-dl">

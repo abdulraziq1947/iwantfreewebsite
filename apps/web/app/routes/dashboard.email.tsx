@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Form, Link, useNavigation } from "react-router";
+import { data as rrData, Form, Link, useNavigation } from "react-router";
 import { Badge, Panel } from "@iwfw/ui";
-import { createDb, eq, onboardingProfiles } from "@iwfw/db";
-import {getEnv, getConfig} from "../lib/env.server";
+import { eq, onboardingProfiles } from "@iwfw/db";
+import { getConfig } from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
 import { getCustomerWorkspace } from "../lib/customer-org.server";
+import { loadCustomerWorkspace } from "../lib/customer-workspace.server";
 import { QuestionnaireField } from "../components/questionnaire-field";
+import { WebsiteSwitcher } from "../components/website-switcher";
 import {
   MAIL_CLIENT_GUIDES,
   mailboxSecurityLabel,
@@ -19,20 +21,34 @@ export function meta(_args: Route.MetaArgs) {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
-  const db = createDb(getEnv(context).DB);
-  return getCustomerWorkspace(db, auth, getConfig(context));
+  const { workspace, headers } = await loadCustomerWorkspace(
+    request,
+    context,
+    auth,
+  );
+  return rrData(workspace, headers ? { headers } : undefined);
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
   const auth = await requireAuth(request, context);
-  const db = createDb(getEnv(context).DB);
-  const workspace = await getCustomerWorkspace(db, auth, getConfig(context));
-  if (!workspace.primary || !workspace.onboarding) {
+  const form = await request.formData();
+  const orgFromForm = String(form.get("org") ?? "").trim() || null;
+  const { db, workspace } = await loadCustomerWorkspace(
+    request,
+    context,
+    auth,
+  );
+  const selected =
+    orgFromForm && workspace.orgs.some((o) => o.id === orgFromForm)
+      ? await getCustomerWorkspace(db, auth, getConfig(context), {
+          organisationId: orgFromForm,
+        })
+      : workspace;
+  if (!selected.primary || !selected.onboarding) {
     return { error: "No website account found." };
   }
 
-  const form = await request.formData();
-  const data = structuredClone(workspace.onboarding.data);
+  const data = structuredClone(selected.onboarding.data);
   data.email = {
     localPart: String(form.get("localPart") ?? "")
       .trim()
@@ -49,7 +65,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       dataJson: JSON.stringify(data),
       updatedAt: new Date(),
     })
-    .where(eq(onboardingProfiles.id, workspace.onboarding.id));
+    .where(eq(onboardingProfiles.id, selected.onboarding.id));
 
   return { ok: true, saved: true };
 }
@@ -170,6 +186,12 @@ export default function EmailPage({
           </Link>
         )}
       </header>
+
+      <WebsiteSwitcher
+        orgs={loaderData.orgs}
+        activeId={loaderData.primary?.id}
+        hint="Mailbox preferences and credentials are per website."
+      />
 
       {ready && mailbox ? (
         <>
@@ -345,6 +367,9 @@ export default function EmailPage({
           <Panel>
             <h2>Mailbox preference</h2>
             <Form method="post" className="iwfw-start__form">
+              {loaderData.primary?.id ? (
+                <input type="hidden" name="org" value={loaderData.primary.id} />
+              ) : null}
               <QuestionnaireField
                 label="Mailbox name"
                 name="localPart"

@@ -78,16 +78,23 @@ export default function AdminMediaPage({ loaderData }: Route.ComponentProps) {
                 />
                 <div className="iwfw-admin-media__body">
                   <strong>{u.originalFilename}</strong>
+                  <p className="iwfw-admin-media__website">
+                    Website:{" "}
+                    {u.organisationId && u.tradingName ? (
+                      <a href={`/admin/clients/${u.organisationId}?tab=images`}>
+                        {u.tradingName}
+                      </a>
+                    ) : u.pendingOrderId ? (
+                      <>Order {u.pendingOrderId.slice(0, 10)}…</>
+                    ) : (
+                      "Unassigned"
+                    )}
+                  </p>
                   <p>
                     {isUploadCategory(u.category)
                       ? categoryLabel(u.category)
                       : u.category}{" "}
-                    · {formatBytes(u.byteSize)} ·{" "}
-                    {u.tradingName ??
-                      (u.pendingOrderId
-                        ? `Order ${u.pendingOrderId.slice(0, 10)}…`
-                        : "Unassigned")}{" "}
-                    · {formatAdminDate(u.createdAt)}
+                    · {formatBytes(u.byteSize)} · {formatAdminDate(u.createdAt)}
                   </p>
                 </div>
                 <div className="iwfw-admin-media__meta">

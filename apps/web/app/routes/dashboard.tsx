@@ -1,10 +1,10 @@
-import { Link } from "react-router";
+import { data, Link } from "react-router";
 import { Badge, Panel } from "@iwfw/ui";
-import { createDb } from "@iwfw/db";
 import { goLiveSlaLabel } from "@iwfw/config";
-import { getEnv, getConfig } from "../lib/env.server";
+import { getConfig } from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
-import { getCustomerWorkspace } from "../lib/customer-org.server";
+import { loadCustomerWorkspace } from "../lib/customer-workspace.server";
+import { withActiveOrg } from "../lib/active-org";
 import { orgStatusLabel, orgStatusTone } from "../lib/customer-dashboard";
 import {
   buildCustomerActions,
@@ -16,6 +16,10 @@ import {
   websiteStageLabel,
 } from "../lib/customer-progress";
 import { AttentionBoardCard } from "../components/attention-board";
+import {
+  NewWebsiteButton,
+  WebsiteSwitcher,
+} from "../components/website-switcher";
 import type { Route } from "./+types/dashboard";
 
 export function meta(_args: Route.MetaArgs) {
@@ -25,17 +29,24 @@ export function meta(_args: Route.MetaArgs) {
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
   const config = getConfig(context);
-  const db = createDb(getEnv(context).DB);
-  const workspace = await getCustomerWorkspace(db, auth, config);
-  return {
-    userName: auth.name,
-    workspace,
-    goLiveSla: goLiveSlaLabel(config),
-  };
+  const { workspace, headers } = await loadCustomerWorkspace(
+    request,
+    context,
+    auth,
+  );
+  return data(
+    {
+      userName: auth.name,
+      workspace,
+      goLiveSla: goLiveSlaLabel(config),
+    },
+    headers ? { headers } : undefined,
+  );
 }
 
 export default function Dashboard({ loaderData }: Route.ComponentProps) {
   const { workspace, goLiveSla } = loaderData;
+  const activeId = workspace.primary?.id ?? null;
   const firstName = loaderData.userName?.split(" ")[0] ?? "";
   const stages = buildJourneyStages({
     needsSubscription: workspace.needsSubscription,
@@ -145,7 +156,10 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
               Contact support
             </Link>
           ) : (
-            <Link to="/dashboard/website" className="iwfw-btn iwfw-btn--outline">
+            <Link
+              to={withActiveOrg("/dashboard/website", activeId)}
+              className="iwfw-btn iwfw-btn--outline"
+            >
               Website details
             </Link>
           )}
@@ -160,7 +174,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
           title="Needs attention"
           gbpActions={
             <Link
-              to="/dashboard/google-business"
+              to={withActiveOrg("/dashboard/google-business", activeId)}
               className="iwfw-btn iwfw-btn--outline"
             >
               {showGbp && gbpAction ? gbpAction.cta : "Update Google Business"}
@@ -168,6 +182,12 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
           }
         />
       ) : null}
+
+      <WebsiteSwitcher
+        orgs={workspace.orgs}
+        activeId={activeId}
+        hint="Overview, images and Google Business follow the website you select."
+      />
 
       <section className="iwfw-dash-steps" aria-label="What happens next">
         <div className="iwfw-dash-steps__head">
@@ -193,19 +213,35 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
       </section>
 
       <section className="iwfw-dash-links" aria-label="Quick links">
-        <Link to="/dashboard/website" className="iwfw-dash-link">
+        <Link
+          to={withActiveOrg("/dashboard/website", activeId)}
+          className="iwfw-dash-link"
+        >
           <span>Website</span>
           <strong>{stageLabel}</strong>
         </Link>
-        <Link to="/dashboard/domain" className="iwfw-dash-link">
+        <Link
+          to={withActiveOrg("/dashboard/domain", activeId)}
+          className="iwfw-dash-link"
+        >
           <span>Domain</span>
           <strong>{domainName || "Managed by us"}</strong>
         </Link>
-        <Link to="/dashboard/media" className="iwfw-dash-link">
+        <Link
+          to={withActiveOrg("/dashboard/media", activeId)}
+          className="iwfw-dash-link"
+        >
           <span>Images</span>
-          <strong>Upload anytime</strong>
+          <strong>
+            {workspace.primary?.tradingName
+              ? `For ${workspace.primary.tradingName}`
+              : "Upload anytime"}
+          </strong>
         </Link>
-        <Link to="/dashboard/billing" className="iwfw-dash-link">
+        <Link
+          to={withActiveOrg("/dashboard/billing", activeId)}
+          className="iwfw-dash-link"
+        >
           <span>Billing</span>
           <strong>
             {workspace.primary
@@ -213,12 +249,19 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
               : "No plan yet"}
           </strong>
         </Link>
-        <Link to="/dashboard/support" className="iwfw-dash-link">
-          <span>Support</span>
-          <strong>We’re here</strong>
+        <Link
+          to={withActiveOrg("/dashboard/google-business", activeId)}
+          className="iwfw-dash-link"
+        >
+          <span>Google Business</span>
+          <strong>
+            {workspace.primary?.tradingName
+              ? workspace.primary.tradingName
+              : "Per website"}
+          </strong>
         </Link>
         <Link to="/get-started?new=1" className="iwfw-dash-link">
-          <span>New site</span>
+          <span>New website</span>
           <strong>Add another</strong>
         </Link>
       </section>
@@ -228,18 +271,18 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
           <div>
             <h2>Your websites</h2>
             <p className="iwfw-dash-sites__intro">
-              Each paid order becomes its own site in your account.
+              Each paid order becomes its own site. Select one to manage images
+              and Google Business for that site.
             </p>
           </div>
-          <Link to="/get-started?new=1" className="iwfw-btn iwfw-btn--outline">
-            Add another site
-          </Link>
+          <NewWebsiteButton>New website</NewWebsiteButton>
         </div>
         <ul className="iwfw-dash-orgs">
           {workspace.orgs.map((org) => {
             const initial = org.tradingName.trim().charAt(0).toUpperCase() || "W";
+            const selected = org.id === activeId;
             return (
-              <li key={org.id}>
+              <li key={org.id} className={selected ? "is-selected" : undefined}>
                 <div className="iwfw-dash-orgs__body">
                   <span className="iwfw-dash-orgs__mark" aria-hidden>
                     {initial}
@@ -247,15 +290,24 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
                   <div>
                     <p className="iwfw-dash-orgs__name">{org.tradingName}</p>
                     <p className="iwfw-dash-orgs__meta">
-                      {org.id === workspace.primary?.id
-                        ? "Showing in this dashboard"
-                        : "Additional site"}
+                      {org.domainName ? `${org.domainName} · ` : ""}
+                      {selected ? "Selected" : "Tap Select to manage"}
                     </p>
                   </div>
                 </div>
-                <Badge tone={orgStatusTone(org.status)}>
-                  {orgStatusLabel(org.status)}
-                </Badge>
+                <div className="iwfw-dash-orgs__actions">
+                  <Badge tone={orgStatusTone(org.status)}>
+                    {orgStatusLabel(org.status)}
+                  </Badge>
+                  {!selected ? (
+                    <Link
+                      to={withActiveOrg("/dashboard", org.id)}
+                      className="iwfw-btn iwfw-btn--outline iwfw-btn--sm"
+                    >
+                      Select
+                    </Link>
+                  ) : null}
+                </div>
               </li>
             );
           })}

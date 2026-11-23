@@ -457,7 +457,7 @@ export default function AdminClientDetailPage({
                     className="iwfw-btn iwfw-btn--outline"
                     disabled={busy}
                   >
-                    Revoke GMB granted
+                    Revoke GMB for {client.org.tradingName}
                   </button>
                 </Form>
               ) : (
@@ -469,12 +469,17 @@ export default function AdminClientDetailPage({
                     className="iwfw-btn iwfw-btn--green"
                     disabled={busy}
                   >
-                    Mark GMB access granted
+                    Mark GMB granted · {client.org.tradingName}
                   </button>
                 </Form>
               )
             }
           />
+          <p className="iwfw-admin-muted" style={{ marginTop: "-0.35rem" }}>
+            Google Business status on this folder is for{" "}
+            <strong>{client.org.tradingName}</strong> only. Other websites for
+            the same customer have their own client folders.
+          </p>
 
           <section className="iwfw-admin-panel">
             <div className="iwfw-admin-panel__head">
@@ -915,6 +920,14 @@ export default function AdminClientDetailPage({
 
       {tab === "images" ? (
         <section className="iwfw-admin-panel">
+          <div className="iwfw-admin-panel__head">
+            <h2>Images for {client.org.tradingName}</h2>
+          </div>
+          <p className="iwfw-admin-muted" style={{ marginBottom: "0.85rem" }}>
+            These uploads belong to this website only. If the customer has
+            several sites, open each client folder to see that site’s images and
+            Google Business details.
+          </p>
           {client.uploads.length === 0 ? (
             <p className="iwfw-admin-empty">No images uploaded yet.</p>
           ) : (
@@ -929,6 +942,9 @@ export default function AdminClientDetailPage({
                   />
                   <div className="iwfw-admin-media__body">
                     <strong>{u.originalFilename}</strong>
+                    <p className="iwfw-admin-media__website">
+                      Website: {client.org.tradingName}
+                    </p>
                     <p>
                       {u.categoryLabel} · {formatAdminDate(u.createdAt)}
                     </p>

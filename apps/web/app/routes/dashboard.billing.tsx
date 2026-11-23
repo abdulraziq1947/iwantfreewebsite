@@ -1,9 +1,9 @@
-import { Form, Link, redirect, useNavigation } from "react-router";
+import { data, Form, Link, redirect, useNavigation } from "react-router";
 import { Badge, Panel } from "@iwfw/ui";
-import { createDb, desc, eq, assetTransferTasks } from "@iwfw/db";
-import { getConfig, getEnv } from "../lib/env.server";
+import { desc, eq, assetTransferTasks } from "@iwfw/db";
+import { getConfig } from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
-import { getCustomerWorkspace } from "../lib/customer-org.server";
+import { loadCustomerWorkspace } from "../lib/customer-workspace.server";
 import { orgStatusLabel, orgStatusTone } from "../lib/customer-dashboard";
 import {
   createBillingPortalSession,
@@ -11,6 +11,7 @@ import {
   listOrganisationInvoices,
   setSubscriptionCancelAtPeriodEnd,
 } from "../lib/billing.server";
+import { WebsiteSwitcher } from "../components/website-switcher";
 import type { Route } from "./+types/dashboard.billing";
 
 export function meta(_args: Route.MetaArgs) {
@@ -20,8 +21,11 @@ export function meta(_args: Route.MetaArgs) {
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
   const config = getConfig(context);
-  const db = createDb(getEnv(context).DB);
-  const workspace = await getCustomerWorkspace(db, auth, getConfig(context));
+  const { db, workspace, headers } = await loadCustomerWorkspace(
+    request,
+    context,
+    auth,
+  );
   const subscription = workspace.primary
     ? await getOrganisationSubscription(db, workspace.primary.id)
     : null;
@@ -43,33 +47,47 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         ReturnType<typeof listOrganisationInvoices>
       >["invoices"] };
 
-  return {
-    workspace,
-    subscription,
-    transfer,
-    invoices: invoiceResult.invoices,
-    invoiceError:
-      "error" in invoiceResult ? invoiceResult.error : undefined,
-  };
+  return data(
+    {
+      workspace,
+      subscription,
+      transfer,
+      invoices: invoiceResult.invoices,
+      invoiceError:
+        "error" in invoiceResult ? invoiceResult.error : undefined,
+    },
+    headers ? { headers } : undefined,
+  );
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
   const auth = await requireAuth(request, context);
   const config = getConfig(context);
-  const db = createDb(getEnv(context).DB);
-  const workspace = await getCustomerWorkspace(db, auth, getConfig(context));
-  if (!workspace.primary) {
+  const form = await request.formData();
+  const orgFromForm = String(form.get("org") ?? "").trim() || null;
+  const { db, workspace } = await loadCustomerWorkspace(
+    request,
+    context,
+    auth,
+  );
+  const { getCustomerWorkspace } = await import("../lib/customer-org.server");
+  const selected =
+    orgFromForm && workspace.orgs.some((o) => o.id === orgFromForm)
+      ? await getCustomerWorkspace(db, auth, config, {
+          organisationId: orgFromForm,
+        })
+      : workspace;
+  if (!selected.primary) {
     return { error: "No website account found." };
   }
 
-  const form = await request.formData();
   const intent = String(form.get("intent") ?? "");
 
   if (intent === "cancel") {
     return setSubscriptionCancelAtPeriodEnd({
       config,
       db,
-      organisationId: workspace.primary.id,
+      organisationId: selected.primary.id,
       cancelAtPeriodEnd: true,
     });
   }
@@ -77,7 +95,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     return setSubscriptionCancelAtPeriodEnd({
       config,
       db,
-      organisationId: workspace.primary.id,
+      organisationId: selected.primary.id,
       cancelAtPeriodEnd: false,
     });
   }
@@ -85,8 +103,8 @@ export async function action({ request, context }: Route.ActionArgs) {
     const portal = await createBillingPortalSession({
       config,
       db,
-      organisationId: workspace.primary.id,
-      returnUrl: `${config.APP_URL}/dashboard/billing`,
+      organisationId: selected.primary.id,
+      returnUrl: `${config.APP_URL}/dashboard/billing?org=${encodeURIComponent(selected.primary.id)}`,
     });
     if ("error" in portal) return portal;
     throw redirect(portal.url);
@@ -170,6 +188,12 @@ export default function BillingPage({
         </div>
         <Badge tone={orgStatusTone(status)}>{orgStatusLabel(status)}</Badge>
       </header>
+
+      <WebsiteSwitcher
+        orgs={workspace.orgs}
+        activeId={workspace.primary?.id}
+        hint="Billing, invoices and cancellation apply to the selected website subscription."
+      />
 
       <section className="iwfw-dash-panel">
         <div className="iwfw-dash-panel-head">
@@ -279,6 +303,9 @@ export default function BillingPage({
               </dl>
               <Form method="post">
                 <input type="hidden" name="intent" value="portal" />
+                {workspace.primary?.id ? (
+                  <input type="hidden" name="org" value={workspace.primary.id} />
+                ) : null}
                 <button
                   type="submit"
                   className="iwfw-btn iwfw-btn--outline"
@@ -334,6 +361,9 @@ export default function BillingPage({
           {activeLike && !subscription?.cancelAtPeriodEnd && (
             <Form method="post">
               <input type="hidden" name="intent" value="cancel" />
+              {workspace.primary?.id ? (
+                <input type="hidden" name="org" value={workspace.primary.id} />
+              ) : null}
               <button
                 type="submit"
                 className="iwfw-btn iwfw-btn--outline"
@@ -347,6 +377,9 @@ export default function BillingPage({
           {activeLike && subscription?.cancelAtPeriodEnd && (
             <Form method="post">
               <input type="hidden" name="intent" value="resume" />
+              {workspace.primary?.id ? (
+                <input type="hidden" name="org" value={workspace.primary.id} />
+              ) : null}
               <p className="iwfw-dash-fine">
                 Cancellation is scheduled for{" "}
                 {formatDate(subscription.currentPeriodEnd)}. You can keep your

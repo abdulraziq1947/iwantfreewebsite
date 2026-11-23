@@ -20,11 +20,13 @@ import {
 } from "./customer-progress";
 import { buildAttentionBoard } from "./attention";
 import { getOrganisationMailbox } from "./mailbox.server";
+import { pickActiveOrganisationId } from "./active-org";
 
 export async function getCustomerWorkspace(
   db: ReturnType<typeof createDb>,
   auth: AuthContext,
   config: WorkerEnvConfig,
+  options?: { organisationId?: string | null },
 ) {
   const orgIds = auth.memberships.map((m) => m.organisationId);
   const orgs =
@@ -35,7 +37,8 @@ export async function getCustomerWorkspace(
           .where(inArray(organisations.id, orgIds))
       : [];
 
-  const primary = orgs[0] ?? null;
+  const activeId = pickActiveOrganisationId(orgIds, options?.organisationId);
+  const primary = orgs.find((o) => o.id === activeId) ?? orgs[0] ?? null;
   if (!primary) {
     return {
       orgs: [],
@@ -135,11 +138,28 @@ export async function getCustomerWorkspace(
 
   const mailbox = await getOrganisationMailbox(db, primary.id, config);
 
+  const domainRows =
+    orgIds.length > 0
+      ? await db
+          .select()
+          .from(domainRegistrationTasks)
+          .where(inArray(domainRegistrationTasks.organisationId, orgIds))
+          .orderBy(desc(domainRegistrationTasks.createdAt))
+          .all()
+      : [];
+  const domainByOrg = new Map<string, string>();
+  for (const row of domainRows) {
+    if (!domainByOrg.has(row.organisationId)) {
+      domainByOrg.set(row.organisationId, row.domainName);
+    }
+  }
+
   return {
     orgs: orgs.map((o) => ({
       id: o.id,
       tradingName: o.tradingName,
       status: o.status,
+      domainName: domainByOrg.get(o.id) ?? null,
     })),
     primary: {
       id: primary.id,

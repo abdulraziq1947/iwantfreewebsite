@@ -1,9 +1,11 @@
-import { Link } from "react-router";
-import { createDb } from "@iwfw/db";
+import { data, Link } from "react-router";
+import { Badge } from "@iwfw/ui";
 import { goLiveSlaLabel } from "@iwfw/config";
-import { getEnv, getConfig } from "../lib/env.server";
+import { getConfig } from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
-import { getCustomerWorkspace } from "../lib/customer-org.server";
+import { loadCustomerWorkspace } from "../lib/customer-workspace.server";
+import { withActiveOrg } from "../lib/active-org";
+import { orgStatusLabel, orgStatusTone } from "../lib/customer-dashboard";
 import {
   buildStatusBanner,
   liveWebsiteUrl,
@@ -11,6 +13,10 @@ import {
   previewWebsiteUrl,
   websiteStageLabel,
 } from "../lib/customer-progress";
+import {
+  NewWebsiteButton,
+  WebsiteSwitcher,
+} from "../components/website-switcher";
 import type { Route } from "./+types/dashboard.website";
 
 export function meta(_args: Route.MetaArgs) {
@@ -20,13 +26,20 @@ export function meta(_args: Route.MetaArgs) {
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
   const config = getConfig(context);
-  const db = createDb(getEnv(context).DB);
-  const workspace = await getCustomerWorkspace(db, auth, config);
-  return { workspace, goLiveSla: goLiveSlaLabel(config) };
+  const { workspace, headers } = await loadCustomerWorkspace(
+    request,
+    context,
+    auth,
+  );
+  return data(
+    { workspace, goLiveSla: goLiveSlaLabel(config) },
+    headers ? { headers } : undefined,
+  );
 }
 
 export default function WebsitePage({ loaderData }: Route.ComponentProps) {
   const { workspace, goLiveSla } = loaderData;
+  const activeId = workspace.primary?.id ?? null;
   const banner = buildStatusBanner({
     needsSubscription: workspace.needsSubscription,
     briefReady: workspace.briefReady,
@@ -63,8 +76,17 @@ export default function WebsitePage({ loaderData }: Route.ComponentProps) {
         </div>
         <div className="iwfw-dash-home__hero-side">
           <span className="iwfw-dash-home__pill">{stage}</span>
+          <NewWebsiteButton className="iwfw-btn iwfw-btn--green">
+            New website
+          </NewWebsiteButton>
         </div>
       </header>
+
+      <WebsiteSwitcher
+        orgs={workspace.orgs}
+        activeId={activeId}
+        hint="Preview, live status and Google Business for this page follow the selected website."
+      />
 
       <section
         className={`iwfw-dash-status ${paidAndReady ? "is-ready" : ""} ${isLive ? "is-live" : ""}`}
@@ -115,17 +137,74 @@ export default function WebsitePage({ loaderData }: Route.ComponentProps) {
             </a>
           ) : showGbp ? (
             <Link
-              to="/dashboard/google-business"
+              to={withActiveOrg("/dashboard/google-business", activeId)}
               className="iwfw-btn iwfw-btn--green"
             >
               Give Manager access
             </Link>
           ) : (
-            <Link to="/dashboard" className="iwfw-btn iwfw-btn--outline">
+            <Link
+              to={withActiveOrg("/dashboard", activeId)}
+              className="iwfw-btn iwfw-btn--outline"
+            >
               Back to overview
             </Link>
           )}
         </div>
+      </section>
+
+      <section className="iwfw-dash-panel iwfw-dash-sites">
+        <div className="iwfw-dash-panel-head">
+          <div>
+            <h2>Your websites</h2>
+            <p className="iwfw-dash-sites__intro">
+              Each paid order is a separate website. Select one above, or start
+              another.
+            </p>
+          </div>
+          <NewWebsiteButton />
+        </div>
+        <ul className="iwfw-dash-orgs">
+          {workspace.orgs.map((org) => {
+            const initial =
+              org.tradingName.trim().charAt(0).toUpperCase() || "W";
+            const selected = org.id === activeId;
+            return (
+              <li key={org.id} className={selected ? "is-selected" : undefined}>
+                <div className="iwfw-dash-orgs__body">
+                  <span className="iwfw-dash-orgs__mark" aria-hidden>
+                    {initial}
+                  </span>
+                  <div>
+                    <p className="iwfw-dash-orgs__name">{org.tradingName}</p>
+                    <p className="iwfw-dash-orgs__meta">
+                      {org.domainName ? `${org.domainName} · ` : ""}
+                      {selected ? "Selected" : "Switch to manage"}
+                    </p>
+                  </div>
+                </div>
+                <div className="iwfw-dash-orgs__actions">
+                  <Badge tone={orgStatusTone(org.status)}>
+                    {orgStatusLabel(org.status)}
+                  </Badge>
+                  {!selected ? (
+                    <Link
+                      to={withActiveOrg("/dashboard/website", org.id)}
+                      className="iwfw-btn iwfw-btn--outline iwfw-btn--sm"
+                    >
+                      Select
+                    </Link>
+                  ) : null}
+                </div>
+              </li>
+            );
+          })}
+          {workspace.orgs.length === 0 ? (
+            <li className="iwfw-dash-orgs__empty">
+              No website yet. Start the package to create your first one.
+            </li>
+          ) : null}
+        </ul>
       </section>
     </div>
   );
