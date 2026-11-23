@@ -57,7 +57,10 @@ export async function action({ request, context, params }: Route.ActionArgs) {
   }
 
   if (intent === "mark_live") {
-    const result = await markClientWebsiteLive(db, params.orgId);
+    const liveUrl = String(form.get("liveUrl") ?? "").trim();
+    const result = await markClientWebsiteLive(db, params.orgId, {
+      liveUrl: liveUrl || null,
+    });
     if ("error" in result) return result;
     throw redirect(`/admin/clients/${params.orgId}?tab=${tab}`);
   }
@@ -187,20 +190,54 @@ export default function AdminClientDetailPage({
                 {busy ? "Saving…" : "Save status"}
               </button>
             </Form>
-            <div className="iwfw-admin-actions">
-              {!isLive ? (
-                <Form method="post">
-                  <input type="hidden" name="intent" value="mark_live" />
-                  <input type="hidden" name="tab" value="overview" />
-                  <button
-                    type="submit"
+            {!isLive ? (
+              <Form method="post" className="iwfw-start__form">
+                <input type="hidden" name="intent" value="mark_live" />
+                <input type="hidden" name="tab" value="overview" />
+                <label className="iwfw-field">
+                  <span>Live website URL</span>
+                  <input
+                    className="iwfw-control"
+                    type="url"
+                    name="liveUrl"
+                    placeholder={
+                      liveDomain
+                        ? `https://${liveDomain}`
+                        : "https://example.co.uk"
+                    }
+                    defaultValue={
+                      liveDomain ? `https://${liveDomain}` : undefined
+                    }
+                  />
+                </label>
+                <p className="iwfw-admin-muted">
+                  Customers see this link and get a congratulations
+                  notification.
+                </p>
+                <button
+                  type="submit"
+                  className="iwfw-btn iwfw-btn--green"
+                  disabled={busy}
+                >
+                  {busy ? "Updating…" : "Mark website live"}
+                </button>
+              </Form>
+            ) : (
+              <div className="iwfw-admin-actions">
+                {client.domainTasks.find((t) => t.status === "connected")
+                  ?.liveUrl ? (
+                  <a
                     className="iwfw-btn iwfw-btn--green"
-                    disabled={busy}
+                    href={
+                      client.domainTasks.find((t) => t.status === "connected")!
+                        .liveUrl!
+                    }
+                    target="_blank"
+                    rel="noreferrer"
                   >
-                    {busy ? "Updating…" : "Mark website live"}
-                  </button>
-                </Form>
-              ) : (
+                    Open live site
+                  </a>
+                ) : null}
                 <Form method="post">
                   <input type="hidden" name="intent" value="unmark_live" />
                   <input type="hidden" name="tab" value="overview" />
@@ -212,8 +249,8 @@ export default function AdminClientDetailPage({
                     {busy ? "Updating…" : "Mark not live yet"}
                   </button>
                 </Form>
-              )}
-            </div>
+              </div>
+            )}
           </section>
 
           <section className="iwfw-admin-panel">

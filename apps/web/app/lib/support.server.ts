@@ -49,7 +49,8 @@ async function createNotifications(
       | "ticket_created"
       | "ticket_reply_customer"
       | "ticket_reply_staff"
-      | "ticket_status";
+      | "ticket_status"
+      | "website_live";
     title: string;
     body: string;
     href: string;
@@ -68,6 +69,27 @@ async function createNotifications(
       createdAt: now,
     });
   }
+}
+
+/** Congratulate org members when their website goes live. */
+export async function notifyWebsiteLive(
+  db: Db,
+  options: {
+    organisationId: string;
+    tradingName: string;
+    liveUrl: string;
+  },
+) {
+  const members = await orgMemberUserIds(db, options.organisationId);
+  if (members.length === 0) return;
+  await createNotifications(db, {
+    userIds: members,
+    organisationId: options.organisationId,
+    kind: "website_live",
+    title: "Congratulations — your website is live!",
+    body: `${options.tradingName} is live at ${options.liveUrl}. Open your dashboard to visit the site.`,
+    href: "/dashboard",
+  });
 }
 
 export async function listCustomerTickets(db: Db, organisationIds: string[]) {

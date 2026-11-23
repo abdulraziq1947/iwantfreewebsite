@@ -6,6 +6,7 @@ import { getCustomerWorkspace } from "../lib/customer-org.server";
 import {
   buildJourneyStages,
   buildStatusBanner,
+  liveWebsiteUrl,
   needsGbpInvite,
   websiteStageLabel,
 } from "../lib/customer-progress";
@@ -49,6 +50,8 @@ export default function ProgressPage({ loaderData }: Route.ComponentProps) {
     data?.domain.existingDomain ||
     "—";
   const paidAndReady = !workspace.needsSubscription && workspace.briefReady;
+  const isLive = workspace.domainTask?.status === "connected";
+  const liveUrl = liveWebsiteUrl(workspace.domainTask);
 
   return (
     <div className="iwfw-dash-page iwfw-dash-home">
@@ -57,8 +60,9 @@ export default function ProgressPage({ loaderData }: Route.ComponentProps) {
           <p className="iwfw-dash-home__eyebrow">Progress</p>
           <h1>What’s happening</h1>
           <p className="iwfw-dash-home__lead">
-            Your brief is already with us. This page shows where things stand —
-            not another form to fill in.
+            {isLive
+              ? "Congratulations — your website is live."
+              : "Your brief is already with us. This page shows where things stand — not another form to fill in."}
           </p>
         </div>
         <div className="iwfw-dash-home__hero-side">
@@ -67,22 +71,40 @@ export default function ProgressPage({ loaderData }: Route.ComponentProps) {
       </header>
 
       <section
-        className={`iwfw-dash-status ${paidAndReady ? "is-ready" : ""}`}
+        className={`iwfw-dash-status ${paidAndReady ? "is-ready" : ""} ${isLive ? "is-live" : ""}`}
         aria-label="Current status"
       >
         <div className="iwfw-dash-status__copy">
           <p className="iwfw-dash-status__kicker">{banner.kicker}</p>
           <h2>{banner.title}</h2>
           <p>{banner.body}</p>
+          {liveUrl ? (
+            <p className="iwfw-dash-status__live-url">
+              <a href={liveUrl} target="_blank" rel="noreferrer">
+                {liveUrl}
+              </a>
+            </p>
+          ) : null}
         </div>
         <div className="iwfw-dash-status__actions">
-          <Link to="/dashboard" className="iwfw-btn iwfw-btn--outline">
-            Back to overview
-          </Link>
+          {liveUrl ? (
+            <a
+              href={liveUrl}
+              className="iwfw-btn iwfw-btn--green"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Visit live site
+            </a>
+          ) : (
+            <Link to="/dashboard" className="iwfw-btn iwfw-btn--outline">
+              Back to overview
+            </Link>
+          )}
         </div>
       </section>
 
-      {showGbp && (
+      {showGbp && !isLive && (
         <section className="iwfw-dash-gbp" aria-label="Optional Google Business">
           <div className="iwfw-dash-gbp__copy">
             <p className="iwfw-dash-gbp__kicker">Optional · while we build</p>

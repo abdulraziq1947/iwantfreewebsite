@@ -25,11 +25,13 @@ import {
   domainTaskLabel,
   isBriefReady,
   needsGbpInvite,
+  normaliseLiveUrl,
   websiteStageLabel,
   type DomainTaskSnapshot,
 } from "./customer-progress";
 import { categoryLabel, isUploadCategory } from "./image-sniff";
 import { newId } from "./ids";
+import { notifyWebsiteLive } from "./support.server";
 
 export const ORG_STATUSES = [
   "prospect",
@@ -342,14 +344,42 @@ export async function updateDomainTaskStatus(
     return { ok: true as const };
   }
   if (intent === "mark_connected") {
+    const task = await db
+      .select()
+      .from(domainRegistrationTasks)
+      .where(eq(domainRegistrationTasks.id, taskId))
+      .get();
+    if (!task) return { error: "Domain task not found." };
+    const liveUrl =
+      normaliseLiveUrl(task.liveUrl, task.domainName) ??
+      `https://${task.domainName}`;
     await db
       .update(domainRegistrationTasks)
       .set({
         status: "connected",
         connectedAt: now,
+        liveUrl,
         updatedAt: now,
       })
       .where(eq(domainRegistrationTasks.id, taskId));
+    const org = await db
+      .select()
+      .from(organisations)
+      .where(eq(organisations.id, task.organisationId))
+      .get();
+    if (org) {
+      await notifyWebsiteLive(db, {
+        organisationId: org.id,
+        tradingName: org.tradingName,
+        liveUrl,
+      });
+      if (org.status === "prospect") {
+        await db
+          .update(organisations)
+          .set({ status: "active", updatedAt: now })
+          .where(eq(organisations.id, org.id));
+      }
+    }
     return { ok: true as const };
   }
   if (intent === "mark_unavailable") {
@@ -411,10 +441,12 @@ export async function updateOrganisationStatus(
 /**
  * Mark the customer's website as live (journey “Go live” = domain connected).
  * Updates the latest domain task, or creates one from the brief if missing.
+ * Notifies org members with a congratulations message.
  */
 export async function markClientWebsiteLive(
   db: Db,
   organisationId: string,
+  options?: { liveUrl?: string | null },
 ) {
   const org = await db
     .select()
@@ -431,13 +463,22 @@ export async function markClientWebsiteLive(
     .orderBy(desc(domainRegistrationTasks.createdAt))
     .get();
 
+  let domainName = existing?.domainName ?? "";
+  let liveUrl: string;
+
   if (existing) {
+    domainName = existing.domainName;
+    liveUrl =
+      normaliseLiveUrl(options?.liveUrl, domainName) ??
+      normaliseLiveUrl(existing.liveUrl, domainName) ??
+      `https://${domainName}`;
     await db
       .update(domainRegistrationTasks)
       .set({
         status: "connected",
         registeredAt: existing.registeredAt ?? now,
         connectedAt: now,
+        liveUrl,
         updatedAt: now,
       })
       .where(eq(domainRegistrationTasks.id, existing.id));
@@ -448,12 +489,15 @@ export async function markClientWebsiteLive(
       .where(eq(onboardingProfiles.organisationId, organisationId))
       .get();
     const data = parseOnboardingData(profile?.dataJson);
-    const domainName =
+    domainName =
       data.domain.preferredDomain.trim() ||
       data.domain.existingDomain.trim() ||
       `${org.tradingName.toLowerCase().replace(/[^a-z0-9]+/g, "") || "site"}.co.uk`;
     const domainMode =
       data.domain.mode === "existing" ? "existing" : "new";
+    liveUrl =
+      normaliseLiveUrl(options?.liveUrl, domainName) ??
+      `https://${domainName}`;
 
     await db.insert(domainRegistrationTasks).values({
       id: newId("dom"),
@@ -463,6 +507,7 @@ export async function markClientWebsiteLive(
       status: "connected",
       registeredAt: now,
       connectedAt: now,
+      liveUrl,
       createdAt: now,
       updatedAt: now,
       adminNotes: "Marked live from client folder",
@@ -477,7 +522,13 @@ export async function markClientWebsiteLive(
       .where(eq(organisations.id, organisationId));
   }
 
-  return { ok: true as const };
+  await notifyWebsiteLive(db, {
+    organisationId,
+    tradingName: org.tradingName,
+    liveUrl,
+  });
+
+  return { ok: true as const, liveUrl };
 }
 
 /** Move the site back off “live” (domain task → in_progress). */
@@ -502,6 +553,7 @@ export async function unmarkClientWebsiteLive(
     .set({
       status: "in_progress",
       connectedAt: null,
+      liveUrl: null,
       updatedAt: new Date(),
     })
     .where(eq(domainRegistrationTasks.id, existing.id));
@@ -607,6 +659,7 @@ export async function getAdminClientDetail(db: Db, organisationId: string) {
         connectedAt: latestDomain.connectedAt
           ? latestDomain.connectedAt.toISOString()
           : null,
+        liveUrl: latestDomain.liveUrl ?? null,
       }
     : null;
 
@@ -755,6 +808,7 @@ export async function getAdminClientDetail(db: Db, organisationId: string) {
       domainMode: t.domainMode,
       status: t.status,
       adminNotes: t.adminNotes,
+      liveUrl: t.liveUrl,
       registeredAt: t.registeredAt ? t.registeredAt.toISOString() : null,
       connectedAt: t.connectedAt ? t.connectedAt.toISOString() : null,
       createdAt: t.createdAt ? t.createdAt.toISOString() : null,

@@ -1921,6 +1921,23 @@ h3 {
     #fff;
 }
 
+.iwfw-dash-status.is-live {
+  border-color: color-mix(in srgb, var(--iwfw-cta) 35%, var(--iwfw-border));
+}
+
+.iwfw-dash-status__live-url {
+  margin: 0.75rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.iwfw-dash-status__live-url a {
+  color: var(--iwfw-cta-hover);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  word-break: break-all;
+}
+
 .iwfw-dash-status__kicker {
   margin: 0 0 0.4rem;
   color: var(--iwfw-cta-hover);
