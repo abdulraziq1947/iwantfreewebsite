@@ -131,27 +131,19 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
         </div>
       </section>
 
-      {workspace.attention ? (
+      {workspace.attention &&
+      workspace.attention.customerPendingCount > 0 ? (
         <AttentionBoardCard
           board={workspace.attention}
           perspective="customer"
           title="Needs attention"
           gbpActions={
-            !workspace.attention.gbp.granted ? (
-              <Link
-                to="/dashboard/google-business"
-                className="iwfw-btn iwfw-btn--outline"
-              >
-                {showGbp && gbpAction ? gbpAction.cta : "Update GMB"}
-              </Link>
-            ) : (
-              <Link
-                to="/dashboard/google-business"
-                className="iwfw-btn iwfw-btn--outline"
-              >
-                View GMB
-              </Link>
-            )
+            <Link
+              to="/dashboard/google-business"
+              className="iwfw-btn iwfw-btn--outline"
+            >
+              {showGbp && gbpAction ? gbpAction.cta : "Update GMB"}
+            </Link>
           }
         />
       ) : null}
