@@ -1,5 +1,4 @@
 import { Form, Link, redirect, useNavigation } from "react-router";
-import { Button } from "@iwfw/ui";
 import { isStripeCheckoutConfigured } from "@iwfw/config";
 import { createDb, eq, pendingOrders } from "@iwfw/db";
 import { getConfig, getEnv } from "../lib/env.server";
@@ -234,12 +233,13 @@ export default function GetStartedReview({
               <Link to="/get-started/domain" className="iwfw-btn iwfw-btn--outline">
                 ← Domain
               </Link>
-              <Button
+              <button
                 type="submit"
+                className="iwfw-btn iwfw-btn--green"
                 disabled={busy || !loaderData.stripeConfigured}
               >
                 {busy ? "Redirecting to Stripe…" : "Pay £39.99/month securely"}
-              </Button>
+              </button>
             </div>
             <p className="iwfw-start__fine">
               Stripe test mode. The success page is not proof of payment —

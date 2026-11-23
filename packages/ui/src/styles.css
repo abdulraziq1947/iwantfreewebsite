@@ -15,3 +15,55 @@
   --iwfw-font-sans: "Plus Jakarta Sans", "Segoe UI", sans-serif;
   --iwfw-font-display: "Plus Jakarta Sans", "Segoe UI", sans-serif;
 }
+
+/* Explicit classes — do not rely on Tailwind scanning packages/ui. */
+.iwfw-ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--iwfw-radius);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  border: none;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+.iwfw-ui-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.iwfw-ui-btn--primary {
+  background: var(--iwfw-accent);
+  color: #fff;
+}
+.iwfw-ui-btn--primary:hover:not(:disabled) {
+  background: var(--iwfw-accent-hover);
+}
+.iwfw-ui-btn--secondary {
+  background: var(--iwfw-surface);
+  color: var(--iwfw-ink);
+  border: 1px solid var(--iwfw-border);
+}
+.iwfw-ui-btn--secondary:hover:not(:disabled) {
+  background: var(--iwfw-paper);
+}
+.iwfw-ui-btn--ghost {
+  background: transparent;
+  color: var(--iwfw-ink);
+}
+.iwfw-ui-btn--ghost:hover:not(:disabled) {
+  background: var(--iwfw-paper);
+}
+.iwfw-ui-btn--danger {
+  background: var(--iwfw-danger);
+  color: #fff;
+}
+.iwfw-ui-btn--danger:hover:not(:disabled) {
+  opacity: 0.9;
+}
