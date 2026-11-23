@@ -13,6 +13,7 @@ import {
   type OrderQuestionnaire,
 } from "../lib/order-questionnaire";
 import type { Route } from "./+types/get-started.website";
+import type { ReactNode } from "react";
 
 export function meta(_args: Route.MetaArgs) {
   return [{ title: "Website details — iwantfreewebsite.com" }];
@@ -138,6 +139,308 @@ export async function action({ request, context }: Route.ActionArgs) {
   return { ok: true, step: nextStep, data };
 }
 
+function Field({
+  label,
+  name,
+  defaultValue,
+  required,
+  hint,
+  placeholder,
+  type = "text",
+  multiline,
+  rows = 3,
+  autoComplete,
+}: {
+  label: string;
+  name: string;
+  defaultValue?: string;
+  required?: boolean;
+  hint?: string;
+  placeholder?: string;
+  type?: string;
+  multiline?: boolean;
+  rows?: number;
+  autoComplete?: string;
+}) {
+  return (
+    <label className="iwfw-field">
+      <span className="iwfw-field__label">
+        {label}
+        {required ? <span className="iwfw-field__req">*</span> : null}
+      </span>
+      {hint ? <em className="iwfw-field__hint">{hint}</em> : null}
+      {multiline ? (
+        <textarea
+          name={name}
+          rows={rows}
+          required={required}
+          defaultValue={defaultValue}
+          placeholder={placeholder}
+        />
+      ) : (
+        <input
+          type={type}
+          name={name}
+          required={required}
+          defaultValue={defaultValue}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+        />
+      )}
+    </label>
+  );
+}
+
+function StepFields({
+  step,
+  data,
+}: {
+  step: number;
+  data: OrderQuestionnaire;
+}): ReactNode {
+  if (step === 0) {
+    return (
+      <>
+        <Field
+          label="Full name"
+          name="fullName"
+          required
+          defaultValue={data.contact.fullName}
+          placeholder="Jane Smith"
+          autoComplete="name"
+        />
+        <div className="iwfw-field-grid iwfw-field-grid--2">
+          <Field
+            label="Email"
+            name="email"
+            type="email"
+            required
+            defaultValue={data.contact.email}
+            placeholder="jane@business.co.uk"
+            autoComplete="email"
+            hint="We’ll send your activation link here after payment."
+          />
+          <Field
+            label="Phone"
+            name="phone"
+            required
+            defaultValue={data.contact.phone}
+            placeholder="07xxx xxxxxx"
+            autoComplete="tel"
+          />
+        </div>
+      </>
+    );
+  }
+
+  if (step === 1) {
+    return (
+      <>
+        <Field
+          label="Business / trading name"
+          name="tradingName"
+          required
+          defaultValue={data.business.tradingName}
+          placeholder="Acme Plumbing"
+          autoComplete="organization"
+        />
+        <Field
+          label="Industry / category"
+          name="industry"
+          required
+          defaultValue={data.business.industry}
+          placeholder="Plumbing, dental, removals…"
+        />
+        <Field
+          label="Business address"
+          name="address"
+          required
+          multiline
+          rows={3}
+          defaultValue={data.business.address}
+          placeholder="Street, town, postcode"
+        />
+        <Field
+          label="Service areas"
+          name="serviceAreas"
+          multiline
+          rows={2}
+          defaultValue={data.business.serviceAreas}
+          placeholder="Towns, postcodes, or nationwide"
+          hint="Optional — helps us write location pages that match how you trade."
+        />
+      </>
+    );
+  }
+
+  if (step === 2) {
+    return (
+      <>
+        <Field
+          label="Services offered"
+          name="list"
+          required
+          multiline
+          rows={5}
+          defaultValue={data.services.list}
+          placeholder={"Boiler repairs\nBathroom installation\nEmergency call-outs"}
+          hint="One service per line works best."
+        />
+        <Field
+          label="Service descriptions"
+          name="descriptions"
+          multiline
+          rows={4}
+          defaultValue={data.services.descriptions}
+          placeholder="Short detail for each service if you have it"
+          hint="Optional — pricing ranges or what customers should expect."
+        />
+      </>
+    );
+  }
+
+  if (step === 3) {
+    return (
+      <>
+        <Field
+          label="About your business"
+          name="introduction"
+          required
+          multiline
+          rows={5}
+          defaultValue={data.about.introduction}
+          placeholder="A short introduction customers can trust…"
+        />
+        <div className="iwfw-field-grid iwfw-field-grid--2">
+          <Field
+            label="Phone to show on the website"
+            name="displayPhone"
+            defaultValue={data.about.displayPhone}
+            placeholder="Same as contact phone is fine"
+          />
+          <Field
+            label="Email to show on the website"
+            name="displayEmail"
+            type="email"
+            defaultValue={data.about.displayEmail}
+            placeholder="hello@yourbusiness.co.uk"
+          />
+        </div>
+        <Field
+          label="Opening hours"
+          name="openingHours"
+          multiline
+          rows={3}
+          defaultValue={data.about.openingHours}
+          placeholder={"Mon–Fri 8am–6pm\nSat 9am–1pm"}
+        />
+        <Field
+          label="Existing website or domain"
+          name="existingWebsite"
+          defaultValue={data.about.existingWebsite}
+          placeholder="https://… or leave blank"
+        />
+      </>
+    );
+  }
+
+  if (step === 4) {
+    return (
+      <>
+        <Field
+          label="Preferred pages"
+          name="preferredPages"
+          required
+          multiline
+          rows={3}
+          defaultValue={data.website.preferredPages}
+          placeholder="Home, Services, About, Contact…"
+        />
+        <Field
+          label="Design preferences"
+          name="designPreferences"
+          multiline
+          rows={3}
+          defaultValue={data.website.designPreferences}
+          placeholder="Clean and modern, bold and trustworthy…"
+        />
+        <Field
+          label="Brand colours"
+          name="colours"
+          defaultValue={data.website.colours}
+          placeholder="Navy and white, or leave blank"
+        />
+        <Field
+          label="Example websites you like"
+          name="exampleWebsites"
+          multiline
+          rows={2}
+          defaultValue={data.website.exampleWebsites}
+          placeholder="Links or brand names"
+        />
+        <Field
+          label="Additional instructions"
+          name="additionalInstructions"
+          multiline
+          rows={3}
+          defaultValue={data.website.additionalInstructions}
+          placeholder="Anything else we should know before we build"
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <MediaUploader
+        mode="order"
+        title="Upload your brand images"
+        description="Drag in logos, business photos, team shots or portfolio images. Files stay private and carry over when you resume or after payment."
+      />
+      <div className="iwfw-field-grid iwfw-field-grid--2">
+        <Field
+          label="Logo notes"
+          name="logoNotes"
+          multiline
+          rows={2}
+          defaultValue={data.media.logoNotes}
+          placeholder="Which logo version to use"
+        />
+        <Field
+          label="Business image notes"
+          name="imageNotes"
+          multiline
+          rows={2}
+          defaultValue={data.media.imageNotes}
+          placeholder="Preferred photos for Home / About"
+        />
+      </div>
+      <Field
+        label="Anything else about your images?"
+        name="uploadNotes"
+        multiline
+        rows={2}
+        defaultValue={data.media.uploadNotes}
+        placeholder="e.g. use the navy logo on light backgrounds"
+      />
+      <Field
+        label="Social media links"
+        name="socialLinks"
+        multiline
+        rows={2}
+        defaultValue={data.media.socialLinks}
+        placeholder="Facebook, Instagram, LinkedIn…"
+      />
+      <Field
+        label="Google Business Profile link"
+        name="gbpLink"
+        defaultValue={data.media.gbpLink}
+        placeholder="https://g.page/…"
+      />
+    </>
+  );
+}
+
 export default function GetStartedWebsite({
   loaderData,
   actionData,
@@ -165,188 +468,7 @@ export default function GetStartedWebsite({
       <Form method="post" className="iwfw-start__card iwfw-start__form">
         <input type="hidden" name="step" value={step} />
 
-        {step === 0 && (
-          <>
-            <label className="iwfw-field">
-              <span>Full name *</span>
-              <input name="fullName" required defaultValue={data.contact.fullName} />
-            </label>
-            <label className="iwfw-field">
-              <span>Email *</span>
-              <input
-                type="email"
-                name="email"
-                required
-                defaultValue={data.contact.email}
-              />
-            </label>
-            <label className="iwfw-field">
-              <span>Phone *</span>
-              <input name="phone" required defaultValue={data.contact.phone} />
-            </label>
-          </>
-        )}
-
-        {step === 1 && (
-          <>
-            <label className="iwfw-field">
-              <span>Business / trading name *</span>
-              <input
-                name="tradingName"
-                required
-                defaultValue={data.business.tradingName}
-              />
-            </label>
-            <label className="iwfw-field">
-              <span>Industry / category *</span>
-              <input name="industry" required defaultValue={data.business.industry} />
-            </label>
-            <label className="iwfw-field">
-              <span>Business address *</span>
-              <textarea name="address" rows={3} required defaultValue={data.business.address} />
-            </label>
-            <label className="iwfw-field">
-              <span>Service areas</span>
-              <textarea
-                name="serviceAreas"
-                rows={2}
-                defaultValue={data.business.serviceAreas}
-                placeholder="Towns, postcodes or 'nationwide'"
-              />
-            </label>
-          </>
-        )}
-
-        {step === 2 && (
-          <>
-            <label className="iwfw-field">
-              <span>Services offered *</span>
-              <textarea
-                name="list"
-                rows={4}
-                required
-                defaultValue={data.services.list}
-                placeholder="One service per line"
-              />
-            </label>
-            <label className="iwfw-field">
-              <span>Service descriptions</span>
-              <textarea
-                name="descriptions"
-                rows={4}
-                defaultValue={data.services.descriptions}
-              />
-            </label>
-          </>
-        )}
-
-        {step === 3 && (
-          <>
-            <label className="iwfw-field">
-              <span>About your business *</span>
-              <textarea
-                name="introduction"
-                rows={4}
-                required
-                defaultValue={data.about.introduction}
-              />
-            </label>
-            <label className="iwfw-field">
-              <span>Phone to show on the website</span>
-              <input name="displayPhone" defaultValue={data.about.displayPhone} />
-            </label>
-            <label className="iwfw-field">
-              <span>Email to show on the website</span>
-              <input name="displayEmail" defaultValue={data.about.displayEmail} />
-            </label>
-            <label className="iwfw-field">
-              <span>Opening hours</span>
-              <textarea name="openingHours" rows={3} defaultValue={data.about.openingHours} />
-            </label>
-            <label className="iwfw-field">
-              <span>Existing website or domain</span>
-              <input name="existingWebsite" defaultValue={data.about.existingWebsite} />
-            </label>
-          </>
-        )}
-
-        {step === 4 && (
-          <>
-            <label className="iwfw-field">
-              <span>Preferred pages *</span>
-              <textarea
-                name="preferredPages"
-                rows={3}
-                required
-                defaultValue={data.website.preferredPages}
-                placeholder="Home, Services, About, Contact…"
-              />
-            </label>
-            <label className="iwfw-field">
-              <span>Design preferences</span>
-              <textarea
-                name="designPreferences"
-                rows={3}
-                defaultValue={data.website.designPreferences}
-              />
-            </label>
-            <label className="iwfw-field">
-              <span>Brand colours</span>
-              <input name="colours" defaultValue={data.website.colours} />
-            </label>
-            <label className="iwfw-field">
-              <span>Example websites you like</span>
-              <textarea
-                name="exampleWebsites"
-                rows={2}
-                defaultValue={data.website.exampleWebsites}
-              />
-            </label>
-            <label className="iwfw-field">
-              <span>Additional instructions</span>
-              <textarea
-                name="additionalInstructions"
-                rows={3}
-                defaultValue={data.website.additionalInstructions}
-              />
-            </label>
-          </>
-        )}
-
-        {step === 5 && (
-          <>
-            <MediaUploader
-              mode="order"
-              title="Upload your brand images"
-              description="Drag in logos, business photos, team shots or portfolio images. Files stay private in secure storage and carry over when you resume or after payment."
-            />
-            <label className="iwfw-field">
-              <span>Logo notes</span>
-              <textarea name="logoNotes" rows={2} defaultValue={data.media.logoNotes} />
-            </label>
-            <label className="iwfw-field">
-              <span>Business image notes</span>
-              <textarea name="imageNotes" rows={2} defaultValue={data.media.imageNotes} />
-            </label>
-            <label className="iwfw-field">
-              <span>Anything else about your images?</span>
-              <textarea
-                name="uploadNotes"
-                rows={2}
-                defaultValue={data.media.uploadNotes}
-                placeholder="e.g. use the navy logo on light backgrounds; team photo is preferred for About"
-              />
-            </label>
-            <label className="iwfw-field">
-              <span>Social media links</span>
-              <textarea name="socialLinks" rows={2} defaultValue={data.media.socialLinks} />
-            </label>
-            <label className="iwfw-field">
-              <span>Google Business Profile link</span>
-              <input name="gbpLink" defaultValue={data.media.gbpLink} />
-            </label>
-          </>
-        )}
+        <StepFields step={step} data={data} />
 
         {actionData?.error && (
           <p className="iwfw-start__error" role="alert">
@@ -355,7 +477,8 @@ export default function GetStartedWebsite({
         )}
         {actionData && "saved" in actionData && actionData.saved && (
           <p className="iwfw-start__ok" role="status">
-            Progress saved. You can close this page and resume later on this device.
+            Progress saved. You can close this page and resume later on this
+            device.
           </p>
         )}
 
@@ -387,14 +510,16 @@ export default function GetStartedWebsite({
             className="iwfw-btn iwfw-btn--green"
             disabled={busy}
           >
-            {step >= QUESTIONNAIRE_STEPS.length - 1
-              ? "Continue to domain"
-              : "Continue"}
+            {busy
+              ? "Saving…"
+              : step >= QUESTIONNAIRE_STEPS.length - 1
+                ? "Continue to domain"
+                : "Continue"}
           </button>
         </div>
         <p className="iwfw-start__fine">
-          No account needed yet — you pay first, then we create your dashboard login.{" "}
-          <Link to="/get-started">← Package</Link>
+          No account needed yet — you pay first, then we create your dashboard
+          login. <Link to="/get-started">← Package</Link>
         </p>
       </Form>
     </div>

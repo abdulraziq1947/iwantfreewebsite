@@ -224,17 +224,20 @@ export default function GetStartedReview({
               </p>
             )}
 
-            <Button
-              type="submit"
-              disabled={busy || !loaderData.stripeConfigured}
-              className="w-full"
-            >
-              {busy ? "Redirecting to Stripe…" : "Pay £39.99/month securely"}
-            </Button>
+            <div className="iwfw-order-actions">
+              <Link to="/get-started/domain" className="iwfw-btn iwfw-btn--outline">
+                ← Domain
+              </Link>
+              <Button
+                type="submit"
+                disabled={busy || !loaderData.stripeConfigured}
+              >
+                {busy ? "Redirecting to Stripe…" : "Pay £39.99/month securely"}
+              </Button>
+            </div>
             <p className="iwfw-start__fine">
-              Test mode only. Success page is not proof of payment — webhooks
-              confirm your order.{" "}
-              <Link to="/get-started/domain">← Domain</Link>
+              Stripe test mode. The success page is not proof of payment —
+              webhooks confirm your order.
             </p>
           </Form>
         </section>
