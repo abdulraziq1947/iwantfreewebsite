@@ -41,6 +41,8 @@ export async function action({ request, context }: Route.ActionArgs) {
       ? outcome
       : "") as typeof data.gbp.outcome,
     publishDirectly: form.get("publishDirectly") === "on",
+    // Staff-only flag — never cleared by the customer form.
+    accessGranted: Boolean(data.gbp.accessGranted),
   };
 
   await db
@@ -61,14 +63,16 @@ export default function GoogleBusinessPage({
   const gbp = loaderData.workspace.onboarding?.data.gbp;
   const navigation = useNavigation();
   const busy = navigation.state !== "idle";
-  const label =
-    gbp?.outcome === "invitation_sent"
+  const granted = Boolean(gbp?.accessGranted);
+  const label = granted
+    ? "Access granted"
+    : gbp?.outcome === "invitation_sent"
       ? "Invitation sent"
       : gbp?.outcome === "help_requested"
         ? "Help requested"
         : gbp?.outcome === "no_profile"
           ? "No profile yet"
-          : "Action helpful";
+          : "Not granted yet";
 
   return (
     <div className="iwfw-dash-page">
@@ -80,7 +84,7 @@ export default function GoogleBusinessPage({
             not Owner — when you’re ready.
           </p>
         </div>
-        <Badge tone={gbp?.outcome === "invitation_sent" ? "success" : "neutral"}>
+        <Badge tone={granted ? "success" : gbp?.outcome ? "warning" : "neutral"}>
           {label}
         </Badge>
       </header>

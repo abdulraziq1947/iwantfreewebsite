@@ -113,6 +113,7 @@ export function isBriefReady(
 export function needsGbpInvite(
   data: OnboardingData | null | undefined,
 ): boolean {
+  if (data?.gbp.accessGranted) return false;
   return !Boolean(data?.gbp.outcome);
 }
 
