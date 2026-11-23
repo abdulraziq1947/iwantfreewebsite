@@ -6,6 +6,7 @@ import { getCustomerWorkspace } from "../lib/customer-org.server";
 import {
   buildJourneyStages,
   buildStatusBanner,
+  liveWebsiteUrl,
   needsGbpInvite,
   websiteStageLabel,
 } from "../lib/customer-progress";
@@ -44,6 +45,8 @@ export default function WebsitePage({ loaderData }: Route.ComponentProps) {
     !workspace.needsSubscription &&
     needsGbpInvite(workspace.onboarding?.data);
   const paidAndReady = !workspace.needsSubscription && workspace.briefReady;
+  const isLive = workspace.domainTask?.status === "connected";
+  const liveUrl = liveWebsiteUrl(workspace.domainTask);
 
   return (
     <div className="iwfw-dash-page iwfw-dash-home">
@@ -52,7 +55,9 @@ export default function WebsitePage({ loaderData }: Route.ComponentProps) {
           <p className="iwfw-dash-home__eyebrow">Website</p>
           <h1>Your website</h1>
           <p className="iwfw-dash-home__lead">
-            Build progress after payment. Domain and launch stay with our team.
+            {isLive
+              ? "Your site is live. Open the link below anytime."
+              : "Build progress after payment. Domain and launch stay with our team."}
           </p>
         </div>
         <div className="iwfw-dash-home__hero-side">
@@ -61,30 +66,50 @@ export default function WebsitePage({ loaderData }: Route.ComponentProps) {
       </header>
 
       <section
-        className={`iwfw-dash-status ${paidAndReady ? "is-ready" : ""}`}
+        className={`iwfw-dash-status ${paidAndReady ? "is-ready" : ""} ${isLive ? "is-live" : ""}`}
         aria-label="Current status"
       >
         <div className="iwfw-dash-status__copy">
           <p className="iwfw-dash-status__kicker">{banner.kicker}</p>
           <h2>{banner.title}</h2>
           <p>{banner.body}</p>
+          {liveUrl ? (
+            <p className="iwfw-dash-status__live-url">
+              <a href={liveUrl} target="_blank" rel="noreferrer">
+                {liveUrl}
+              </a>
+            </p>
+          ) : null}
         </div>
-        {showGbp && (
-          <div className="iwfw-dash-status__actions">
+        <div className="iwfw-dash-status__actions">
+          {liveUrl ? (
+            <a
+              href={liveUrl}
+              className="iwfw-btn iwfw-btn--green"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Visit live site
+            </a>
+          ) : showGbp ? (
             <Link
               to="/dashboard/google-business"
               className="iwfw-btn iwfw-btn--green"
             >
               Give Manager access
             </Link>
-          </div>
-        )}
+          ) : null}
+        </div>
       </section>
 
       <section className="iwfw-dash-steps" aria-label="What happens next">
         <div className="iwfw-dash-steps__head">
           <h2>What happens next</h2>
-          <p>We’ll share a preview before go-live.</p>
+          <p>
+            {isLive
+              ? "All stages complete — your website is live."
+              : "We’ll share a preview before go-live."}
+          </p>
         </div>
         <ol className="iwfw-dash-steps__list">
           {stages.map((item, index) => (

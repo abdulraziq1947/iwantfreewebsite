@@ -83,4 +83,50 @@ describe("customer progress", () => {
       }),
     ).toBe("We’re working on it");
   });
+
+  it("celebrates a live website with the public URL", () => {
+    const task = {
+      domainName: "acme.co.uk",
+      domainMode: "new" as const,
+      status: "connected",
+      registeredAt: null,
+      connectedAt: "2026-01-01T00:00:00.000Z",
+      liveUrl: "https://acme.co.uk",
+    };
+    expect(
+      websiteStageLabel({
+        needsSubscription: false,
+        briefReady: true,
+        domainStatus: "connected",
+      }),
+    ).toBe("Live");
+    const banner = buildStatusBanner({
+      needsSubscription: false,
+      briefReady: true,
+      domainTask: task,
+      tradingName: "Acme",
+    });
+    expect(banner.kicker).toMatch(/congratulat/i);
+    expect(banner.title).toMatch(/live/i);
+    expect(banner.href).toBe("https://acme.co.uk");
+    expect(banner.cta).toMatch(/visit live site/i);
+    const stages = buildJourneyStages({
+      needsSubscription: false,
+      briefReady: true,
+      domainTask: task,
+    });
+    expect(stages.find((s) => s.id === "live")?.title).toBe("Website live");
+    expect(stages.find((s) => s.id === "live")?.detail).toMatch(
+      /https:\/\/acme\.co\.uk/,
+    );
+    const actions = buildCustomerActions({
+      needsSubscription: false,
+      briefReady: true,
+      domainTask: task,
+      data: emptyOnboardingData(),
+    });
+    expect(actions.find((a) => a.id === "visit-live")?.to).toBe(
+      "https://acme.co.uk",
+    );
+  });
 });

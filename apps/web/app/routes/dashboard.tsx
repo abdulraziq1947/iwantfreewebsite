@@ -9,6 +9,7 @@ import {
   buildCustomerActions,
   buildJourneyStages,
   buildStatusBanner,
+  liveWebsiteUrl,
   needsGbpInvite,
   websiteStageLabel,
 } from "../lib/customer-progress";
@@ -58,6 +59,8 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
     briefReady: workspace.briefReady,
   });
   const paidAndReady = !workspace.needsSubscription && workspace.briefReady;
+  const isLive = workspace.domainTask?.status === "connected";
+  const liveUrl = liveWebsiteUrl(workspace.domainTask);
   const domainName = workspace.domainTask?.domainName;
 
   return (
@@ -67,9 +70,11 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
           <p className="iwfw-dash-home__eyebrow">Customer dashboard</p>
           <h1>Welcome back{firstName ? `, ${firstName}` : ""}</h1>
           <p className="iwfw-dash-home__lead">
-            {paidAndReady
-              ? "You’re done on your side. We’ll build the website and get back to you when it’s live."
-              : "A clear view of where things stand and what to do next."}
+            {isLive
+              ? "Congratulations — your website is live. Share the link with customers."
+              : paidAndReady
+                ? "You’re done on your side. We’ll build the website and get back to you when it’s live."
+                : "A clear view of where things stand and what to do next."}
           </p>
         </div>
         <div className="iwfw-dash-home__hero-side">
@@ -84,19 +89,35 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
       </header>
 
       <section
-        className={`iwfw-dash-status ${paidAndReady ? "is-ready" : ""}`}
+        className={`iwfw-dash-status ${paidAndReady ? "is-ready" : ""} ${isLive ? "is-live" : ""}`}
         aria-label="Current status"
       >
         <div className="iwfw-dash-status__copy">
           <p className="iwfw-dash-status__kicker">{banner.kicker}</p>
           <h2>{banner.title}</h2>
           <p>{banner.body}</p>
+          {liveUrl ? (
+            <p className="iwfw-dash-status__live-url">
+              <a href={liveUrl} target="_blank" rel="noreferrer">
+                {liveUrl}
+              </a>
+            </p>
+          ) : null}
         </div>
         <div className="iwfw-dash-status__actions">
           {workspace.needsSubscription ? (
             <Link to="/get-started" className="iwfw-btn iwfw-btn--green">
               See £39.99 plan
             </Link>
+          ) : liveUrl ? (
+            <a
+              href={liveUrl}
+              className="iwfw-btn iwfw-btn--green"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Visit live site
+            </a>
           ) : workspace.domainTask?.status === "unavailable" ? (
             <Link to="/dashboard/support" className="iwfw-btn iwfw-btn--green">
               Contact support
@@ -109,7 +130,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
         </div>
       </section>
 
-      {paidAndReady && showGbp && gbpAction && (
+      {paidAndReady && !isLive && showGbp && gbpAction && (
         <section className="iwfw-dash-gbp" aria-label="Optional Google Business">
           <div className="iwfw-dash-gbp__copy">
             <p className="iwfw-dash-gbp__kicker">Optional · while we build</p>

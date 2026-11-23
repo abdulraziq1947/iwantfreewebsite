@@ -6,6 +6,7 @@ export type DomainTaskSnapshot = {
   status: string;
   registeredAt: string | null;
   connectedAt: string | null;
+  liveUrl?: string | null;
 } | null;
 
 export type JourneyStage = {
@@ -22,6 +23,7 @@ export type CustomerAction = {
   to: string;
   cta: string;
   tone: "primary" | "secondary";
+  external?: boolean;
 };
 
 export type StatusBanner = {
@@ -29,7 +31,30 @@ export type StatusBanner = {
   title: string;
   body: string;
   meta?: string;
+  href?: string;
+  cta?: string;
+  external?: boolean;
 };
+
+/** Normalise a customer-facing live website URL. */
+export function normaliseLiveUrl(
+  value: string | null | undefined,
+  domainName?: string | null,
+): string | null {
+  const raw = (value ?? "").trim();
+  if (raw) {
+    if (/^https?:\/\//i.test(raw)) return raw;
+    return `https://${raw.replace(/^\/+/, "")}`;
+  }
+  const domain = (domainName ?? "").trim().replace(/^https?:\/\//i, "");
+  if (!domain) return null;
+  return `https://${domain}`;
+}
+
+export function liveWebsiteUrl(task: DomainTaskSnapshot): string | null {
+  if (!task || task.status !== "connected") return null;
+  return normaliseLiveUrl(task.liveUrl, task.domainName);
+}
 
 export function domainTaskLabel(status: string | undefined): string {
   switch (status) {
@@ -40,7 +65,7 @@ export function domainTaskLabel(status: string | undefined): string {
     case "registered":
       return "Registered — connecting DNS";
     case "connected":
-      return "Connected";
+      return "Live";
     case "unavailable":
       return "Unavailable — we’ll contact you";
     case "cancelled":
@@ -59,7 +84,7 @@ export function websiteStageLabel(options: {
   if (!options.briefReady) return "Brief incomplete";
   switch (options.domainStatus) {
     case "connected":
-      return "Almost live";
+      return "Live";
     case "unavailable":
       return "Needs a quick decision";
     case "registered":
@@ -99,6 +124,7 @@ export function buildStatusBanner(options: {
 }): StatusBanner {
   const name = options.tradingName?.trim() || "Your business";
   const domain = options.domainTask?.domainName;
+  const liveUrl = liveWebsiteUrl(options.domainTask);
 
   if (options.needsSubscription) {
     return {
@@ -129,10 +155,15 @@ export function buildStatusBanner(options: {
 
   if (options.domainTask?.status === "connected") {
     return {
-      kicker: "You’re all set",
-      title: "Nothing more for you to do right now",
-      body: "Your website is nearly ready. We’ll get back to you when it’s live.",
+      kicker: "Congratulations",
+      title: "Your website is live",
+      body: liveUrl
+        ? `Great news — ${name} is live at ${liveUrl}. Share it with customers and keep the link handy.`
+        : `Great news — ${name} is live. Open your site from the button below.`,
       meta: domain ? `${name} · ${domain}` : name,
+      href: liveUrl ?? undefined,
+      cta: liveUrl ? "Visit live site" : undefined,
+      external: true,
     };
   }
 
@@ -157,6 +188,7 @@ export function buildJourneyStages(options: {
   const { needsSubscription, briefReady, domainTask } = options;
   const domainStatus = domainTask?.status;
   const liveDone = domainStatus === "connected";
+  const liveUrl = liveWebsiteUrl(domainTask);
   const workingCurrent =
     !needsSubscription && briefReady && !liveDone && domainStatus !== "unavailable";
 
@@ -180,7 +212,7 @@ export function buildJourneyStages(options: {
   const liveState: JourneyStage["state"] = liveDone ? "done" : "upcoming";
 
   const workingDetail = liveDone
-    ? "Build complete — finishing launch checks."
+    ? "Build complete — your site is launched."
     : domainTask?.domainName
       ? `Including ${domainTask.domainName}, hosting and setup — handled by our team.`
       : "Domain, hosting and setup are handled by our team.";
@@ -210,9 +242,11 @@ export function buildJourneyStages(options: {
     },
     {
       id: "live",
-      title: "Go live",
+      title: liveDone ? "Website live" : "Go live",
       detail: liveDone
-        ? "Your site is connected. Ask support if you need the live URL."
+        ? liveUrl
+          ? `Your site is live at ${liveUrl}.`
+          : "Your site is live — open it from your dashboard."
         : "We’ll get back to you when it’s ready to review and go live.",
       state: liveState,
     },
@@ -238,6 +272,19 @@ export function buildCustomerActions(options: {
     return actions;
   }
 
+  const liveUrl = liveWebsiteUrl(options.domainTask);
+  if (liveUrl) {
+    actions.push({
+      id: "visit-live",
+      title: "Your website is live",
+      body: `Open ${liveUrl} anytime — share it with customers.`,
+      to: liveUrl,
+      cta: "Visit live site",
+      tone: "primary",
+      external: true,
+    });
+  }
+
   if (options.domainTask?.status === "unavailable") {
     actions.push({
       id: "domain-help",
@@ -256,7 +303,7 @@ export function buildCustomerActions(options: {
       body: "If you’d like us to handle weekly posts and review replies, give us Manager access on your Google Business Profile.",
       to: "/dashboard/google-business",
       cta: "Give Manager access",
-      tone: "primary",
+      tone: liveUrl ? "secondary" : "primary",
     });
   }
 

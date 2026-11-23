@@ -324,6 +324,8 @@ export const domainRegistrationTasks = sqliteTable(
       .notNull()
       .default("pending"),
     adminNotes: text("admin_notes"),
+    /** Public URL shown to the customer once the site is live. */
+    liveUrl: text("live_url"),
     registeredAt: integer("registered_at", { mode: "timestamp_ms" }),
     connectedAt: integer("connected_at", { mode: "timestamp_ms" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
@@ -533,6 +535,7 @@ export const notifications = sqliteTable(
         "ticket_reply_customer",
         "ticket_reply_staff",
         "ticket_status",
+        "website_live",
       ],
     }).notNull(),
     title: text("title").notNull(),
