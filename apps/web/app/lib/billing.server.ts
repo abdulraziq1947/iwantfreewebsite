@@ -521,3 +521,122 @@ export async function getOpenAssetTransferTask(db: Db, organisationId: string) {
     .where(eq(assetTransferTasks.organisationId, organisationId))
     .get();
 }
+
+export type OrganisationInvoice = {
+  id: string;
+  number: string | null;
+  status: string | null;
+  currency: string;
+  amountDue: number;
+  amountPaid: number;
+  total: number;
+  createdAt: string | null;
+  periodStart: string | null;
+  periodEnd: string | null;
+  hostedInvoiceUrl: string | null;
+  invoicePdfUrl: string | null;
+};
+
+function formatStripeSeconds(value: number | null | undefined): string | null {
+  if (value == null) return null;
+  return new Date(value * 1000).toISOString();
+}
+
+/** List Stripe invoices for an organisation (test-mode Stripe only). */
+export async function listOrganisationInvoices(options: {
+  config: WorkerEnvConfig;
+  db: Db;
+  organisationId: string;
+  limit?: number;
+}): Promise<{ invoices: OrganisationInvoice[]; error?: string }> {
+  const org = await options.db
+    .select()
+    .from(organisations)
+    .where(eq(organisations.id, options.organisationId))
+    .get();
+  if (!org?.stripeCustomerId) {
+    return { invoices: [] };
+  }
+
+  const stripe = getStripe(options.config);
+  if (!stripe) {
+    return {
+      invoices: [],
+      error: "Billing history is unavailable right now.",
+    };
+  }
+
+  try {
+    const list = await stripe.invoices.list({
+      customer: org.stripeCustomerId,
+      limit: options.limit ?? 24,
+    });
+    return {
+      invoices: list.data.map((inv) => ({
+        id: inv.id,
+        number: inv.number,
+        status: inv.status,
+        currency: (inv.currency || "gbp").toUpperCase(),
+        amountDue: inv.amount_due ?? 0,
+        amountPaid: inv.amount_paid ?? 0,
+        total: inv.total ?? 0,
+        createdAt: formatStripeSeconds(inv.created),
+        periodStart: formatStripeSeconds(inv.period_start),
+        periodEnd: formatStripeSeconds(inv.period_end),
+        hostedInvoiceUrl: inv.hosted_invoice_url ?? null,
+        invoicePdfUrl: inv.invoice_pdf ?? null,
+      })),
+    };
+  } catch (error) {
+    log("error", "list_invoices_failed", {
+      organisationId: options.organisationId,
+      error: error instanceof Error ? error.message : "unknown",
+    });
+    return {
+      invoices: [],
+      error: "Could not load invoices from Stripe.",
+    };
+  }
+}
+
+/** Resolve a single invoice PDF URL after membership/staff checks in the route. */
+export async function getOrganisationInvoicePdfUrl(options: {
+  config: WorkerEnvConfig;
+  db: Db;
+  organisationId: string;
+  invoiceId: string;
+}): Promise<{ url: string } | { error: string }> {
+  const org = await options.db
+    .select()
+    .from(organisations)
+    .where(eq(organisations.id, options.organisationId))
+    .get();
+  if (!org?.stripeCustomerId) {
+    return { error: "No billing customer on this account." };
+  }
+  const stripe = getStripe(options.config);
+  if (!stripe) {
+    return { error: "Billing is unavailable right now." };
+  }
+  try {
+    const invoice = await stripe.invoices.retrieve(options.invoiceId);
+    const customerId =
+      typeof invoice.customer === "string"
+        ? invoice.customer
+        : invoice.customer?.id;
+    if (customerId !== org.stripeCustomerId) {
+      return { error: "Invoice not found for this account." };
+    }
+    if (!invoice.invoice_pdf) {
+      return { error: "PDF is not ready for this invoice yet." };
+    }
+    return { url: invoice.invoice_pdf };
+  } catch (error) {
+    log("error", "invoice_pdf_failed", {
+      organisationId: options.organisationId,
+      invoiceId: options.invoiceId,
+      error: error instanceof Error ? error.message : "unknown",
+    });
+    return { error: "Could not open invoice PDF." };
+  }
+}

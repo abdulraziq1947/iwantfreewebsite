@@ -50,6 +50,13 @@
       "when": 1763752000000,
       "tag": "0006_customer_uploads",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1763906400000,
+      "tag": "0007_support_tickets",
+      "breakpoints": true
     }
   ]
 }

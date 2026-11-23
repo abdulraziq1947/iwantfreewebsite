@@ -7,6 +7,7 @@ import { getCustomerWorkspace } from "../lib/customer-org.server";
 import { orgStatusLabel, orgStatusTone } from "../lib/customer-dashboard";
 import {
   getOrganisationSubscription,
+  listOrganisationInvoices,
   setSubscriptionCancelAtPeriodEnd,
 } from "../lib/billing.server";
 import type { Route } from "./+types/dashboard.billing";
@@ -17,6 +18,7 @@ export function meta(_args: Route.MetaArgs) {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
+  const config = getConfig(context);
   const db = createDb(getEnv(context).DB);
   const workspace = await getCustomerWorkspace(db, auth);
   const subscription = workspace.primary
@@ -30,8 +32,24 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         .orderBy(desc(assetTransferTasks.createdAt))
         .get()
     : null;
+  const invoiceResult = workspace.primary
+    ? await listOrganisationInvoices({
+        config,
+        db,
+        organisationId: workspace.primary.id,
+      })
+    : { invoices: [] as Awaited<
+        ReturnType<typeof listOrganisationInvoices>
+      >["invoices"] };
 
-  return { workspace, subscription, transfer };
+  return {
+    workspace,
+    subscription,
+    transfer,
+    invoices: invoiceResult.invoices,
+    invoiceError:
+      "error" in invoiceResult ? invoiceResult.error : undefined,
+  };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -76,11 +94,19 @@ function formatDate(value: Date | string | null | undefined): string {
   });
 }
 
+function formatMoney(pence: number, currency = "GBP"): string {
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency,
+  }).format(pence / 100);
+}
+
 export default function BillingPage({
   loaderData,
   actionData,
 }: Route.ComponentProps) {
-  const { workspace, subscription, transfer } = loaderData;
+  const { workspace, subscription, transfer, invoices, invoiceError } =
+    loaderData;
   const status = workspace.primary?.status ?? "prospect";
   const navigation = useNavigation();
   const busy = navigation.state !== "idle";
@@ -100,6 +126,73 @@ export default function BillingPage({
         </div>
         <Badge tone={orgStatusTone(status)}>{orgStatusLabel(status)}</Badge>
       </header>
+
+      <section className="iwfw-admin-panel" style={{ marginBottom: "1rem" }}>
+        <div className="iwfw-admin-panel__head">
+          <h2>Invoices</h2>
+        </div>
+        {invoiceError ? (
+          <p className="iwfw-dash-fine">{invoiceError}</p>
+        ) : invoices.length === 0 ? (
+          <p className="iwfw-dash-fine">
+            Invoices appear here after Stripe confirms a payment.
+          </p>
+        ) : (
+          <ul className="iwfw-invoice-list">
+            {invoices.map((inv) => (
+              <li key={inv.id}>
+                <div>
+                  <strong>
+                    {inv.number || inv.id}{" "}
+                    <Badge
+                      tone={
+                        inv.status === "paid"
+                          ? "success"
+                          : inv.status === "open"
+                            ? "warning"
+                            : "neutral"
+                      }
+                    >
+                      {inv.status || "—"}
+                    </Badge>
+                  </strong>
+                  <p className="iwfw-dash-fine" style={{ margin: "0.2rem 0 0" }}>
+                    Billed {formatDate(inv.createdAt)}
+                    {inv.periodStart && inv.periodEnd
+                      ? ` · period ${formatDate(inv.periodStart)} → ${formatDate(inv.periodEnd)}`
+                      : ""}
+                    {" · "}
+                    {formatMoney(inv.total, inv.currency)}
+                    {inv.amountPaid > 0 && inv.amountPaid !== inv.total
+                      ? ` (paid ${formatMoney(inv.amountPaid, inv.currency)})`
+                      : ""}
+                  </p>
+                </div>
+                <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                  {inv.invoicePdfUrl ? (
+                    <a
+                      href={`/dashboard/billing/invoice/${inv.id}.pdf`}
+                      className="iwfw-btn iwfw-btn--green iwfw-admin__btn-sm"
+                    >
+                      Download PDF
+                    </a>
+                  ) : null}
+                  {inv.hostedInvoiceUrl ? (
+                    <a
+                      href={inv.hostedInvoiceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="iwfw-btn iwfw-btn--outline iwfw-admin__btn-sm"
+                    >
+                      View online
+                    </a>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <div className="iwfw-dash-split">
         <Panel>

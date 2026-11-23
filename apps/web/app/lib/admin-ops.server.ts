@@ -9,12 +9,26 @@ import {
   assetTransferTasks,
   memberships,
   user,
+  onboardingProfiles,
+  customerUploads,
 } from "@iwfw/db";
 import {
   BLOCKING_SUBSCRIPTION_STATUSES,
   WEBSITE_PLAN_UNIT_AMOUNT,
+  isBlockingSubscriptionStatus,
 } from "./stripe.server";
 import { formatGbpFromPence } from "./admin-ops";
+import { parseOnboardingData } from "./onboarding";
+import {
+  buildJourneyStages,
+  buildStatusBanner,
+  domainTaskLabel,
+  isBriefReady,
+  needsGbpInvite,
+  websiteStageLabel,
+  type DomainTaskSnapshot,
+} from "./customer-progress";
+import { categoryLabel, isUploadCategory } from "./image-sniff";
 
 type Db = ReturnType<typeof createDb>;
 
@@ -350,4 +364,281 @@ export async function updateTransferTaskStatus(
     return { ok: true as const };
   }
   return { error: "Unknown transfer action." };
+}
+
+export async function getAdminClientDetail(db: Db, organisationId: string) {
+  const org = await db
+    .select()
+    .from(organisations)
+    .where(eq(organisations.id, organisationId))
+    .get();
+  if (!org) return null;
+
+  const [
+    mems,
+    users,
+    subs,
+    orders,
+    domainTasks,
+    transfers,
+    profile,
+    uploads,
+  ] = await Promise.all([
+    db
+      .select()
+      .from(memberships)
+      .where(eq(memberships.organisationId, organisationId))
+      .all(),
+    db.select().from(user).all(),
+    db
+      .select()
+      .from(subscriptions)
+      .where(eq(subscriptions.organisationId, organisationId))
+      .orderBy(desc(subscriptions.createdAt))
+      .all(),
+    db
+      .select()
+      .from(pendingOrders)
+      .where(eq(pendingOrders.organisationId, organisationId))
+      .orderBy(desc(pendingOrders.createdAt))
+      .all(),
+    db
+      .select()
+      .from(domainRegistrationTasks)
+      .where(eq(domainRegistrationTasks.organisationId, organisationId))
+      .orderBy(desc(domainRegistrationTasks.createdAt))
+      .all(),
+    db
+      .select()
+      .from(assetTransferTasks)
+      .where(eq(assetTransferTasks.organisationId, organisationId))
+      .orderBy(desc(assetTransferTasks.createdAt))
+      .all(),
+    db
+      .select()
+      .from(onboardingProfiles)
+      .where(eq(onboardingProfiles.organisationId, organisationId))
+      .get(),
+    db
+      .select()
+      .from(customerUploads)
+      .where(eq(customerUploads.organisationId, organisationId))
+      .orderBy(desc(customerUploads.createdAt))
+      .all(),
+  ]);
+
+  const userById = new Map(users.map((u) => [u.id, u]));
+  const members = mems.map((m) => {
+    const u = userById.get(m.userId);
+    return {
+      membershipId: m.id,
+      userId: m.userId,
+      role: m.role,
+      name: u?.name ?? null,
+      email: u?.email ?? null,
+    };
+  });
+
+  const blockingSub =
+    subs.find((s) => isBlockingSubscriptionStatus(s.status)) ?? null;
+  const needsSubscription = !(
+    org.status === "active" ||
+    org.status === "cancelling" ||
+    Boolean(blockingSub)
+  );
+
+  const onboardingData = parseOnboardingData(profile?.dataJson);
+  const briefReady = isBriefReady(
+    onboardingData,
+    Boolean(profile?.completedAt),
+  );
+
+  const latestDomain = domainTasks[0] ?? null;
+  const domainTask: DomainTaskSnapshot = latestDomain
+    ? {
+        domainName: latestDomain.domainName,
+        domainMode: latestDomain.domainMode,
+        status: latestDomain.status,
+        registeredAt: latestDomain.registeredAt
+          ? latestDomain.registeredAt.toISOString()
+          : null,
+        connectedAt: latestDomain.connectedAt
+          ? latestDomain.connectedAt.toISOString()
+          : null,
+      }
+    : null;
+
+  const journey = buildJourneyStages({
+    needsSubscription,
+    briefReady,
+    domainTask,
+  });
+  const banner = buildStatusBanner({
+    needsSubscription,
+    briefReady,
+    domainTask,
+    tradingName: org.tradingName,
+  });
+
+  const openDomainCount = domainTasks.filter((t) =>
+    (OPEN_DOMAIN_STATUSES as readonly string[]).includes(t.status),
+  ).length;
+  const openTransferCount = transfers.filter((t) =>
+    (OPEN_TRANSFER_STATUSES as readonly string[]).includes(t.status),
+  ).length;
+
+  const required: string[] = [];
+  if (needsSubscription) required.push("Customer still needs to pay / subscribe.");
+  if (!briefReady) required.push("Brief incomplete — chase missing questionnaire details.");
+  if (openDomainCount > 0) {
+    required.push(
+      `${openDomainCount} domain task${openDomainCount === 1 ? "" : "s"} open (${domainTaskLabel(domainTask?.status)}).`,
+    );
+  }
+  if (needsGbpInvite(onboardingData)) {
+    required.push("Google Business Profile invite not confirmed yet.");
+  }
+  const readyUploads = uploads.filter((u) => u.status === "ready");
+  if (readyUploads.length === 0) {
+    required.push("No customer images uploaded yet.");
+  }
+  if (openTransferCount > 0) {
+    required.push(
+      `${openTransferCount} asset transfer task${openTransferCount === 1 ? "" : "s"} open.`,
+    );
+  }
+  if (
+    !needsSubscription &&
+    briefReady &&
+    domainTask?.status !== "connected" &&
+    domainTask?.status !== "unavailable"
+  ) {
+    required.push("Website build / go-live still in progress with the team.");
+  }
+
+  // Also pull uploads linked only via paid orders for this org
+  const orderIds = orders.map((o) => o.id);
+  let orderUploads = readyUploads;
+  if (orderIds.length > 0 && readyUploads.length === 0) {
+    const allReady = await db
+      .select()
+      .from(customerUploads)
+      .where(eq(customerUploads.status, "ready"))
+      .orderBy(desc(customerUploads.createdAt))
+      .all();
+    orderUploads = allReady.filter(
+      (u) =>
+        u.organisationId === organisationId ||
+        (u.pendingOrderId && orderIds.includes(u.pendingOrderId)),
+    );
+  } else if (orderIds.length > 0) {
+    const extras = await db
+      .select()
+      .from(customerUploads)
+      .where(eq(customerUploads.status, "ready"))
+      .orderBy(desc(customerUploads.createdAt))
+      .all();
+    const seen = new Set(readyUploads.map((u) => u.id));
+    for (const u of extras) {
+      if (
+        !seen.has(u.id) &&
+        u.pendingOrderId &&
+        orderIds.includes(u.pendingOrderId)
+      ) {
+        orderUploads = [...orderUploads, u];
+        seen.add(u.id);
+      }
+    }
+  }
+
+  return {
+    org: {
+      id: org.id,
+      tradingName: org.tradingName,
+      registeredCompanyName: org.registeredCompanyName,
+      companiesHouseNumber: org.companiesHouseNumber,
+      status: org.status,
+      stripeCustomerId: org.stripeCustomerId,
+      createdAt: org.createdAt ? org.createdAt.toISOString() : null,
+      updatedAt: org.updatedAt ? org.updatedAt.toISOString() : null,
+    },
+    members,
+    stageLabel: websiteStageLabel({
+      needsSubscription,
+      domainStatus: domainTask?.status,
+      briefReady,
+    }),
+    banner,
+    journey,
+    required,
+    briefReady,
+    needsSubscription,
+    gbpNeeded: needsGbpInvite(onboardingData),
+    onboarding: {
+      currentStep: profile?.currentStep ?? 0,
+      completedAt: profile?.completedAt
+        ? profile.completedAt.toISOString()
+        : null,
+      data: onboardingData,
+    },
+    subscriptions: subs.map((s) => ({
+      id: s.id,
+      status: s.status,
+      cancelAtPeriodEnd: s.cancelAtPeriodEnd,
+      stripeSubscriptionId: s.stripeSubscriptionId,
+      stripePriceId: s.stripePriceId,
+      currentPeriodStart: s.currentPeriodStart
+        ? s.currentPeriodStart.toISOString()
+        : null,
+      currentPeriodEnd: s.currentPeriodEnd
+        ? s.currentPeriodEnd.toISOString()
+        : null,
+      createdAt: s.createdAt ? s.createdAt.toISOString() : null,
+      planLabel: formatGbpFromPence(WEBSITE_PLAN_UNIT_AMOUNT) + "/mo",
+    })),
+    orders: orders.map((o) => ({
+      id: o.id,
+      status: o.status,
+      email: o.email,
+      fullName: o.fullName,
+      tradingName: o.tradingName,
+      domainName: o.domainName,
+      domainMode: o.domainMode,
+      paidAt: o.paidAt ? o.paidAt.toISOString() : null,
+      createdAt: o.createdAt ? o.createdAt.toISOString() : null,
+    })),
+    domainTasks: domainTasks.map((t) => ({
+      id: t.id,
+      domainName: t.domainName,
+      domainMode: t.domainMode,
+      status: t.status,
+      adminNotes: t.adminNotes,
+      registeredAt: t.registeredAt ? t.registeredAt.toISOString() : null,
+      connectedAt: t.connectedAt ? t.connectedAt.toISOString() : null,
+      createdAt: t.createdAt ? t.createdAt.toISOString() : null,
+      statusLabel: domainTaskLabel(t.status),
+    })),
+    transfers: transfers.map((t) => ({
+      id: t.id,
+      status: t.status,
+      adminNotes: t.adminNotes,
+      periodEndAt: t.periodEndAt ? t.periodEndAt.toISOString() : null,
+      completedAt: t.completedAt ? t.completedAt.toISOString() : null,
+      createdAt: t.createdAt ? t.createdAt.toISOString() : null,
+    })),
+    uploads: orderUploads
+      .filter((u) => u.status === "ready")
+      .map((u) => ({
+        id: u.id,
+        category: u.category,
+        categoryLabel: isUploadCategory(u.category)
+          ? categoryLabel(u.category)
+          : u.category,
+        originalFilename: u.originalFilename,
+        contentType: u.contentType,
+        byteSize: u.byteSize,
+        createdAt: u.createdAt ? u.createdAt.toISOString() : null,
+        contentUrl: `/api/uploads/${u.id}/content`,
+      })),
+  };
 }

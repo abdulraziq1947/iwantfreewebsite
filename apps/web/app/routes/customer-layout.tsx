@@ -1,14 +1,29 @@
 import { Form, Link, NavLink, Outlet, useLocation } from "react-router";
+import { createDb } from "@iwfw/db";
 import { requireAuth } from "../lib/session.server";
+import { getEnv } from "../lib/env.server";
 import { CUSTOMER_NAV } from "../lib/customer-dashboard";
+import { BrandLogo } from "../components/brand-logo";
+import {
+  countCustomerUnreadTickets,
+  countUnreadNotifications,
+} from "../lib/support.server";
 import type { Route } from "./+types/customer-layout";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const auth = await requireAuth(request, context);
+  const db = createDb(getEnv(context).DB);
+  const organisationIds = auth.memberships.map((m) => m.organisationId);
+  const [ticketUnread, notifyUnread] = await Promise.all([
+    countCustomerUnreadTickets(db, organisationIds),
+    countUnreadNotifications(db, auth.userId),
+  ]);
   return {
     user: { name: auth.name, email: auth.email },
     isStaff: auth.staffRoles.length > 0,
-    organisationIds: auth.memberships.map((m) => m.organisationId),
+    organisationIds,
+    supportUnread: ticketUnread,
+    notifyUnread,
   };
 }
 
@@ -20,8 +35,8 @@ export default function CustomerLayout({ loaderData }: Route.ComponentProps) {
       <header className="iwfw-dash__topbar">
         <div className="iwfw-dash__topbar-inner">
           <div className="iwfw-dash__brand">
-            <Link to="/dashboard" className="iwfw-dash__logo">
-              iwantfreewebsite
+            <Link to="/dashboard" className="iwfw-dash__logo" aria-label="Dashboard home">
+              <BrandLogo size={28} withWordmark />
             </Link>
             <span className="iwfw-dash__eyebrow">Customer area</span>
           </div>
@@ -57,6 +72,12 @@ export default function CustomerLayout({ loaderData }: Route.ComponentProps) {
               }
             >
               {item.label}
+              {item.to === "/dashboard/support" &&
+              loaderData.supportUnread > 0 ? (
+                <span className="iwfw-notify-badge">
+                  {loaderData.supportUnread}
+                </span>
+              ) : null}
             </NavLink>
           ))}
           <Form method="post" action="/logout" className="iwfw-dash__nav-logout">

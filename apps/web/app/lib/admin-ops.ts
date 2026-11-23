@@ -23,5 +23,6 @@ export const ADMIN_NAV = [
   { to: "/admin/orders", label: "Orders" },
   { to: "/admin/domains", label: "Domains" },
   { to: "/admin/transfers", label: "Transfers" },
+  { to: "/admin/support", label: "Support" },
   { to: "/admin/media", label: "Images" },
 ] as const;

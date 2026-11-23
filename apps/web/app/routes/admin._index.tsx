@@ -83,6 +83,7 @@ export default function AdminHome({ loaderData }: Route.ComponentProps) {
             rows={loaderData.recentClients.map((c) => ({
               key: c.id,
               title: c.tradingName,
+              href: `/admin/clients/${c.id}`,
               meta: c.status,
               right: formatAdminDate(c.createdAt),
               badge: c.status,
@@ -168,6 +169,7 @@ function AdminTable({
   rows: Array<{
     key: string;
     title: string;
+    href?: string;
     meta: string;
     right: string;
     badge?: string;
@@ -182,7 +184,7 @@ function AdminTable({
         <li key={row.key}>
           <div>
             <strong>
-              {row.title}
+              {row.href ? <Link to={row.href}>{row.title}</Link> : row.title}
               {row.badge ? (
                 <>
                   {" "}
