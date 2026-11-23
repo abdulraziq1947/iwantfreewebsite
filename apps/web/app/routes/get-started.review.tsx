@@ -29,8 +29,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const { order } = await getOrCreateDraftOrder(db, request);
   const q = orderQuestionnaire(order);
 
-  if (!q.contact.email || !q.business.tradingName) {
-    throw redirect("/get-started/website");
+  if (!q.contact.email) {
+    throw redirect("/get-started/personal");
+  }
+  if (!q.business.tradingName) {
+    throw redirect("/get-started/business");
   }
   if (!order.domainName || !order.domainMode || !order.domainAcknowledged) {
     throw redirect("/get-started/domain");
@@ -124,12 +127,15 @@ export default function GetStartedReview({
   return (
     <div className="iwfw-start">
       <header className="iwfw-start__intro">
-        <p className="iwfw-start__kicker">Order review</p>
+        <p className="iwfw-start__kicker">Step 5 of 5 · Review &amp; pay</p>
         <h1>Review &amp; pay</h1>
         <p className="iwfw-start__lead">
           Confirm your website order, then pay securely with Stripe. Your account
           is created automatically after payment is confirmed.
         </p>
+        <div className="iwfw-order-progress" aria-hidden>
+          <span style={{ width: "100%" }} />
+        </div>
       </header>
 
       <div className="iwfw-start__split">

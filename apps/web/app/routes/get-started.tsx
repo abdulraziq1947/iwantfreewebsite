@@ -82,7 +82,7 @@ export default function GetStartedPackage({ loaderData }: Route.ComponentProps) 
         </div>
 
         <Link
-          to="/get-started/website"
+          to="/get-started/personal"
           className="iwfw-btn iwfw-btn--green iwfw-btn--block"
         >
           Continue — Get My Website

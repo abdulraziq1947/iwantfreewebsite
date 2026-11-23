@@ -15,6 +15,9 @@ export default [
     route("privacy", "routes/privacy.tsx"),
     layout("routes/get-started._layout.tsx", [
       route("get-started", "routes/get-started.tsx"),
+      route("get-started/personal", "routes/get-started.personal.tsx"),
+      route("get-started/business", "routes/get-started.business.tsx"),
+      route("get-started/media", "routes/get-started.media.tsx"),
       route("get-started/website", "routes/get-started.website.tsx"),
       route("get-started/domain", "routes/get-started.domain.tsx"),
       route("get-started/review", "routes/get-started.review.tsx"),
