@@ -71,6 +71,13 @@
       "when": 1763917200000,
       "tag": "0009_organisation_mailboxes",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1763920800000,
+      "tag": "0010_mailbox_password",
+      "breakpoints": true
     }
   ]
 }

@@ -7,6 +7,7 @@ export type OrganisationMailbox = {
   organisationId: string;
   emailAddress: string;
   username: string | null;
+  password: string | null;
   webmailUrl: string | null;
   imapHost: string | null;
   imapPort: number | null;

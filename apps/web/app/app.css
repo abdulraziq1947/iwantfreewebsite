@@ -4752,6 +4752,22 @@ h3 {
   margin-bottom: 0.75rem;
 }
 
+.iwfw-mail-password dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.iwfw-mail-password .iwfw-dash-code {
+  margin: 0;
+}
+
+.iwfw-mail-password__toggle {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+}
+
 .iwfw-mail-guides {
   list-style: none;
   margin: 0;

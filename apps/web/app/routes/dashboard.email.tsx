@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Form, Link, useNavigation } from "react-router";
 import { Badge, Panel } from "@iwfw/ui";
 import { createDb, eq, onboardingProfiles } from "@iwfw/db";
@@ -59,6 +60,27 @@ function CopyRow({ label, value }: { label: string; value: string }) {
       <dt>{label}</dt>
       <dd>
         <code className="iwfw-dash-code">{value}</code>
+      </dd>
+    </div>
+  );
+}
+
+function PasswordRow({ value }: { value: string }) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="iwfw-mail-password">
+      <dt>Password</dt>
+      <dd>
+        <code className="iwfw-dash-code">
+          {visible ? value : "•".repeat(Math.min(Math.max(value.length, 8), 16))}
+        </code>
+        <button
+          type="button"
+          className="iwfw-btn iwfw-btn--outline iwfw-mail-password__toggle"
+          onClick={() => setVisible((v) => !v)}
+        >
+          {visible ? "Hide" : "Show"}
+        </button>
       </dd>
     </div>
   );
@@ -129,6 +151,19 @@ export default function EmailPage({
                 label="Username"
                 value={mailbox.username || mailbox.emailAddress}
               />
+              {mailbox.password ? (
+                <PasswordRow value={mailbox.password} />
+              ) : (
+                <div>
+                  <dt>Password</dt>
+                  <dd>
+                    <p className="iwfw-dash-fine" style={{ margin: 0 }}>
+                      Not set yet — we’ll add it here when your mailbox is
+                      ready.
+                    </p>
+                  </dd>
+                </div>
+              )}
               {mailbox.webmailUrl ? (
                 <CopyRow label="Webmail" value={mailbox.webmailUrl} />
               ) : null}
@@ -137,8 +172,8 @@ export default function EmailPage({
               <p className="iwfw-dash-copy">{mailbox.customerNotes}</p>
             ) : (
               <p className="iwfw-dash-fine">
-                Use the mailbox password we sent you (or that support shared).
-                For security we don’t show the password on this page.
+                Use this password for webmail and when adding the account to
+                Outlook, Apple Mail, Gmail or your phone.
               </p>
             )}
           </section>
