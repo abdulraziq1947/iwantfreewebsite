@@ -28,7 +28,7 @@ Staff must enroll MFA before using `/admin` (except `/admin/security/mfa`).
 | Support | `/admin/support` | Tickets |
 | Notifications | `/admin/notifications` | Staff feed |
 | Images | `/admin/media` | Upload review |
-| MFA | `/admin/security/mfa` | Enrollment |
+| MFA | `/admin/security/mfa` | QR + manual key enrollment, recovery codes |
 
 ## Audit logs
 

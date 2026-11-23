@@ -4868,3 +4868,111 @@ h3 {
 .iwfw-mail-guides ol li + li {
   margin-top: 0.25rem;
 }
+
+/* Staff MFA enrollment */
+.iwfw-mfa-steps {
+  margin: 0 0 1rem;
+  padding-left: 1.2rem;
+  color: var(--iwfw-muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.iwfw-mfa-steps strong {
+  color: var(--iwfw-ink, #0f172a);
+  font-weight: 700;
+}
+
+.iwfw-mfa-qr-wrap {
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+  margin: 0 0 1rem;
+  padding: 1rem;
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--iwfw-border) 35%, #fff);
+  border: 1px solid color-mix(in srgb, var(--iwfw-border) 80%, transparent);
+  text-align: center;
+}
+
+.iwfw-mfa-qr {
+  width: min(100%, 14rem);
+  aspect-ratio: 1;
+}
+
+.iwfw-mfa-qr svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  background: #fff;
+}
+
+.iwfw-mfa-manual,
+.iwfw-mfa-codes {
+  margin: 0 0 1rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 0.85rem;
+  border: 1px dashed color-mix(in srgb, var(--iwfw-border) 90%, #1f7a4c);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.iwfw-mfa-manual__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--iwfw-muted);
+}
+
+.iwfw-mfa-manual__key {
+  display: block;
+  font-size: clamp(0.95rem, 3.6vw, 1.15rem);
+  letter-spacing: 0.08em;
+  word-break: break-all;
+  font-weight: 700;
+  color: var(--iwfw-ink, #0f172a);
+}
+
+.iwfw-mfa-regen {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid color-mix(in srgb, var(--iwfw-border) 70%, transparent);
+  display: grid;
+  gap: 0.65rem;
+}
+
+.iwfw-mfa-success {
+  margin: 0 0 0.85rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--iwfw-green, #1f7a4c) 12%, #fff);
+  color: var(--iwfw-green, #1f7a4c);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.iwfw-mfa-codes__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem 0.75rem;
+}
+
+.iwfw-mfa-codes__list code {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .iwfw-mfa-codes__list {
+    grid-template-columns: 1fr;
+  }
+}
