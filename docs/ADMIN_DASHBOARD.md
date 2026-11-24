@@ -13,10 +13,13 @@
 
 Staff must enroll MFA before using `/admin` (except `/admin/security/mfa`).
 
+Staff sign in at **`/admin/login`** (separate from customer `/get-started/account?mode=login`). Unauthenticated `/admin` requests redirect there. Customers who attempt staff sign-in are rejected without receiving a session cookie.
+
 ## Admin modules (shipped)
 
 | Module | Route | Notes |
 | --- | --- | --- |
+| Staff login | `/admin/login` | Staff-only; customers redirected away |
 | Overview | `/admin` | Ops snapshot |
 | Clients | `/admin/clients` | Search, live/not-live, attention filters |
 | Client folder | `/admin/clients/:orgId` | Brief, mark live/preview, mailbox, notify, billing |
@@ -28,11 +31,12 @@ Staff must enroll MFA before using `/admin` (except `/admin/security/mfa`).
 | Support | `/admin/support` | Tickets |
 | Notifications | `/admin/notifications` | Staff feed |
 | Images | `/admin/media` | Upload review |
+| Team | `/admin/team` | Owner/administrator: create staff, grant roles, create customers |
 | MFA | `/admin/security/mfa` | QR + manual key enrollment, recovery codes |
 
 ## Audit logs
 
-Sensitive actions write to `audit_logs` (mark live, preview, mailbox upsert, org status, ops task changes, domain renews-at). Passwords are redacted.
+Sensitive actions write to `audit_logs` (mark live, preview, mailbox upsert, org status, ops task changes, domain renews-at, staff/customer create). Passwords are redacted.
 
 ## Domain & GBP ops
 

@@ -27,4 +27,5 @@ export const ADMIN_NAV = [
   { to: "/admin/support", label: "Support" },
   { to: "/admin/notifications", label: "Notifications" },
   { to: "/admin/media", label: "Images" },
+  { to: "/admin/team", label: "Team" },
 ] as const;
