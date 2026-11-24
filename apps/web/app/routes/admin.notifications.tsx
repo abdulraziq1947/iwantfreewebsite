@@ -40,7 +40,7 @@ export default function AdminNotificationsPage({ loaderData }: Route.ComponentPr
       <AdminPageHeader
         kicker="Live ops"
         title="Notifications"
-        lead="New prospects, new customers, support requests, and GMB updates — refreshed as they happen."
+        lead="Prospects, customers, photo uploads, billing changes, mailbox updates, support, and GMB — refreshed as they happen."
         aside={
           <>
             <AdminCount

@@ -55,6 +55,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   }
 
   const data = structuredClone(selected.onboarding.data);
+  const previousEmail = selected.onboarding.data.email;
   data.email = {
     localPart: String(form.get("localPart") ?? "")
       .trim()
@@ -72,6 +73,27 @@ export async function action({ request, context }: Route.ActionArgs) {
       updatedAt: new Date(),
     })
     .where(eq(onboardingProfiles.id, selected.onboarding.id));
+
+  const mailboxChanged =
+    previousEmail.localPart !== data.email.localPart ||
+    previousEmail.existingProvider !== data.email.existingProvider ||
+    previousEmail.migrationRequired !== data.email.migrationRequired ||
+    previousEmail.mxOverwriteApproved !== data.email.mxOverwriteApproved;
+  if (mailboxChanged) {
+    try {
+      const { notifyStaffMailboxUpdate } = await import(
+        "../lib/notifications.server"
+      );
+      await notifyStaffMailboxUpdate(db, {
+        organisationId: selected.primary.id,
+        tradingName: selected.primary.tradingName,
+        localPart: data.email.localPart,
+        migrationRequired: data.email.migrationRequired,
+      });
+    } catch {
+      // Non-fatal
+    }
+  }
 
   return { ok: true, saved: true };
 }

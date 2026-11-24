@@ -1,5 +1,11 @@
 import type { WorkerEnvConfig } from "@iwfw/config";
-import { createDb, eq, organisations, pendingOrders } from "@iwfw/db";
+import {
+  createDb,
+  eq,
+  organisations,
+  pendingOrders,
+  subscriptions,
+} from "@iwfw/db";
 import type Stripe from "stripe";
 import { log } from "./logger";
 import {
@@ -16,6 +22,52 @@ import {
 } from "./billing.server";
 import { deliverActivationEmail } from "./activation-email.server";
 import { fulfillPaidPendingOrder } from "./fulfill-order.server";
+
+type Db = ReturnType<typeof createDb>;
+
+async function localSubscriptionSnapshot(
+  db: Db,
+  stripeSubscriptionId: string,
+) {
+  return db
+    .select({
+      status: subscriptions.status,
+      cancelAtPeriodEnd: subscriptions.cancelAtPeriodEnd,
+    })
+    .from(subscriptions)
+    .where(eq(subscriptions.stripeSubscriptionId, stripeSubscriptionId))
+    .get();
+}
+
+async function notifyStaffOfSubscriptionChange(
+  db: Db,
+  organisationId: string,
+  previous: { status: string; cancelAtPeriodEnd: boolean } | null | undefined,
+  next: { status: string; cancelAtPeriodEnd: boolean },
+) {
+  try {
+    const { staffBillingChangeFromStripe, notifyStaffBillingChange } =
+      await import("./notifications.server");
+    const change = staffBillingChangeFromStripe(previous ?? null, next);
+    if (!change) return;
+    const org = await db
+      .select({ tradingName: organisations.tradingName })
+      .from(organisations)
+      .where(eq(organisations.id, organisationId))
+      .get();
+    await notifyStaffBillingChange(db, {
+      organisationId,
+      tradingName: org?.tradingName,
+      title: change.title,
+      detail: change.detail,
+    });
+  } catch (error) {
+    log("warn", "staff_billing_notify_failed", {
+      organisationId,
+      error: error instanceof Error ? error.message : "unknown",
+    });
+  }
+}
 
 export async function handleStripeWebhookRequest(
   request: Request,
@@ -216,11 +268,18 @@ export async function handleStripeWebhookRequest(
           });
           break;
         }
+        const previous = await localSubscriptionSnapshot(db, sub.id);
         await upsertSubscriptionFromStripe({
           db,
           organisationId,
           stripeSubscription: sub,
         });
+        if (event.type === "customer.subscription.updated") {
+          await notifyStaffOfSubscriptionChange(db, organisationId, previous, {
+            status: sub.status,
+            cancelAtPeriodEnd: Boolean(sub.cancel_at_period_end),
+          });
+        }
         break;
       }
       case "customer.subscription.deleted": {
@@ -230,6 +289,7 @@ export async function handleStripeWebhookRequest(
           sub,
         );
         if (!organisationId) break;
+        const previous = await localSubscriptionSnapshot(db, sub.id);
         const { id: subscriptionId } = await upsertSubscriptionFromStripe({
           db,
           organisationId,
@@ -242,6 +302,10 @@ export async function handleStripeWebhookRequest(
           periodEndAt: msFromStripeSeconds(
             (sub as { current_period_end?: number }).current_period_end,
           ),
+        });
+        await notifyStaffOfSubscriptionChange(db, organisationId, previous, {
+          status: "canceled",
+          cancelAtPeriodEnd: Boolean(sub.cancel_at_period_end),
         });
         break;
       }
@@ -265,11 +329,21 @@ export async function handleStripeWebhookRequest(
             sub,
           );
           if (organisationId) {
+            const previous = await localSubscriptionSnapshot(db, sub.id);
             await upsertSubscriptionFromStripe({
               db,
               organisationId,
               stripeSubscription: sub,
             });
+            await notifyStaffOfSubscriptionChange(
+              db,
+              organisationId,
+              previous,
+              {
+                status: sub.status,
+                cancelAtPeriodEnd: Boolean(sub.cancel_at_period_end),
+              },
+            );
           }
         }
         break;

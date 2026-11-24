@@ -545,6 +545,29 @@ export async function setSubscriptionCancelAtPeriodEnd(options: {
     // Non-fatal
   }
 
+  try {
+    const org = await options.db
+      .select({ tradingName: organisations.tradingName })
+      .from(organisations)
+      .where(eq(organisations.id, options.organisationId))
+      .get();
+    const { notifyStaffBillingChange } = await import(
+      "./notifications.server"
+    );
+    await notifyStaffBillingChange(options.db, {
+      organisationId: options.organisationId,
+      tradingName: org?.tradingName,
+      title: options.cancelAtPeriodEnd
+        ? "Customer cancelled subscription"
+        : "Customer resumed subscription",
+      detail: options.cancelAtPeriodEnd
+        ? "They asked to cancel at the end of the current period."
+        : "They kept the plan after cancelling.",
+    });
+  } catch {
+    // Non-fatal
+  }
+
   return { ok: true };
 }
 

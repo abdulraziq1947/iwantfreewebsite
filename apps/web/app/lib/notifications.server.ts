@@ -5,6 +5,8 @@ import {
   isNull,
   and,
   memberships,
+  organisations,
+  pendingOrders,
   platformRoles,
   notifications,
 } from "@iwfw/db";
@@ -27,6 +29,9 @@ export const NOTIFICATION_KINDS = [
   "new_prospect",
   "new_customer",
   "staff_message",
+  "media_upload",
+  "billing_update",
+  "mailbox_update",
 ] as const;
 
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
@@ -98,6 +103,97 @@ export async function notifyStaffUsers(
 ) {
   const staffIds = await staffUserIds(db);
   await createNotifications(db, { ...options, userIds: staffIds });
+}
+
+/** One unread bell per org+kind so a burst of photo uploads does not spam staff. */
+export async function notifyStaffUsersUnlessUnread(
+  db: Db,
+  options: {
+    organisationId: string;
+    kind: NotificationKind;
+    title: string;
+    body: string;
+    href: string;
+  },
+) {
+  const staffIds = await staffUserIds(db);
+  if (staffIds.length === 0) return;
+  const existing = await db
+    .select({ id: notifications.id })
+    .from(notifications)
+    .where(
+      and(
+        eq(notifications.organisationId, options.organisationId),
+        eq(notifications.kind, options.kind),
+        isNull(notifications.readAt),
+      ),
+    )
+    .get();
+  if (existing) return;
+  await createNotifications(db, { ...options, userIds: staffIds });
+}
+
+export function staffBillingChangeFromStripe(
+  previous: { status: string; cancelAtPeriodEnd: boolean } | null,
+  next: { status: string; cancelAtPeriodEnd: boolean },
+): { title: string; detail: string } | null {
+  if (!previous) return null;
+  if (previous.status !== next.status) {
+    if (next.status === "canceled") {
+      return {
+        title: "Subscription ended",
+        detail: "The Stripe subscription is now cancelled.",
+      };
+    }
+    if (next.status === "past_due" || next.status === "unpaid") {
+      return {
+        title: "Subscription payment issue",
+        detail: `Status is now ${next.status.replaceAll("_", " ")}.`,
+      };
+    }
+    if (
+      (previous.status === "past_due" ||
+        previous.status === "unpaid" ||
+        previous.status === "incomplete") &&
+      next.status === "active"
+    ) {
+      return {
+        title: "Subscription recovered",
+        detail: "Payment succeeded and the plan is active again.",
+      };
+    }
+    if (previous.status === "trialing" && next.status === "active") {
+      return null;
+    }
+    return {
+      title: "Subscription updated",
+      detail: `Status changed from ${previous.status.replaceAll("_", " ")} to ${next.status.replaceAll("_", " ")}.`,
+    };
+  }
+  if (previous.cancelAtPeriodEnd !== next.cancelAtPeriodEnd) {
+    return next.cancelAtPeriodEnd
+      ? {
+          title: "Customer cancelled subscription",
+          detail: "They asked to cancel at the end of the current period.",
+        }
+      : {
+          title: "Customer resumed subscription",
+          detail: "They kept the plan after cancelling.",
+        };
+  }
+  return null;
+}
+
+async function organisationTradingName(
+  db: Db,
+  organisationId: string,
+): Promise<string> {
+  const org = await db
+    .select({ tradingName: organisations.tradingName })
+    .from(organisations)
+    .where(eq(organisations.id, organisationId))
+    .get();
+  return org?.tradingName?.trim() || "A client";
 }
 
 export async function notifyOrgMembers(
@@ -183,6 +279,13 @@ export async function notifyPaymentFailed(
     title: "Payment failed — update your card",
     body: `We couldn’t take the latest payment for ${name}. Please update your payment method so your website and services stay active.`,
     href: "/dashboard/billing",
+  });
+  await notifyStaffUsersUnlessUnread(db, {
+    organisationId: options.organisationId,
+    kind: "billing_update",
+    title: "Payment failed",
+    body: `${options.tradingName?.trim() || "A client"} — card was declined or payment failed.`,
+    href: `/admin/clients/${options.organisationId}?tab=billing`,
   });
 }
 
@@ -316,6 +419,92 @@ export async function notifyStaffGbpCustomerUpdate(
     title: label,
     body: options.tradingName,
     href: `/admin/clients/${options.organisationId}`,
+  });
+}
+
+export async function notifyStaffMediaUploaded(
+  db: Db,
+  options: {
+    organisationId?: string | null;
+    pendingOrderId?: string | null;
+    categoryLabel: string;
+    filename: string;
+  },
+) {
+  if (options.organisationId) {
+    const tradingName = await organisationTradingName(
+      db,
+      options.organisationId,
+    );
+    await notifyStaffUsersUnlessUnread(db, {
+      organisationId: options.organisationId,
+      kind: "media_upload",
+      title: "New images uploaded",
+      body: `${tradingName} added ${options.categoryLabel.toLowerCase()}${options.filename ? ` (${options.filename})` : ""}.`,
+      href: `/admin/clients/${options.organisationId}?tab=images`,
+    });
+    return;
+  }
+
+  if (!options.pendingOrderId) return;
+  const order = await db
+    .select({
+      tradingName: pendingOrders.tradingName,
+      email: pendingOrders.email,
+    })
+    .from(pendingOrders)
+    .where(eq(pendingOrders.id, options.pendingOrderId))
+    .get();
+  const who =
+    order?.tradingName?.trim() ||
+    order?.email?.trim() ||
+    "A prospect";
+  await notifyStaffUsers(db, {
+    organisationId: null,
+    kind: "media_upload",
+    title: "Prospect uploaded images",
+    body: `${who} added ${options.categoryLabel.toLowerCase()}${options.filename ? ` (${options.filename})` : ""}.`,
+    href: "/admin/media",
+  });
+}
+
+export async function notifyStaffBillingChange(
+  db: Db,
+  options: {
+    organisationId: string;
+    tradingName?: string | null;
+    title: string;
+    detail: string;
+  },
+) {
+  const name = options.tradingName?.trim() || "A client";
+  await notifyStaffUsersUnlessUnread(db, {
+    organisationId: options.organisationId,
+    kind: "billing_update",
+    title: options.title,
+    body: `${name} — ${options.detail}`,
+    href: `/admin/clients/${options.organisationId}?tab=billing`,
+  });
+}
+
+export async function notifyStaffMailboxUpdate(
+  db: Db,
+  options: {
+    organisationId: string;
+    tradingName: string;
+    localPart: string;
+    migrationRequired: boolean;
+  },
+) {
+  const extra = options.migrationRequired
+    ? " They asked for help moving from an existing mailbox."
+    : "";
+  await notifyStaffUsersUnlessUnread(db, {
+    organisationId: options.organisationId,
+    kind: "mailbox_update",
+    title: "Mailbox preference updated",
+    body: `${options.tradingName} wants ${options.localPart || "a mailbox"}@their domain.${extra}`,
+    href: `/admin/clients/${options.organisationId}?tab=email`,
   });
 }
 
