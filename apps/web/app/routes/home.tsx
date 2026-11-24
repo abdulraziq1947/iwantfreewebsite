@@ -1,15 +1,42 @@
 import { Link } from "react-router";
 import { BrandLogo } from "../components/brand-logo";
+import {
+  CTA_REASSURANCE,
+  HOME_FAQS,
+  OFFER_LINE,
+  PACKAGE_BENEFITS,
+  PACKAGE_PRICE,
+  POSITIONING_LINE,
+  PRIMARY_CTA,
+  SUPPORT_PHONE_DISPLAY,
+  SUPPORT_PHONE_HREF,
+  WHO_FOR,
+  WHO_FOR_EXAMPLES,
+} from "../lib/marketing";
 import type { Route } from "./+types/home";
 
 export function meta(_args: Route.MetaArgs) {
   return [
-    { title: "iwantfreewebsite.com — Get a Professional Business Website" },
+    {
+      title:
+        "iwantfreewebsite.com — Professional website for UK businesses, £39.99/month",
+    },
     {
       name: "description",
       content:
-        "£39.99/month. We build your website, host it, look after your domain and renewals, and help with Google Business Profile — so you are not juggling design, hosting and domain bills alone. Cancel anytime.",
+        "You run your business. We'll handle your website. Professional managed website, domain, hosting, business email and Google Business help for £39.99/month. No upfront design fee. Cancel anytime.",
     },
+    {
+      property: "og:title",
+      content: "You run your business. We'll handle your website.",
+    },
+    {
+      property: "og:description",
+      content:
+        "Everything your UK business needs to get online, professionally managed for £39.99 a month. No upfront design fee. Cancel anytime.",
+    },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
   ];
 }
 
@@ -22,39 +49,41 @@ export default function Home() {
             <p className="iwfw-hero__brand">
               <BrandLogo size={40} withWordmark />
             </p>
-            <p className="iwfw-pill">Managed website service</p>
-            <h1>Get a Professional Business Website</h1>
+            <p className="iwfw-pill">Managed online presence for UK businesses</p>
+            <h1>{POSITIONING_LINE}</h1>
             <p className="iwfw-price-banner">
-              <span>£39.99/month · Design, hosting &amp; renewals handled</span>
+              <span>
+                {PACKAGE_PRICE}/month · No upfront design fee · Cancel anytime
+              </span>
             </p>
             <p className="iwfw-hero__lead">
               <span className="iwfw-hero__lead-short">
-                Stop juggling website design, hosting and domain renewals —
-                one monthly plan keeps your site online.
+                A professional business website without spending hundreds
+                upfront or wrestling with technology — all managed for{" "}
+                {PACKAGE_PRICE} a month.
               </span>
               <span className="iwfw-hero__lead-full">
-                Paying separately for design, hosting and a domain is easy to
-                forget — miss a renewal and years of work can disappear
-                overnight. We build your site, host it, look after your domain
-                and renewals, and help with Google Business Profile so you can
-                focus on the business.
+                Get a professional business website without spending hundreds
+                upfront or dealing with complicated technology. Everything taken
+                care of for just {PACKAGE_PRICE} a month.
               </span>
             </p>
             <div className="iwfw-hero__ctas">
               <Link to="/get-started" className="iwfw-btn iwfw-btn--green">
-                Get My Website Today
+                {PRIMARY_CTA}
                 <ArrowIcon />
               </Link>
-              <a className="iwfw-speak" href="tel:08008527267">
+              <a className="iwfw-speak" href={SUPPORT_PHONE_HREF}>
                 <span className="iwfw-speak__icon">
                   <PhoneIcon />
                 </span>
                 <span>
-                  <strong>Speak to Us Today</strong>
-                  <em>0800 852 7267</em>
+                  <strong>Speak to us</strong>
+                  <em>{SUPPORT_PHONE_DISPLAY}</em>
                 </span>
               </a>
             </div>
+            <p className="iwfw-hero__reassure">{CTA_REASSURANCE}</p>
           </div>
 
           <div className="iwfw-hero__visual iwfw-anim iwfw-anim--2" aria-hidden="true">
@@ -76,57 +105,178 @@ export default function Home() {
 
         <div className="iwfw-trust iwfw-anim iwfw-anim--3">
           <div className="iwfw-trust__item">
-            <TrustIcon kind="support" />
-            <span>Friendly Support</span>
+            <TrustIcon kind="uk" />
+            <span>UK-based support</span>
           </div>
           <div className="iwfw-trust__item">
-            <TrustIcon kind="setup" />
-            <span>Quick Setup</span>
+            <TrustIcon kind="stripe" />
+            <span>Secure Stripe checkout</span>
           </div>
           <div className="iwfw-trust__item">
-            <TrustIcon kind="hosting" />
-            <span>Reliable Hosting</span>
+            <TrustIcon kind="cancel" />
+            <span>No minimum contract</span>
           </div>
           <div className="iwfw-trust__item">
-            <TrustIcon kind="trusted" />
-            <span>Built for local businesses</span>
+            <TrustIcon kind="transfer" />
+            <span>Website &amp; domain transfer help</span>
           </div>
+        </div>
+      </section>
+
+      <section id="catch" className="iwfw-band iwfw-band--catch">
+        <div className="iwfw-band__inner iwfw-catch">
+          <h2>So, what&apos;s the catch?</h2>
+          <p className="iwfw-band__lead">
+            Our offer can sound too good to be true. Here is exactly how it
+            works — plainly.
+          </p>
+          <div className="iwfw-catch__grid">
+            <div className="iwfw-catch__card">
+              <h3>Why there is no upfront design fee</h3>
+              <p>
+                Most website companies ask you to spend hundreds or thousands of
+                pounds before your website even goes live. We&apos;ve chosen a
+                different approach. Instead of a large design bill upfront, we
+                build your website as part of a simple{" "}
+                <strong>{PACKAGE_PRICE} monthly subscription</strong>.
+              </p>
+            </div>
+            <div className="iwfw-catch__card">
+              <h3>How we make money</h3>
+              <p>
+                Our business model is based on ongoing subscriptions, not large
+                upfront invoices. You pay {PACKAGE_PRICE}/month from the
+                beginning for the full managed package — not after the site is
+                finished, and not for a &ldquo;free&rdquo; website with surprise
+                extras.
+              </p>
+            </div>
+            <div className="iwfw-catch__card">
+              <h3>What you pay for</h3>
+              <p>
+                {PACKAGE_PRICE}/month (inclusive of VAT where applicable) covers
+                your professional website, hosting, domain registration and
+                renewals while you subscribe, one business email mailbox, Google
+                Business Profile help, and UK-based support.
+              </p>
+            </div>
+            <div className="iwfw-catch__card">
+              <h3>Why you are not locked in</h3>
+              <p>
+                There is no minimum term and no cancellation fee. We want you to
+                stay because you are happy with the service — not because you
+                are tied into a contract. If you leave, we help transfer your
+                website and domain to you.
+              </p>
+            </div>
+          </div>
+          <p className="iwfw-catch__footer">
+            Clear distinction: <strong>website design has no upfront fee</strong>
+            . The managed service is a paid subscription of{" "}
+            <strong>
+              {PACKAGE_PRICE}
+              /month
+            </strong>{" "}
+            from day one.
+          </p>
+        </div>
+      </section>
+
+      <section id="familiar" className="iwfw-band iwfw-band--muted">
+        <div className="iwfw-band__inner">
+          <h2>Sound familiar?</h2>
+          <p className="iwfw-band__lead">
+            If any of this feels like your situation, this service was built for
+            people like you.
+          </p>
+          <ul className="iwfw-pain">
+            {PAIN_POINTS.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+          <p className="iwfw-pain__solution">
+            You should be running your business — not learning hosting, chasing
+            designers or worrying about domain renewals. We handle your online
+            presence so you can get on with the work that pays.
+          </p>
+          <Link to="/get-started" className="iwfw-btn iwfw-btn--green">
+            {PRIMARY_CTA}
+          </Link>
         </div>
       </section>
 
       <section id="included" className="iwfw-band">
-        <div className="iwfw-band__inner iwfw-band__split">
-          <div className="iwfw-include-panel">
-            <h2>What&apos;s Included?</h2>
-            <ul>
-              <IncludeItem icon="globe" label="Professional business website" />
-              <IncludeItem icon="domain" label="Domain name & hosting" />
-              <IncludeItem icon="mail" label="Business email address" />
-              <IncludeItem
-                icon="shop"
-                label="Google Business Profile help"
-              />
-              <IncludeItem icon="star" label="Review reply guidance" />
-            </ul>
-          </div>
-          <div className="iwfw-price-panel">
-            <p>All for just</p>
-            <p className="iwfw-price-panel__amount">
-              £39.99 <span>/month</span>
-            </p>
-            <Link to="/get-started" className="iwfw-btn iwfw-btn--green iwfw-btn--block">
-              Get Started
+        <div className="iwfw-band__inner">
+          <h2>Everything taken care of</h2>
+          <p className="iwfw-band__lead">{OFFER_LINE}</p>
+          <ul className="iwfw-benefits">
+            {PACKAGE_BENEFITS.map((item) => (
+              <li key={item.title}>
+                <strong>{item.title}</strong>
+                <span>{item.benefit}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="iwfw-band__cta-row">
+            <div className="iwfw-price-chip">
+              <span>All for</span>
+              <strong>
+                {PACKAGE_PRICE}
+                <em>/month</em>
+              </strong>
+            </div>
+            <Link to="/get-started" className="iwfw-btn iwfw-btn--green">
+              {PRIMARY_CTA}
             </Link>
           </div>
+          <p className="iwfw-band__fine">
+            Inclusive of VAT where applicable · Billed in advance · No minimum
+            contract
+          </p>
         </div>
       </section>
 
-      <section id="examples" className="iwfw-band iwfw-band--muted">
+      <section id="how-it-works" className="iwfw-band iwfw-band--muted">
         <div className="iwfw-band__inner">
-          <h2>Some of the sites we&apos;ve built</h2>
+          <h2>How it works</h2>
           <p className="iwfw-band__lead">
-            Live examples of the kind of sites we build — preview below, or open
-            the full site.
+            Getting started is straightforward. No technical knowledge needed.
+          </p>
+          <ol className="iwfw-how">
+            <li>
+              <strong>1. Tell us about your business</strong>
+              <p>
+                Answer a short questionnaire — who you are, what you do, photos
+                if you have them, and the domain you want. No account needed
+                yet.
+              </p>
+            </li>
+            <li>
+              <strong>2. Pay {PACKAGE_PRICE}/month securely</strong>
+              <p>
+                Subscribe with Stripe (billed in advance). After payment, we
+                create your account and email a secure activation link.
+              </p>
+            </li>
+            <li>
+              <strong>3. We build and manage it</strong>
+              <p>
+                We register your domain (or work with one you already own), build
+                your site, set up business email, help with Google Business
+                Profile access, and keep hosting and renewals on track. Follow
+                progress in your dashboard.
+              </p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="examples" className="iwfw-band">
+        <div className="iwfw-band__inner">
+          <h2>Website examples</h2>
+          <p className="iwfw-band__lead">
+            Live examples of the kind of professional sites we build for local
+            businesses. Open any site to see the full experience.
           </p>
           <ul className="iwfw-examples">
             {BUILT_SITES.map((site) => (
@@ -169,98 +319,202 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="how-it-works" className="iwfw-band">
+      <section id="why-us" className="iwfw-band iwfw-band--muted">
         <div className="iwfw-band__inner">
-          <h2>How It Works</h2>
+          <h2>Why choose us?</h2>
           <p className="iwfw-band__lead">
-            Three simple steps from brief to a live business website.
+            Affordable managed online presence — not a cheap one-off website
+            with unfinished edges.
           </p>
-          <ol className="iwfw-how">
-            <li>
-              <strong>1. Tell us about your business</strong>
+          <ul className="iwfw-why">
+            {WHY_US.map((item) => (
+              <li key={item.title}>
+                <strong>{item.title}</strong>
+                <span>{item.body}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section id="who" className="iwfw-band">
+        <div className="iwfw-band__inner">
+          <h2>Who is this for?</h2>
+          <p className="iwfw-band__lead">
+            Built for busy UK small businesses that need to look professional
+            online without becoming a tech project.
+          </p>
+          <ul className="iwfw-who">
+            {WHO_FOR.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+          <p className="iwfw-band__fine">
+            For example: {WHO_FOR_EXAMPLES} If that sounds like you — or close —
+            you&apos;re in the right place.
+          </p>
+        </div>
+      </section>
+
+      <section id="pricing" className="iwfw-band iwfw-band--muted">
+        <div className="iwfw-band__inner iwfw-band__split">
+          <div className="iwfw-include-panel">
+            <h2>Transparent pricing</h2>
+            <ul>
+              {PACKAGE_BENEFITS.slice(0, 7).map((item) => (
+                <IncludeItem key={item.title} label={item.title} />
+              ))}
+            </ul>
+            <p className="iwfw-include-panel__note">
+              You do not need to buy hosting, domain renewals or a separate
+              design project for the included services while your subscription
+              is active.
+            </p>
+          </div>
+          <div className="iwfw-price-panel">
+            <p>Simple monthly subscription</p>
+            <p className="iwfw-price-panel__amount">
+              {PACKAGE_PRICE} <span>/month</span>
+            </p>
+            <p className="iwfw-price-panel__vat">
+              Inclusive of VAT where applicable · Billed in advance
+            </p>
+            <Link
+              to="/get-started"
+              className="iwfw-btn iwfw-btn--green iwfw-btn--block"
+            >
+              {PRIMARY_CTA}
+            </Link>
+            <p className="iwfw-price-panel__fine">
+              No upfront design fee · No minimum contract · Cancel anytime
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="cancel" className="iwfw-band">
+        <div className="iwfw-band__inner iwfw-cancel">
+          <h2>What if I change my mind?</h2>
+          <p className="iwfw-band__lead">
+            Buying a website should not feel like a trap. Here is what happens
+            if you cancel.
+          </p>
+          <div className="iwfw-cancel__grid">
+            <div>
+              <h3>Cancel anytime</h3>
               <p>
-                Share your details, photos and preferred domain in a short
-                questionnaire — no account needed yet.
+                There is no minimum term and no cancellation fee. Cancel from
+                your customer dashboard whenever you like. Your service continues
+                until the end of the period you have already paid for.
               </p>
-            </li>
-            <li>
-              <strong>2. Pay securely</strong>
+            </div>
+            <div>
+              <h3>Keep your website and domain</h3>
               <p>
-                Subscribe for £39.99/month with Stripe (billed in advance). We
-                email your account activation link after payment.
+                Subject to our Terms, you retain ownership of your website
+                content and domain. After cancellation we help transfer them to
+                you — handled by our team, not an automatic switch.
               </p>
-            </li>
-            <li>
-              <strong>3. We build and manage it</strong>
+            </div>
+            <div>
+              <h3>What ends after you leave</h3>
               <p>
-                We register your domain, launch your site, set up business email,
-                help with Google Business Profile access, and keep hosting and
-                renewals on track so your hard work stays online.
+                Hosting, domain renewals through us, business email on our
+                managed setup, and Google Business help end with the
+                subscription. After transfer, you arrange those services
+                independently.
               </p>
-            </li>
-          </ol>
+            </div>
+          </div>
+          <p className="iwfw-band__fine">
+            Full details are in our{" "}
+            <Link to="/terms">Terms &amp; Conditions</Link>.
+          </p>
         </div>
       </section>
 
       <section id="faqs" className="iwfw-band iwfw-band--muted">
         <div className="iwfw-band__inner iwfw-faqs">
-          <h2>FAQs</h2>
-          <details open>
-            <summary>Why is it a monthly subscription?</summary>
-            <p>
-              Building a site yourself usually means separate bills for design,
-              hosting and a domain — plus remembering renewals. Miss one and
-              your site (and the work behind it) can vanish overnight. For
-              £39.99/month we handle the website, hosting, domain care and
-              day-to-day management so you are not left holding those pieces
-              alone.
-            </p>
-          </details>
-          <details>
-            <summary>Is there a minimum contract?</summary>
-            <p>
-              No. Cancel anytime. Your service continues until the end of the
-              period you have already paid for.
-            </p>
-          </details>
-          <details>
-            <summary>What do I get for £39.99/month?</summary>
-            <p>
-              A managed business website, hosting, domain help, one business
-              email mailbox, and Google Business Profile help (Manager access
-              and posting guidance).
-            </p>
-          </details>
-          <details>
-            <summary>Do you buy the domain for me?</summary>
-            <p>
-              You choose the domain. After payment, we register and renew it for
-              you.
-            </p>
-          </details>
+          <h2>Frequently asked questions</h2>
+          {HOME_FAQS.map((faq, index) => (
+            <details key={faq.q} open={index === 0}>
+              <summary>{faq.q}</summary>
+              <p>{faq.a}</p>
+            </details>
+          ))}
         </div>
       </section>
 
       <section className="iwfw-band iwfw-band--close">
         <div className="iwfw-band__inner iwfw-close">
-          <h2>Ready for a website that works for your business?</h2>
+          <h2>Stop putting off getting your business online</h2>
           <p>
-            £39.99/month for design, hosting and renewals looked after. Cancel
+            Let&apos;s get your business online — without the big upfront bill.
+            {PACKAGE_PRICE}/month for a fully managed website package. Cancel
             anytime.
           </p>
           <div className="iwfw-close__actions">
             <Link to="/get-started" className="iwfw-btn iwfw-btn--green">
-              Get My Website Today
+              {PRIMARY_CTA}
             </Link>
-            <a className="iwfw-btn iwfw-btn--outline" href="tel:08008527267">
-              Call 0800 852 7267
+            <a className="iwfw-btn iwfw-btn--outline" href={SUPPORT_PHONE_HREF}>
+              Call {SUPPORT_PHONE_DISPLAY}
             </a>
           </div>
+          <p className="iwfw-band__fine">{CTA_REASSURANCE}</p>
         </div>
       </section>
+
+      <div className="iwfw-sticky-cta" role="region" aria-label="Get started">
+        <div className="iwfw-sticky-cta__inner">
+          <p>
+            <strong>{PACKAGE_PRICE}/month</strong>
+            <span>No upfront design fee · Cancel anytime</span>
+          </p>
+          <Link to="/get-started" className="iwfw-btn iwfw-btn--green">
+            {PRIMARY_CTA}
+          </Link>
+        </div>
+      </div>
     </main>
   );
 }
+
+const PAIN_POINTS = [
+  "Been quoted hundreds — or thousands — for a website?",
+  "Too busy running the business to build one yourself?",
+  "Not sure where to start, or put it off for months?",
+  "Worried about hidden charges or long contracts?",
+  "Relying entirely on Facebook, Instagram or WhatsApp?",
+  "Had a bad experience with a website company before?",
+] as const;
+
+const WHY_US = [
+  {
+    title: "No large upfront design fee",
+    body: "Get a professional site without writing a big cheque before anything is live.",
+  },
+  {
+    title: "One clear monthly price",
+    body: `${PACKAGE_PRICE}/month for the managed package — design, hosting, domain care and more.`,
+  },
+  {
+    title: "Fully managed for you",
+    body: "We handle the technical work so you can focus on customers and jobs.",
+  },
+  {
+    title: "UK-based support",
+    body: `Call ${SUPPORT_PHONE_DISPLAY} or email us when you need help.`,
+  },
+  {
+    title: "No minimum contract",
+    body: "Cancel anytime. Stay because the service works for you.",
+  },
+  {
+    title: "Transfer help if you leave",
+    body: "Peace of mind that your website and domain can move with you.",
+  },
+] as const;
 
 const BUILT_SITES = [
   {
@@ -322,23 +576,28 @@ function SampleSite({ variant }: { variant: "desktop" | "mobile" }) {
   );
 }
 
-function IncludeItem({
-  icon,
-  label,
-}: {
-  icon: "globe" | "domain" | "mail" | "shop" | "star";
-  label: string;
-}) {
+function IncludeItem({ label }: { label: string }) {
   return (
     <li>
       <span className="iwfw-include-panel__icon" aria-hidden="true">
-        <IncludeIcon kind={icon} />
+        <CheckMini />
       </span>
       <span>{label}</span>
       <span className="iwfw-include-panel__check" aria-hidden="true">
         ✓
       </span>
     </li>
+  );
+}
+
+function CheckMini() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M9.2 16.6L4.8 12.2l1.4-1.4 3 3 8-8 1.4 1.4-9.4 9.4z"
+      />
+    </svg>
   );
 }
 
@@ -367,25 +626,22 @@ function PhoneIcon() {
   );
 }
 
-function TrustIcon({ kind }: { kind: "support" | "setup" | "hosting" | "trusted" }) {
-  if (kind === "support") {
+function TrustIcon({
+  kind,
+}: {
+  kind: "uk" | "stripe" | "cancel" | "transfer";
+}) {
+  if (kind === "uk") {
     return (
       <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
         <path
           fill="currentColor"
-          d="M12 3a7 7 0 00-7 7v2H4a1 1 0 00-1 1v3a1 1 0 001 1h2v-7a5 5 0 0110 0v7h2a1 1 0 001-1v-3a1 1 0 00-1-1h-1v-2a7 7 0 00-7-7zm-1 14h2a3 3 0 01-2 2.83V21h2v1H9v-1h2v-1.17A3 3 0 0111 17z"
+          d="M12 2a10 10 0 100 20 10 10 0 000-20zm7.4 9h-3.1a15 15 0 00-1.2-5 8 8 0 014.3 5zM12 4c.9 0 2.3 1.9 3 5H9c.7-3.1 2.1-5 3-5zM4.6 11a8 8 0 014.3-5 15 15 0 00-1.2 5H4.6zM4.6 13h3.1a15 15 0 001.2 5 8 8 0 01-4.3-5zM12 20c-.9 0-2.3-1.9-3-5h6c-.7 3.1-2.1 5-3 5zm4.9-2a15 15 0 001.2-5h3.1a8 8 0 01-4.3 5z"
         />
       </svg>
     );
   }
-  if (kind === "setup") {
-    return (
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-        <path fill="currentColor" d="M13 3l7 9h-5l2 9-9-11h5L13 3z" />
-      </svg>
-    );
-  }
-  if (kind === "hosting") {
+  if (kind === "stripe") {
     return (
       <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
         <path
@@ -395,66 +651,21 @@ function TrustIcon({ kind }: { kind: "support" | "setup" | "hosting" | "trusted"
       </svg>
     );
   }
+  if (kind === "cancel") {
+    return (
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+        <path
+          fill="currentColor"
+          d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1 5h2v7h-2V7zm0 9h2v2h-2v-2z"
+        />
+      </svg>
+    );
+  }
   return (
     <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
       <path
         fill="currentColor"
-        d="M9 11a3 3 0 110-6 3 3 0 010 6zm6 0a3 3 0 110-6 3 3 0 010 6zM4.5 18.2c.7-2.3 2.8-3.7 4.5-3.7.7 0 1.6.2 2.4.7.8-.5 1.7-.7 2.4-.7 1.7 0 3.8 1.4 4.5 3.7.2.5-.2 1.1-.7 1.1H5.2c-.5 0-.9-.6-.7-1.1z"
-      />
-    </svg>
-  );
-}
-
-function IncludeIcon({
-  kind,
-}: {
-  kind: "globe" | "domain" | "mail" | "shop" | "star";
-}) {
-  if (kind === "globe") {
-    return (
-      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-        <path
-          fill="currentColor"
-          d="M12 2a10 10 0 100 20 10 10 0 000-20zm7.4 9h-3.1a15 15 0 00-1.2-5 8 8 0 014.3 5zM12 4c.9 0 2.3 1.9 3 5H9c.7-3.1 2.1-5 3-5zM4.6 11a8 8 0 014.3-5 15 15 0 00-1.2 5H4.6zM4.6 13h3.1a15 15 0 001.2 5 8 8 0 01-4.3-5zM12 20c-.9 0-2.3-1.9-3-5h6c-.7 3.1-2.1 5-3 5zm4.9-2a15 15 0 001.2-5h3.1a8 8 0 01-4.3 5z"
-        />
-      </svg>
-    );
-  }
-  if (kind === "domain") {
-    return (
-      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-        <path
-          fill="currentColor"
-          d="M4 5h16a1 1 0 011 1v10a1 1 0 01-1 1h-7l2 3h-6l2-3H4a1 1 0 01-1-1V6a1 1 0 011-1zm1 2v8h14V7H5z"
-        />
-      </svg>
-    );
-  }
-  if (kind === "mail") {
-    return (
-      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-        <path
-          fill="currentColor"
-          d="M3 6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6zm2 0l7 5 7-5H5zm14 2.2l-6.4 4.6a1 1 0 01-1.2 0L5 8.2V18h14V8.2z"
-        />
-      </svg>
-    );
-  }
-  if (kind === "shop") {
-    return (
-      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-        <path
-          fill="currentColor"
-          d="M4 4h16l-1.2 4.8A3 3 0 0116 12H8a3 3 0 01-2.8-3.2L4 4zm2.5 10H17v6H6.5v-6z"
-        />
-      </svg>
-    );
-  }
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M12 2l2.4 6.6H21l-5.2 4 2 6.4L12 15.8 6.2 19l2-6.4L3 8.6h6.6L12 2z"
+        d="M7 7h7v2H9v6H7V7zm10 0v10h-7v-2h5V7h2z"
       />
     </svg>
   );

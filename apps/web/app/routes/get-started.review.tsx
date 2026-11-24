@@ -16,6 +16,7 @@ import {
   PACKAGE_PRICE_LABEL,
   TERMS_VERSION,
 } from "../lib/get-started";
+import { CTA_REASSURANCE } from "../lib/marketing";
 import type { Route } from "./+types/get-started.review";
 
 export function meta(_args: Route.MetaArgs) {
@@ -129,8 +130,9 @@ export default function GetStartedReview({
         <p className="iwfw-start__kicker">Step 5 of 5 · Review &amp; pay</p>
         <h1>Review &amp; pay</h1>
         <p className="iwfw-start__lead">
-          Confirm your website order, then pay securely with Stripe. Your account
-          is created automatically after payment is confirmed.
+          You&apos;re about to start a £39.99/month managed website subscription.
+          Confirm your details, then pay securely with Stripe. Your account is
+          created after payment is confirmed.
         </p>
         <div className="iwfw-order-progress" aria-hidden>
           <span style={{ width: "100%" }} />
@@ -197,12 +199,17 @@ export default function GetStartedReview({
         </section>
 
         <section className="iwfw-start__card">
-          <h2>Cancel anytime</h2>
+          <h2>Before you pay</h2>
           <ul className="iwfw-start__policy">
-            <li>No minimum term and no cancellation penalty.</li>
+            <li>
+              <strong>£39.99/month</strong> billed in advance — no separate
+              upfront design fee.
+            </li>
+            <li>No minimum term and no cancellation fee.</li>
             <li>Access continues until the end of the current paid period.</li>
             <li>
-              If you leave later, we’ll help transfer your website and domain.
+              If you leave later, we&apos;ll help transfer your website and
+              domain. After that, you arrange hosting yourself.
             </li>
             <li>Your account is created after payment is confirmed.</li>
           </ul>
@@ -252,9 +259,10 @@ export default function GetStartedReview({
               </button>
             </div>
             <p className="iwfw-start__fine">
-              You’ll be taken to our secure payment page to complete your
-              subscription.
+              You&apos;ll be taken to Stripe&apos;s secure checkout to start your
+              £39.99/month subscription.
             </p>
+            <p className="iwfw-start__fine">{CTA_REASSURANCE}</p>
           </Form>
         </section>
       </div>

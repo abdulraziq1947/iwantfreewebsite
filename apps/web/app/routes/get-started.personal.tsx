@@ -75,7 +75,8 @@ export default function GetStartedPersonal({
         </p>
         <h1>Personal details</h1>
         <p className="iwfw-start__lead">
-          How we should reach you about this website order.
+          Just so we know how to reach you about your website. No technical
+          knowledge needed — this takes a minute.
         </p>
         <div className="iwfw-order-progress" aria-hidden>
           <span style={{ width: "20%" }} />

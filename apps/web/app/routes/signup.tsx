@@ -43,7 +43,8 @@ export default function Signup({ actionData }: Route.ComponentProps) {
     <main className="mx-auto flex max-w-md flex-col gap-6 px-4 py-16">
       <h1 className="text-3xl font-bold">Create your account</h1>
       <p className="text-[var(--iwfw-muted)]">
-        £39.99/month for design, hosting and renewals handled. Cancel anytime.
+        Prefer the guided path? Start with Get My Website — £39.99/month, no
+        upfront design fee, cancel anytime.
       </p>
       <Panel>
         <Form method="post" className="space-y-4">

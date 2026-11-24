@@ -7,13 +7,13 @@ export const PACKAGE_NAME = "Professional Business Website";
 export const TERMS_VERSION = "2026-11-23";
 
 export const PACKAGE_INCLUDES = [
-  "Professionally built business website",
-  "Domain registration and renewal (we handle it after payment)",
+  "Professionally built business website (no upfront design fee)",
+  "Domain registration and renewal while you subscribe",
   "Website hosting and maintenance",
   "One business email mailbox",
-  "Google Business Profile help (Manager access & posting guidance)",
+  "Weekly Google Business Profile posts (with Manager access)",
   "Help with Google review replies",
-  "UK-based support",
+  "UK-based support · Cancel anytime",
 ] as const;
 
 export const DOMAIN_DISCLAIMER =

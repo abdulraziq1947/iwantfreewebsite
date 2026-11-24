@@ -87,8 +87,9 @@ export default function GetStartedMedia({
         <p className="iwfw-start__kicker">Step 3 of 5 · Media &amp; logos</p>
         <h1>Media, logo &amp; photos</h1>
         <p className="iwfw-start__lead">
-          Upload your logo, business photos and project images separately. Files
-          stay private and carry over when you resume or after payment.
+          Upload what you have — logo, photos of your work, or social links. No
+          logo or photos yet? That&apos;s fine — you can continue and add them
+          later. Files stay private and carry over after payment.
         </p>
         <div className="iwfw-order-progress" aria-hidden>
           <span style={{ width: "60%" }} />
