@@ -137,8 +137,9 @@ export default function GetStartedDomain({
         <p className="iwfw-start__kicker">Step 4 of 5 · Domain</p>
         <h1>Find your web address</h1>
         <p className="iwfw-start__lead">
-          Search .co.uk, .com or .uk — or tell us a domain you already own. We’ll
-          register new domains for you after payment.
+          Choose a professional address for your business (.co.uk, .com or .uk),
+          or tell us a domain you already own. New domains are registered for you
+          after payment as part of your subscription.
         </p>
         <div className="iwfw-order-progress" aria-hidden>
           <span style={{ width: "80%" }} />

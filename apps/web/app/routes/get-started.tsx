@@ -1,7 +1,7 @@
 import { Link, redirect } from "react-router";
 import { getOptionalAuth } from "../lib/session.server";
 import { createDb } from "@iwfw/db";
-import {getEnv, getConfig} from "../lib/env.server";
+import { getEnv, getConfig } from "../lib/env.server";
 import { getCustomerWorkspace } from "../lib/customer-org.server";
 import {
   PACKAGE_INCLUDES,
@@ -9,15 +9,16 @@ import {
   PACKAGE_PRICE_LABEL,
   PACKAGE_PRICE_PERIOD,
 } from "../lib/get-started";
+import { CTA_REASSURANCE, PRIMARY_CTA } from "../lib/marketing";
 import type { Route } from "./+types/get-started";
 
 export function meta(_args: Route.MetaArgs) {
   return [
-    { title: "Get started — iwantfreewebsite.com" },
+    { title: "Get my website — iwantfreewebsite.com" },
     {
       name: "description",
       content:
-        "Professional business website for £39.99/month — design, hosting and renewals handled for you. Cancel anytime at the end of your billing period.",
+        "Start your £39.99/month managed website package. Short questionnaire, choose a domain, pay securely. No upfront design fee. Cancel anytime.",
     },
   ];
 }
@@ -51,7 +52,7 @@ export default function GetStartedPackage({ loaderData }: Route.ComponentProps) 
         <p className="iwfw-start__lead">
           {loaderData.addingSite
             ? "Start a fresh brief for another business or brand. You’ll get a separate site and subscription after payment."
-            : "Answer a short questionnaire, choose a domain, then pay securely. We create your account after payment is confirmed — no signup first."}
+            : "You run your business — we’ll handle the website. Answer a few simple questions, choose a domain, then pay securely. No technical knowledge needed. Your account is created after payment."}
         </p>
       </header>
 
@@ -61,8 +62,7 @@ export default function GetStartedPackage({ loaderData }: Route.ComponentProps) 
           <span>{PACKAGE_PRICE_PERIOD}</span>
         </p>
         <p className="iwfw-start__upfront">
-          One plan for design, hosting &amp; renewals — no juggling separate
-          bills
+          No upfront design fee · Fully managed · Cancel anytime
         </p>
         <ul className="iwfw-start__includes">
           {PACKAGE_INCLUDES.map((item) => (
@@ -71,23 +71,23 @@ export default function GetStartedPackage({ loaderData }: Route.ComponentProps) 
         </ul>
 
         <div className="iwfw-start__terms-box">
-          <h2>How ordering works</h2>
+          <h2>What happens next</h2>
           <ul>
             <li>
-              <strong>No signup before payment.</strong> Complete the website
-              questionnaire and domain selection first.
+              <strong>Short questionnaire.</strong> Tell us about your business
+              — we only ask what we need to build your site.
             </li>
             <li>
-              <strong>£39.99/month</strong> billed in advance · we look after
-              the website, hosting and domain renewals · cancel anytime.
+              <strong>£39.99/month</strong> billed in advance from checkout ·
+              design, hosting and domain renewals looked after · cancel anytime.
             </li>
             <li>
               Domains are checked live, then registered by our team after
-              payment.
+              payment (or we work with a domain you already own).
             </li>
             <li>
               After payment, we create your account and email a secure activation
-              link.
+              link so you can follow progress.
             </li>
           </ul>
         </div>
@@ -98,8 +98,9 @@ export default function GetStartedPackage({ loaderData }: Route.ComponentProps) 
         >
           {loaderData.addingSite
             ? "Continue — Add another site"
-            : "Continue — Get My Website"}
+            : `Continue — ${PRIMARY_CTA}`}
         </Link>
+        <p className="iwfw-start__fine">{CTA_REASSURANCE}</p>
         <p className="iwfw-start__fine">
           {loaderData.signedIn ? (
             <>
@@ -118,8 +119,7 @@ export default function GetStartedPackage({ loaderData }: Route.ComponentProps) 
             </>
           ) : (
             <>
-              Already paid?{" "}
-              <Link to="/login">Log in</Link>
+              Already paid? <Link to="/login">Log in</Link>
             </>
           )}
         </p>

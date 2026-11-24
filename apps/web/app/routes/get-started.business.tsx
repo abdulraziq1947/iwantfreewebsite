@@ -82,7 +82,8 @@ export default function GetStartedBusiness({
         <p className="iwfw-start__kicker">Step 2 of 5 · Business details</p>
         <h1>Business details</h1>
         <p className="iwfw-start__lead">
-          Tell us about your business, services and website preferences.
+          Tell us what you do in plain English. We use this to build a website
+          that represents your business properly.
         </p>
         <div className="iwfw-order-progress" aria-hidden>
           <span style={{ width: "40%" }} />

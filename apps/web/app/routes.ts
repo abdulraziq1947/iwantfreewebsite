@@ -13,6 +13,8 @@ export default [
     route("forgot-password", "routes/forgot-password.tsx"),
     route("reset-password", "routes/reset-password.tsx"),
     route("pricing", "routes/pricing.tsx"),
+    route("about", "routes/about.tsx"),
+    route("contact", "routes/contact.tsx"),
     route("terms", "routes/terms.tsx"),
     route("privacy", "routes/privacy.tsx"),
     layout("routes/get-started._layout.tsx", [
