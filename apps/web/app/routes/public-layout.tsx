@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation } from "react-router";
 import { getOptionalAuth } from "../lib/session.server";
 import { BrandLogo } from "../components/brand-logo";
+import { CookieSettingsButton } from "../components/cookie-consent";
 import {
   PRIMARY_CTA,
   SUPPORT_PHONE_DISPLAY,
@@ -99,6 +100,8 @@ export default function PublicLayout({ loaderData }: Route.ComponentProps) {
             <Link to="/get-started">{PRIMARY_CTA}</Link>
             <Link to="/terms">Terms</Link>
             <Link to="/privacy">Privacy</Link>
+            <Link to="/cookies">Cookies</Link>
+            <CookieSettingsButton className="iwfw-footer__text-btn" />
             {!user && (
               <Link to="/get-started/account?mode=login">Log in</Link>
             )}

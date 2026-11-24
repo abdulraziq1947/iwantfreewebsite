@@ -35,13 +35,18 @@
 - Admin domain actions fully audited.
 - Registrant PII encrypted at rest if feasible; minimize access.
 
-## Data protection (UK GDPR)
+## Data protection (UK GDPR) & PECR
 
-- Privacy Policy, Cookie Policy, DPA with processors (Stripe, Cloudflare, MXroute, DataForSEO).
-- Lawful basis: contract + legitimate interests as applicable — **solicitor review**.
-- Data subject access / deletion workflows (admin tooling Phase 8).
+- Privacy Policy (`/privacy`), Cookie Policy (`/cookies`), footer Cookie settings control.
+- PECR cookie banner: Accept all / Reject non-essential / Manage categories. Optional analytics & marketing stay off until consent (`iwfw_consent` cookie, 6 months).
+- Non-essential third-party scripts must use `hasAnalyticsConsent` / `hasMarketingConsent` / `loadScriptWhenAllowed` in `apps/web/app/lib/cookie-consent.ts` — do not load tags before opt-in.
+- Fonts are self-hosted (`@fontsource-variable/plus-jakarta-sans`) — do not reintroduce Google Fonts CDN without consent review.
+- Marketing emails: unchecked opt-in at checkout; preference editable on `/dashboard/account`.
+- Lawful basis: contract + legitimate interests + consent as set out in Privacy Policy — **solicitor review** still required before treating as final legal advice.
+- Data subject access / deletion workflows (admin tooling Phase 8); customers can email support for rights requests today.
 - Retention schedules in [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md).
-- International transfers: Cloudflare/processors SCCs as applicable.
+- International transfers: Cloudflare/processors UK IDTA / SCCs as applicable.
+- DPA with processors (Stripe, Cloudflare, MXroute, DataForSEO) — commercial paperwork outside this repo.
 
 ## Consumer & advertising
 

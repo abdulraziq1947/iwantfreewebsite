@@ -8,22 +8,13 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
+import { CookieConsentBanner } from "./components/cookie-consent";
 import "./app.css";
 import { log } from "./lib/logger";
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
   { rel: "apple-touch-icon", href: "/logo.svg" },
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
-  },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
-  },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -37,6 +28,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        <CookieConsentBanner />
         <ScrollRestoration />
         <Scripts />
       </body>
