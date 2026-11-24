@@ -1,5 +1,4 @@
 import { Form, Link, useNavigation } from "react-router";
-import { Badge } from "@iwfw/ui";
 import { createDb } from "@iwfw/db";
 import {getEnv, getConfig} from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
@@ -16,6 +15,15 @@ import {
   listNotificationsForUser,
   markAllNotificationsRead,
 } from "../lib/support.server";
+import { SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_HREF } from "../lib/marketing";
+import {
+  Alert,
+  ArrowIcon,
+  PageHead,
+  PhoneIcon,
+  StatusMark,
+  ticketTone,
+} from "../components/dash-ui";
 import type { Route } from "./+types/dashboard.support";
 
 export function meta(_args: Route.MetaArgs) {
@@ -72,46 +80,44 @@ export async function action({ request, context }: Route.ActionArgs) {
   return { error: "Unknown action." };
 }
 
-function toneForStatus(
-  status: string,
-): "success" | "warning" | "danger" | "neutral" {
-  if (status === "resolved" || status === "closed") return "success";
-  if (status === "awaiting_customer" || status === "awaiting_staff") {
-    return "warning";
-  }
-  return "neutral";
-}
-
 export default function SupportPage({
   loaderData,
   actionData,
 }: Route.ComponentProps) {
   const navigation = useNavigation();
   const busy = navigation.state !== "idle";
+  const hasUnread = loaderData.notifications.some((n) => !n.readAt);
 
   return (
-    <div className="iwfw-dash-page">
-      <header className="iwfw-dash-page__header">
-        <div>
-          <h1>Support</h1>
-          <p>
-            Open a ticket for website changes, issues, billing questions or
-            anything else — we reply in the same thread.
-          </p>
-        </div>
-      </header>
+    <div className="dash-page">
+      <PageHead
+        kicker="Account"
+        title="Support"
+        lead="Open a ticket for website changes, problems, billing questions or anything else. We reply in the same thread."
+        aside={
+          <a className="dash-call" href={SUPPORT_PHONE_HREF}>
+            <span className="dash-call__icon">
+              <PhoneIcon />
+            </span>
+            <span className="dash-call__text">
+              <small>Prefer the phone?</small>
+              <strong>{SUPPORT_PHONE_DISPLAY}</strong>
+            </span>
+          </a>
+        }
+      />
 
-      <div className="iwfw-dash-split">
-        <section className="iwfw-admin-panel">
-          <div className="iwfw-admin-panel__head">
-            <h2>New ticket</h2>
-          </div>
+      <div className="dash-split dash-split--support">
+        <section className="dash-panel" aria-labelledby="dash-new-ticket-title">
+          <h2 id="dash-new-ticket-title" className="dash-h2">
+            New ticket
+          </h2>
           {!loaderData.primaryOrgId ? (
-            <p className="iwfw-admin-empty">
-              No website account yet — finish checkout first.
+            <p className="dash-empty">
+              No website account yet. Finish checkout first.
             </p>
           ) : (
-            <Form method="post" className="iwfw-start__form">
+            <Form method="post" className="dash-form">
               <input type="hidden" name="intent" value="create" />
               <input
                 type="hidden"
@@ -151,65 +157,67 @@ export default function SupportPage({
                 />
               </label>
               {actionData && "error" in actionData && actionData.error ? (
-                <p className="iwfw-start__error" role="alert">
-                  {actionData.error}
-                </p>
+                <Alert tone="error">{actionData.error}</Alert>
               ) : null}
               {actionData &&
               "ticketId" in actionData &&
               actionData.ticketId ? (
-                <p className="iwfw-start__ok" role="status">
+                <Alert tone="ok">
                   Ticket sent.{" "}
                   <Link to={`/dashboard/support/${actionData.ticketId}`}>
                     Open it
                   </Link>
-                </p>
+                </Alert>
               ) : null}
-              <button
-                type="submit"
-                className="iwfw-btn iwfw-btn--green"
-                disabled={busy}
-              >
-                {busy ? "Sending…" : "Send ticket"}
-              </button>
+              <div>
+                <button
+                  type="submit"
+                  className="dash-btn dash-btn--go"
+                  disabled={busy}
+                >
+                  {busy ? "Sending…" : "Send ticket"}
+                </button>
+              </div>
             </Form>
           )}
-          <p className="iwfw-dash-fine" style={{ marginTop: "1rem" }}>
-            Prefer the phone?{" "}
-            <a href="tel:08008527267">0800 852 7267</a>
-          </p>
         </section>
 
-        <section className="iwfw-admin-panel">
-          <div className="iwfw-admin-panel__head">
-            <h2>Notifications</h2>
-            {loaderData.notifications.some((n) => !n.readAt) ? (
-              <Form method="post">
-                <input type="hidden" name="intent" value="mark_notifications_read" />
-                <button type="submit" className="iwfw-btn iwfw-btn--outline iwfw-admin__btn-sm">
-                  Mark all read
-                </button>
-              </Form>
-            ) : null}
+        <section className="dash-section" aria-labelledby="dash-tickets-title">
+          <div className="dash-section-head">
+            <h2 id="dash-tickets-title" className="dash-h2">
+              Your tickets
+            </h2>
           </div>
-          {loaderData.notifications.length === 0 ? (
-            <p className="iwfw-admin-empty">No notifications yet.</p>
+          {loaderData.tickets.length === 0 ? (
+            <p className="dash-empty">
+              No tickets yet. Anything you send appears here, with our replies.
+            </p>
           ) : (
-            <ul className="iwfw-admin-list">
-              {loaderData.notifications.map((n) => (
-                <li key={n.id}>
-                  <div>
-                    <strong>
-                      {!n.readAt ? (
-                        <span className="iwfw-notify-badge" style={{ marginRight: 6 }}>
-                          new
+            <ul className="dash-tickets">
+              {loaderData.tickets.map((t) => (
+                <li key={t.id}>
+                  <Link
+                    to={`/dashboard/support/${t.id}`}
+                    className={`dash-tickets__link${t.unread > 0 ? " is-unread" : ""}`}
+                  >
+                    <span className="dash-tickets__subject">
+                      {t.subject}
+                      {t.unread > 0 ? (
+                        <span className="dash-count">
+                          {t.unread}
+                          <span className="dash-sr"> unread</span>
                         </span>
                       ) : null}
-                      <Link to={n.href}>{n.title}</Link>
-                    </strong>
-                    <p>{n.body}</p>
-                  </div>
-                  <span>{formatAdminDate(n.createdAt)}</span>
+                    </span>
+                    <span className="dash-tickets__meta">
+                      <StatusMark tone={ticketTone(t.status)}>
+                        {ticketStatusLabel(t.status)}
+                      </StatusMark>
+                      <span>{ticketCategoryLabel(t.category)}</span>
+                      <span>{formatAdminDate(t.lastMessageAt)}</span>
+                    </span>
+                    <ArrowIcon />
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -217,33 +225,34 @@ export default function SupportPage({
         </section>
       </div>
 
-      <section className="iwfw-admin-panel" style={{ marginTop: "1rem" }}>
-        <div className="iwfw-admin-panel__head">
-          <h2>Your tickets</h2>
+      <section className="dash-section" aria-labelledby="dash-support-notes-title">
+        <div className="dash-section-head">
+          <h2 id="dash-support-notes-title" className="dash-h2">
+            Notifications
+          </h2>
+          {hasUnread ? (
+            <Form method="post">
+              <input type="hidden" name="intent" value="mark_notifications_read" />
+              <button type="submit" className="dash-btn dash-btn--quiet dash-btn--sm">
+                Mark all read
+              </button>
+            </Form>
+          ) : null}
         </div>
-        {loaderData.tickets.length === 0 ? (
-          <p className="iwfw-admin-empty">No tickets yet.</p>
+        {loaderData.notifications.length === 0 ? (
+          <p className="dash-empty">No notifications yet.</p>
         ) : (
-          <ul className="iwfw-ticket-list">
-            {loaderData.tickets.map((t) => (
-              <li key={t.id}>
-                <Link to={`/dashboard/support/${t.id}`}>
-                  <div>
-                    <strong>
-                      {t.subject}
-                      {t.unread > 0 ? (
-                        <span className="iwfw-notify-badge">{t.unread}</span>
-                      ) : null}
-                    </strong>
-                    <p>
-                      {ticketCategoryLabel(t.category)} ·{" "}
-                      <Badge tone={toneForStatus(t.status)}>
-                        {ticketStatusLabel(t.status)}
-                      </Badge>{" "}
-                      · {formatAdminDate(t.lastMessageAt)}
-                    </p>
-                  </div>
-                </Link>
+          <ul className="dash-feed">
+            {loaderData.notifications.map((n) => (
+              <li key={n.id} className={n.readAt ? undefined : "is-unread"}>
+                <div className="dash-feed__body">
+                  <p className="dash-feed__title">
+                    {!n.readAt ? <span className="dash-sr">New: </span> : null}
+                    <Link to={n.href}>{n.title}</Link>
+                  </p>
+                  <p>{n.body}</p>
+                </div>
+                <p className="dash-feed__when">{formatAdminDate(n.createdAt)}</p>
               </li>
             ))}
           </ul>
