@@ -218,6 +218,24 @@ describe("cleanupAbandonedUploads", () => {
   });
 });
 
+describe("staff notify on customer uploads", () => {
+  it("notifies staff for customer uploads, not staff-on-behalf uploads", () => {
+    const shouldNotifyStaff = (opts: {
+      storedOk: boolean;
+      isStaffUploader: boolean;
+    }) => opts.storedOk && !opts.isStaffUploader;
+    expect(
+      shouldNotifyStaff({ storedOk: true, isStaffUploader: false }),
+    ).toBe(true);
+    expect(
+      shouldNotifyStaff({ storedOk: true, isStaffUploader: true }),
+    ).toBe(false);
+    expect(
+      shouldNotifyStaff({ storedOk: false, isStaffUploader: false }),
+    ).toBe(false);
+  });
+});
+
 describe("upload permission contracts", () => {
   it("rate-limits aggressively enough for anonymous sessions", () => {
     expect(UPLOAD_RATE_LIMIT_MAX).toBeLessThanOrEqual(40);

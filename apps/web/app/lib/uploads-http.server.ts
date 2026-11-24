@@ -18,6 +18,7 @@ import {
   UPLOAD_SESSION_TTL_MS,
   isUploadCategory,
 } from "./uploads.server";
+import { categoryLabel } from "./image-sniff";
 
 function json(data: unknown, init?: ResponseInit) {
   return Response.json(data, init);
@@ -166,6 +167,21 @@ export async function handleUploadsApiRequest(
     if (!stored.ok) {
       return json({ error: stored.error }, { status: stored.status });
     }
+    try {
+      const { notifyStaffMediaUploaded } = await import(
+        "./notifications.server"
+      );
+      await notifyStaffMediaUploaded(db, {
+        organisationId: auth.organisationId,
+        pendingOrderId: auth.pendingOrderId,
+        categoryLabel: categoryLabel(categoryRaw),
+        filename: file.name || "upload",
+      });
+    } catch (error) {
+      log("warn", "uploads_staff_notify_failed", {
+        error: error instanceof Error ? error.message : "unknown",
+      });
+    }
     return json({
       ok: true,
       upload: {
@@ -244,6 +260,22 @@ export async function handleUploadsApiRequest(
       });
       if (!stored.ok) {
         return json({ error: stored.error }, { status: stored.status });
+      }
+      if (auth.staffRoles.length === 0) {
+        try {
+          const { notifyStaffMediaUploaded } = await import(
+            "./notifications.server"
+          );
+          await notifyStaffMediaUploaded(db, {
+            organisationId,
+            categoryLabel: categoryLabel(categoryRaw),
+            filename: file.name || "upload",
+          });
+        } catch (error) {
+          log("warn", "uploads_staff_notify_failed", {
+            error: error instanceof Error ? error.message : "unknown",
+          });
+        }
       }
       return json({
         ok: true,

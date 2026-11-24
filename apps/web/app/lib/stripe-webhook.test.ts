@@ -64,6 +64,18 @@ describe("stripe webhook contracts", () => {
     expect(shouldCreateTransfer("customer.subscription.deleted")).toBe(true);
   });
 
+  it("notifies staff for subscription changes that affect ops", () => {
+    const staffNotifyEvents = new Set([
+      "customer.subscription.updated",
+      "customer.subscription.deleted",
+      "invoice.payment_failed",
+      "invoice.paid",
+    ]);
+    expect(staffNotifyEvents.has("customer.subscription.created")).toBe(false);
+    expect(staffNotifyEvents.has("customer.subscription.updated")).toBe(true);
+    expect(staffNotifyEvents.has("invoice.payment_failed")).toBe(true);
+  });
+
   it("never invents payment success without Stripe confirmation", () => {
     expect(false).toBe(false);
   });

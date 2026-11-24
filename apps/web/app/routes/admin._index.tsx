@@ -84,7 +84,7 @@ export default function AdminHome({ loaderData }: Route.ComponentProps) {
       to: "/admin/notifications",
       count: shell?.notifyUnread ?? 0,
       name: "Unread notifications",
-      detail: "Prospects, customers, support and GMB updates",
+      detail: "Uploads, billing, mailbox, support and GMB updates",
     },
   ];
   const waiting = queues.filter((q) => q.count > 0).length;
