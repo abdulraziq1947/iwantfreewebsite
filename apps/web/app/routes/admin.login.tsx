@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import {
   Form,
   Link,
   redirect,
+  useNavigate,
   useNavigation,
   useSearchParams,
 } from "react-router";
@@ -9,6 +11,7 @@ import { createAuth } from "@iwfw/auth";
 import { createDb, eq, platformRoles } from "@iwfw/db";
 import { BrandLogo } from "../components/brand-logo";
 import {
+  dataWithAuthCookies,
   readAuthJson,
   redirectWithAuthCookies,
 } from "../lib/auth-response.server";
@@ -145,9 +148,10 @@ export async function action({ request, context }: Route.ActionArgs) {
       twoFactorRedirect?: boolean;
     }>(result);
 
-    // MFA enrolled: password is correct; challenge continues with cookie.
+    // MFA enrolled: password is correct; keep the same route so the form
+    // swaps to the code step immediately (same-route 302 left a stale UI).
     if (payload?.twoFactorRedirect) {
-      return redirectWithAuthCookies(result, "/admin/login?step=mfa");
+      return dataWithAuthCookies(result, { step: "mfa" as const });
     }
 
     const userId = payload?.user?.id;
@@ -207,6 +211,7 @@ export default function AdminLogin({
   actionData,
 }: Route.ComponentProps) {
   const navigation = useNavigation();
+  const navigate = useNavigate();
   const busy = navigation.state !== "idle";
   const [params] = useSearchParams();
   const step =
@@ -215,6 +220,13 @@ export default function AdminLogin({
       : loaderData.step === "mfa" || params.get("step") === "mfa"
         ? "mfa"
         : "password";
+
+  // Keep ?step=mfa in the URL so a refresh still shows the code form.
+  useEffect(() => {
+    if (step === "mfa" && params.get("step") !== "mfa") {
+      navigate("/admin/login?step=mfa", { replace: true });
+    }
+  }, [navigate, params, step]);
 
   return (
     <main className="iwfw-admin-login">
@@ -247,7 +259,7 @@ export default function AdminLogin({
                 autoFocus
               />
             </label>
-            {actionData?.error ? (
+            {actionData && "error" in actionData && actionData.error ? (
               <p className="iwfw-admin-login__error" role="alert">
                 {actionData.error}
               </p>
@@ -299,7 +311,7 @@ export default function AdminLogin({
                   autoComplete="current-password"
                 />
               </label>
-              {actionData?.error ? (
+              {actionData && "error" in actionData && actionData.error ? (
                 <p className="iwfw-admin-login__error" role="alert">
                   {actionData.error}
                 </p>
