@@ -3,6 +3,7 @@ import { createDb } from "@iwfw/db";
 import { requireStaffSession } from "../lib/session.server";
 import { getEnv } from "../lib/env.server";
 import { ADMIN_NAV } from "../lib/admin-ops";
+import { TEAM_MANAGER_ROLES } from "../lib/admin-team.server";
 import { BrandLogo } from "../components/brand-logo";
 import { NotificationBell } from "../components/notification-bell";
 import { countOpenStaffTickets } from "../lib/support.server";
@@ -16,9 +17,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     countOpenStaffTickets(db),
     getNotificationsFeed(db, auth.userId, 12),
   ]);
+  const canManageTeam = auth.staffRoles.some((role) =>
+    TEAM_MANAGER_ROLES.includes(role),
+  );
   return {
     user: { name: auth.name, email: auth.email },
     roles: auth.staffRoles,
+    canManageTeam,
     openTickets,
     notifyUnread: feed.unread,
     notifications: feed.items,
@@ -33,6 +38,9 @@ export function headers() {
 
 export default function AdminLayout({ loaderData }: Route.ComponentProps) {
   const { pathname } = useLocation();
+  const nav = ADMIN_NAV.filter(
+    (item) => item.to !== "/admin/team" || loaderData.canManageTeam,
+  );
 
   return (
     <div className="iwfw-admin">
@@ -62,6 +70,7 @@ export default function AdminLayout({ loaderData }: Route.ComponentProps) {
               Customer view
             </Link>
             <Form method="post" action="/logout">
+              <input type="hidden" name="redirectTo" value="/admin/login" />
               <button type="submit" className="iwfw-btn iwfw-btn--outline iwfw-admin__btn">
                 Log out
               </button>
@@ -72,7 +81,7 @@ export default function AdminLayout({ loaderData }: Route.ComponentProps) {
 
       <div className="iwfw-admin__shell">
         <aside className="iwfw-admin__nav" aria-label="Admin">
-          {ADMIN_NAV.map((item) => (
+          {nav.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -96,7 +105,7 @@ export default function AdminLayout({ loaderData }: Route.ComponentProps) {
         </aside>
 
         <div className="iwfw-admin__mobile-nav" aria-label="Admin sections">
-          {ADMIN_NAV.map((item) => {
+          {nav.map((item) => {
             const active =
               item.to === "/admin"
                 ? pathname === "/admin"

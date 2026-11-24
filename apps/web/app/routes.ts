@@ -29,6 +29,7 @@ export default [
     ]),
   ]),
   route("logout", "routes/logout.tsx"),
+  route("admin/login", "routes/admin.login.tsx"),
   layout("routes/customer-layout.tsx", [
     route("dashboard", "routes/dashboard.tsx"),
     route("dashboard/onboarding", "routes/dashboard.onboarding.tsx"),
@@ -70,5 +71,6 @@ export default [
     route("admin/notifications", "routes/admin.notifications.tsx"),
     route("admin/notifications/feed", "routes/admin.notifications.feed.ts"),
     route("admin/media", "routes/admin.media.tsx"),
+    route("admin/team", "routes/admin.team.tsx"),
   ]),
 ] satisfies RouteConfig;

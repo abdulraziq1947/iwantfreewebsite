@@ -254,6 +254,12 @@ export default function GetStartedAccount({
 
       <p className="iwfw-start__fine">
         <Link to="/get-started">← Back to package</Link>
+        {mode === "login" ? (
+          <>
+            {" · "}
+            Staff? <Link to="/admin/login">Operations sign in</Link>
+          </>
+        ) : null}
       </p>
     </div>
   );

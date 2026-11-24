@@ -89,7 +89,7 @@ Vars: `APP_URL`, `APP_ENV`, `STRIPE_PRICE_ID`, optional `STRIPE_ALLOW_LIVE`, `GO
 
 - Email/password via Better Auth (`/api/auth/*`)
 - Customer memberships → `/dashboard` (org-scoped)
-- Staff `platform_roles` → `/admin` (MFA required)
+- Staff sign in at `/admin/login` → `/admin` (MFA required); Team page lets owners/admins add staff or customers
 - Password reset: `/forgot-password` + `/reset-password`
 - Feature flag `rank_tracking_checkout_enabled` defaults **false**
 

@@ -40,7 +40,7 @@ export async function requireStaffSession(
   if (!ctx) {
     throw new Response(null, {
       status: 302,
-      headers: { Location: "/get-started/account?mode=login" },
+      headers: { Location: "/admin/login" },
     });
   }
   // Customers never see the admin panel — send them to their dashboard.
