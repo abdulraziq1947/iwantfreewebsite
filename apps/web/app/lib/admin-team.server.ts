@@ -1,12 +1,4 @@
-import {
-  hashPassword,
-  requireStaff,
-  type AuthContext,
-} from "@iwfw/auth";
-import {
-  platformRoles as platformRoleValues,
-  type PlatformRole,
-} from "@iwfw/config";
+import { hashPassword, requireStaff, type AuthContext } from "@iwfw/auth";
 import {
   account,
   createDb,
@@ -17,41 +9,22 @@ import {
   platformRoles,
   user,
 } from "@iwfw/db";
+import type { PlatformRole } from "@iwfw/config";
 import { newId } from "./ids";
 import { writeAuditLog } from "./audit-log.server";
+import { isAssignableRole, TEAM_MANAGER_ROLES } from "./admin-team";
+
+export {
+  assignableRolesFor,
+  isAssignableRole,
+  PLATFORM_ROLE_LABELS,
+  TEAM_MANAGER_ROLES,
+} from "./admin-team";
 
 type Db = ReturnType<typeof createDb>;
 
-export const TEAM_MANAGER_ROLES: PlatformRole[] = [
-  "platform_owner",
-  "administrator",
-];
-
-export const PLATFORM_ROLE_LABELS: Record<PlatformRole, string> = {
-  platform_owner: "Platform owner",
-  administrator: "Administrator",
-  website_developer: "Website developer",
-  gbp_manager: "GBP manager",
-  support_agent: "Support agent",
-};
-
 export function assertCanManageTeam(auth: AuthContext): void {
   requireStaff(auth, TEAM_MANAGER_ROLES);
-}
-
-export function assignableRolesFor(actor: AuthContext): PlatformRole[] {
-  if (actor.staffRoles.includes("platform_owner")) {
-    return [...platformRoleValues];
-  }
-  // Administrators may create ops roles but not elevate to platform_owner.
-  return platformRoleValues.filter((role) => role !== "platform_owner");
-}
-
-export function isAssignableRole(
-  actor: AuthContext,
-  role: string,
-): role is PlatformRole {
-  return assignableRolesFor(actor).includes(role as PlatformRole);
 }
 
 export type StaffMemberRow = {
@@ -203,7 +176,8 @@ export async function grantStaffRoleToExistingUser(
   if (!existing) {
     return {
       ok: false,
-      error: "No account found for that email. Create a new staff account instead.",
+      error:
+        "No account found for that email. Create a new staff account instead.",
     };
   }
 
