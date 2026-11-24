@@ -18,11 +18,9 @@ import {
 import { getConfig, getEnv } from "../lib/env.server";
 import { newId } from "../lib/ids";
 import { log } from "../lib/logger";
-import {
-  getOptionalAuth,
-  homePathForAuth,
-} from "../lib/session.server";
+import { getOptionalAuth, homePathForAuth } from "../lib/session.server";
 import type { Route } from "./+types/admin.login";
+import "../admin.css";
 
 export function meta(_args: Route.MetaArgs) {
   return [{ title: "Staff sign in — iwantfreewebsite" }];
@@ -115,8 +113,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       const userId = payload?.user?.id;
       if (!userId) {
         return {
-          error:
-            "Unable to complete MFA sign-in. Start again from email/password.",
+          error: "Unable to complete MFA sign-in. Start again from email/password.",
           step: "password" as const,
         };
       }
@@ -132,7 +129,9 @@ export async function action({ request, context }: Route.ActionArgs) {
       return next;
     }
 
-    const email = String(form.get("email") ?? "").trim().toLowerCase();
+    const email = String(form.get("email") ?? "")
+      .trim()
+      .toLowerCase();
     const password = String(form.get("password") ?? "");
     const result = await authApi.api.signInEmail({
       body: { email, password },
@@ -206,10 +205,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   }
 }
 
-export default function AdminLogin({
-  loaderData,
-  actionData,
-}: Route.ComponentProps) {
+export default function AdminLogin({ loaderData, actionData }: Route.ComponentProps) {
   const navigation = useNavigation();
   const navigate = useNavigate();
   const busy = navigation.state !== "idle";
@@ -229,29 +225,25 @@ export default function AdminLogin({
   }, [navigate, params, step]);
 
   return (
-    <main className="iwfw-admin-login">
-      <div className="iwfw-admin-login__card">
-        <p className="iwfw-admin-login__eyebrow">Operations · staff only</p>
-        <Link
-          to="/admin/login"
-          className="iwfw-admin-login__brand"
-          aria-label="Staff sign in"
-        >
+    <main className="adm-login">
+      <div className="adm-login__card">
+        <p className="adm-login__kicker">Operations · staff only</p>
+        <Link to="/admin/login" className="adm-login__brand" aria-label="Staff sign in">
           <BrandLogo size={32} withWordmark variant="admin" />
         </Link>
         <h1>{step === "mfa" ? "Authenticator code" : "Staff sign in"}</h1>
-        <p className="iwfw-admin-login__lead">
+        <p className="adm-login__lead">
           {step === "mfa"
             ? "Enter the 6-digit code from your authenticator app, or a one-time backup code."
             : "Sign in to the operations console. Customer accounts use a different log in page."}
         </p>
 
         {step === "mfa" ? (
-          <Form method="post" className="iwfw-admin-login__form">
-            <label className="iwfw-field">
+          <Form method="post" className="adm-login__form">
+            <label className="adm-field">
               <span>Authentication code</span>
               <input
-                className="iwfw-control"
+                className="adm-input"
                 name="code"
                 inputMode="numeric"
                 autoComplete="one-time-code"
@@ -260,7 +252,7 @@ export default function AdminLogin({
               />
             </label>
             {actionData && "error" in actionData && actionData.error ? (
-              <p className="iwfw-admin-login__error" role="alert">
+              <p className="adm-alert adm-alert--error" role="alert">
                 {actionData.error}
               </p>
             ) : null}
@@ -268,7 +260,7 @@ export default function AdminLogin({
               type="submit"
               name="intent"
               value="verify_totp"
-              className="iwfw-btn iwfw-btn--primary"
+              className="adm-btn adm-btn--ink"
               disabled={busy}
             >
               {busy ? "Verifying…" : "Verify and continue"}
@@ -277,33 +269,33 @@ export default function AdminLogin({
               type="submit"
               name="intent"
               value="verify_backup"
-              className="iwfw-btn iwfw-btn--outline"
+              className="adm-btn"
               disabled={busy}
             >
               Use backup code
             </button>
-            <p className="iwfw-admin-login__fine">
+            <p className="adm-login__fine">
               <Link to="/admin/login">← Back to email and password</Link>
             </p>
           </Form>
         ) : (
           <>
-            <Form method="post" className="iwfw-admin-login__form">
+            <Form method="post" className="adm-login__form">
               <input type="hidden" name="intent" value="password" />
-              <label className="iwfw-field">
+              <label className="adm-field">
                 <span>Email</span>
                 <input
-                  className="iwfw-control"
+                  className="adm-input"
                   name="email"
                   type="email"
                   required
                   autoComplete="username"
                 />
               </label>
-              <label className="iwfw-field">
+              <label className="adm-field">
                 <span>Password</span>
                 <input
-                  className="iwfw-control"
+                  className="adm-input"
                   name="password"
                   type="password"
                   required
@@ -312,20 +304,16 @@ export default function AdminLogin({
                 />
               </label>
               {actionData && "error" in actionData && actionData.error ? (
-                <p className="iwfw-admin-login__error" role="alert">
+                <p className="adm-alert adm-alert--error" role="alert">
                   {actionData.error}
                 </p>
               ) : null}
-              <button
-                type="submit"
-                className="iwfw-btn iwfw-btn--primary"
-                disabled={busy}
-              >
+              <button type="submit" className="adm-btn adm-btn--ink" disabled={busy}>
                 {busy ? "Signing in…" : "Sign in to admin"}
               </button>
             </Form>
 
-            <p className="iwfw-admin-login__fine">
+            <p className="adm-login__fine">
               <Link to="/forgot-password">Forgot password?</Link>
               {" · "}
               <Link to="/get-started/account?mode=login">Customer log in</Link>

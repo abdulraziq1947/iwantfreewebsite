@@ -1,5 +1,4 @@
 import { data } from "react-router";
-import { Panel } from "@iwfw/ui";
 import { MediaUploader } from "../components/media-uploader";
 import { requireAuth } from "../lib/session.server";
 import { loadCustomerWorkspace } from "../lib/customer-workspace.server";
@@ -7,6 +6,7 @@ import {
   NewWebsiteButton,
   WebsiteSwitcher,
 } from "../components/website-switcher";
+import { PageHead } from "../components/dash-ui";
 import type { Route } from "./+types/dashboard.media";
 
 export function meta(_args: Route.MetaArgs) {
@@ -36,17 +36,19 @@ export default function DashboardMediaPage({
   const { organisationId, tradingName, orgs } = loaderData;
 
   return (
-    <div className="iwfw-dash-page">
-      <header className="iwfw-dash-page__header">
-        <div>
-          <h1>Images</h1>
-          <p>
-            Upload logos and photos for the selected website. Our build team
-            only uses files linked to that site.
-          </p>
-        </div>
-        {orgs.length > 0 ? <NewWebsiteButton /> : null}
-      </header>
+    <div className="dash-page">
+      <PageHead
+        kicker={tradingName ?? "Your website"}
+        title="Images"
+        lead="Upload logos and photos for the selected website. Our build team only uses files linked to that site."
+        aside={
+          orgs.length > 0 ? (
+            <NewWebsiteButton className="dash-btn dash-btn--line dash-btn--sm">
+              New website
+            </NewWebsiteButton>
+          ) : null
+        }
+      />
 
       <WebsiteSwitcher
         orgs={orgs}
@@ -55,15 +57,17 @@ export default function DashboardMediaPage({
       />
 
       {!organisationId ? (
-        <Panel>
-          <h2>No business yet</h2>
-          <p className="iwfw-dash-copy">
+        <section className="dash-empty-state" aria-labelledby="dash-media-empty">
+          <h2 id="dash-media-empty" className="dash-h2">
+            No business yet
+          </h2>
+          <p className="dash-copy">
             Finish checkout and account activation first. Images you uploaded
             during Get Started are linked automatically after payment.
           </p>
-        </Panel>
+        </section>
       ) : (
-        <Panel key={organisationId}>
+        <div className="dash-media" key={organisationId}>
           <MediaUploader
             mode="organisation"
             organisationId={organisationId}
@@ -74,7 +78,7 @@ export default function DashboardMediaPage({
             }
             description="Add or replace logos, business photos, team shots and portfolio images for this website only. Files are private and served only through authorised links."
           />
-        </Panel>
+        </div>
       )}
     </div>
   );

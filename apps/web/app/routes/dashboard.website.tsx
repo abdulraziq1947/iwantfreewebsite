@@ -1,11 +1,9 @@
 import { data, Link } from "react-router";
-import { Badge } from "@iwfw/ui";
 import { goLiveSlaLabel } from "@iwfw/config";
 import { getConfig } from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
 import { loadCustomerWorkspace } from "../lib/customer-workspace.server";
 import { withActiveOrg } from "../lib/active-org";
-import { orgStatusLabel, orgStatusTone } from "../lib/customer-dashboard";
 import {
   buildStatusBanner,
   liveWebsiteUrl,
@@ -17,6 +15,14 @@ import {
   NewWebsiteButton,
   WebsiteSwitcher,
 } from "../components/website-switcher";
+import {
+  ArrowIcon,
+  ExternalIcon,
+  PageHead,
+  StatusMark,
+  WebsiteList,
+  websiteStageTone,
+} from "../components/dash-ui";
 import type { Route } from "./+types/dashboard.website";
 
 export function meta(_args: Route.MetaArgs) {
@@ -59,28 +65,34 @@ export default function WebsitePage({ loaderData }: Route.ComponentProps) {
   const isLive = workspace.domainTask?.status === "connected";
   const liveUrl = liveWebsiteUrl(workspace.domainTask);
   const previewUrl = previewWebsiteUrl(workspace.domainTask);
+  const shownUrl = liveUrl ?? previewUrl;
+  const stageTone = websiteStageTone({
+    needsSubscription: workspace.needsSubscription,
+    briefReady: workspace.briefReady,
+    domainStatus: workspace.domainTask?.status,
+  });
 
   return (
-    <div className="iwfw-dash-page iwfw-dash-home">
-      <header className="iwfw-dash-home__hero">
-        <div className="iwfw-dash-home__hero-copy">
-          <p className="iwfw-dash-home__eyebrow">Website</p>
-          <h1>Your website</h1>
-          <p className="iwfw-dash-home__lead">
-            {isLive
-              ? "Your site is live. Open the link below anytime."
-              : previewUrl
-                ? "Your preview is ready — review it and tell us any changes before we publish."
-                : "Preview and live links appear here. Domain and launch stay with our team."}
-          </p>
-        </div>
-        <div className="iwfw-dash-home__hero-side">
-          <span className="iwfw-dash-home__pill">{stage}</span>
-          <NewWebsiteButton className="iwfw-btn iwfw-btn--green">
-            New website
-          </NewWebsiteButton>
-        </div>
-      </header>
+    <div className="dash-page">
+      <PageHead
+        kicker={workspace.primary?.tradingName ?? "Website"}
+        title="Your website"
+        lead={
+          isLive
+            ? "Your site is live. Open the link below whenever you need it."
+            : previewUrl
+              ? "Your preview is ready. Have a look and tell us any changes before we publish."
+              : "Preview and live links appear here. Domain and launch stay with our team."
+        }
+        aside={
+          <>
+            <StatusMark tone={stageTone}>{stage}</StatusMark>
+            <NewWebsiteButton className="dash-btn dash-btn--line dash-btn--sm">
+              New website
+            </NewWebsiteButton>
+          </>
+        }
+      />
 
       <WebsiteSwitcher
         orgs={workspace.orgs}
@@ -89,123 +101,103 @@ export default function WebsitePage({ loaderData }: Route.ComponentProps) {
       />
 
       <section
-        className={`iwfw-dash-status ${paidAndReady ? "is-ready" : ""} ${isLive ? "is-live" : ""}`}
-        aria-label="Current status"
+        className={`dash-browser${isLive ? " is-live" : ""}${paidAndReady ? " is-ready" : ""}`}
+        aria-labelledby="dash-browser-title"
       >
-        <div className="iwfw-dash-status__copy">
-          <p className="iwfw-dash-status__kicker">{banner.kicker}</p>
-          <h2>{banner.title}</h2>
-          <p>{banner.body}</p>
+        <div className="dash-browser__bar">
+          <span className="dash-browser__dots" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+          </span>
+          <p className="dash-browser__address">
+            <span className="dash-sr">
+              {liveUrl ? "Live address: " : previewUrl ? "Preview address: " : ""}
+            </span>
+            {shownUrl ? (
+              <a href={shownUrl} target="_blank" rel="noreferrer">
+                {shownUrl}
+              </a>
+            ) : (
+              <span className="dash-browser__placeholder">
+                Your web address will appear here
+              </span>
+            )}
+          </p>
           {liveUrl ? (
-            <p className="iwfw-dash-status__live-url">
-              <a href={liveUrl} target="_blank" rel="noreferrer">
-                {liveUrl}
-              </a>
-            </p>
+            <span className="dash-browser__tag is-live">Live</span>
           ) : previewUrl ? (
-            <p className="iwfw-dash-status__live-url">
-              <a href={previewUrl} target="_blank" rel="noreferrer">
-                {previewUrl}
-              </a>
-            </p>
-          ) : null}
-          {!isLive && paidAndReady && !previewUrl ? (
-            <p className="iwfw-dash-fine">
-              Typical go-live: about {goLiveSla} after we have everything we
-              need. This is a usual timeframe, not a guaranteed deadline.
-            </p>
+            <span className="dash-browser__tag">Preview</span>
           ) : null}
         </div>
-        <div className="iwfw-dash-status__actions">
-          {liveUrl ? (
-            <a
-              href={liveUrl}
-              className="iwfw-btn iwfw-btn--green"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Visit live site
-            </a>
-          ) : previewUrl ? (
-            <a
-              href={previewUrl}
-              className="iwfw-btn iwfw-btn--green"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Open preview
-            </a>
-          ) : showGbp ? (
-            <Link
-              to={withActiveOrg("/dashboard/google-business", activeId)}
-              className="iwfw-btn iwfw-btn--green"
-            >
-              Give Manager access
-            </Link>
-          ) : (
-            <Link
-              to={withActiveOrg("/dashboard", activeId)}
-              className="iwfw-btn iwfw-btn--outline"
-            >
-              Back to overview
-            </Link>
-          )}
+
+        <div className="dash-browser__body">
+          <div className="dash-browser__copy">
+            <p className="dash-kicker dash-kicker--plain">{banner.kicker}</p>
+            <h2 id="dash-browser-title" className="dash-h2 dash-h2--lg">
+              {banner.title}
+            </h2>
+            <p className="dash-copy">{banner.body}</p>
+            {!isLive && paidAndReady && !previewUrl ? (
+              <p className="dash-fine">
+                Typical go-live: about {goLiveSla} after we have everything we
+                need. This is a usual timeframe, not a guaranteed deadline.
+              </p>
+            ) : null}
+          </div>
+          <div className="dash-browser__cta">
+            {liveUrl ? (
+              <a
+                href={liveUrl}
+                className="dash-btn dash-btn--go"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Visit live site
+                <ExternalIcon />
+              </a>
+            ) : previewUrl ? (
+              <a
+                href={previewUrl}
+                className="dash-btn dash-btn--go"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open preview
+                <ExternalIcon />
+              </a>
+            ) : showGbp ? (
+              <Link
+                to={withActiveOrg("/dashboard/google-business", activeId)}
+                className="dash-btn dash-btn--go"
+              >
+                Give Manager access
+                <ArrowIcon />
+              </Link>
+            ) : (
+              <Link
+                to={withActiveOrg("/dashboard", activeId)}
+                className="dash-btn dash-btn--line"
+              >
+                Back to overview
+              </Link>
+            )}
+          </div>
         </div>
       </section>
 
-      <section className="iwfw-dash-panel iwfw-dash-sites">
-        <div className="iwfw-dash-panel-head">
-          <div>
-            <h2>Your websites</h2>
-            <p className="iwfw-dash-sites__intro">
-              Each paid order is a separate website. Select one above, or start
-              another.
-            </p>
-          </div>
-          <NewWebsiteButton />
-        </div>
-        <ul className="iwfw-dash-orgs">
-          {workspace.orgs.map((org) => {
-            const initial =
-              org.tradingName.trim().charAt(0).toUpperCase() || "W";
-            const selected = org.id === activeId;
-            return (
-              <li key={org.id} className={selected ? "is-selected" : undefined}>
-                <div className="iwfw-dash-orgs__body">
-                  <span className="iwfw-dash-orgs__mark" aria-hidden>
-                    {initial}
-                  </span>
-                  <div>
-                    <p className="iwfw-dash-orgs__name">{org.tradingName}</p>
-                    <p className="iwfw-dash-orgs__meta">
-                      {org.domainName ? `${org.domainName} · ` : ""}
-                      {selected ? "Selected" : "Switch to manage"}
-                    </p>
-                  </div>
-                </div>
-                <div className="iwfw-dash-orgs__actions">
-                  <Badge tone={orgStatusTone(org.status)}>
-                    {orgStatusLabel(org.status)}
-                  </Badge>
-                  {!selected ? (
-                    <Link
-                      to={withActiveOrg("/dashboard/website", org.id)}
-                      className="iwfw-btn iwfw-btn--outline iwfw-btn--sm"
-                    >
-                      Select
-                    </Link>
-                  ) : null}
-                </div>
-              </li>
-            );
-          })}
-          {workspace.orgs.length === 0 ? (
-            <li className="iwfw-dash-orgs__empty">
-              No website yet. Start the package to create your first one.
-            </li>
-          ) : null}
-        </ul>
-      </section>
+      <WebsiteList
+        orgs={workspace.orgs}
+        activeId={activeId}
+        intro="Each paid order is a separate website. Select one here, or start another."
+        selectHref={(orgId) => withActiveOrg("/dashboard/website", orgId)}
+        unselectedHint="Switch to manage"
+        action={
+          <NewWebsiteButton className="dash-btn dash-btn--line dash-btn--sm">
+            New website
+          </NewWebsiteButton>
+        }
+      />
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import { Form, Link, redirect, useNavigation } from "react-router";
-import { Button, Input, Panel } from "@iwfw/ui";
 import { createAuth } from "@iwfw/auth";
 import { createDb, eq, platformRoles } from "@iwfw/db";
 import { getConfig, getEnv } from "../lib/env.server";
@@ -13,7 +12,10 @@ import {
 } from "../lib/auth-response.server";
 import { newId } from "../lib/ids";
 import { log } from "../lib/logger";
+import { FormAlert, StepHeader } from "../components/start-funnel";
+import { QuestionnaireField } from "../components/questionnaire-field";
 import type { Route } from "./+types/login";
+import "../start.css";
 
 export function meta(_args: Route.MetaArgs) {
   return [{ title: "Log in — iwantfreewebsite" }];
@@ -100,48 +102,50 @@ export default function Login({ actionData }: Route.ComponentProps) {
   const busy = navigation.state !== "idle";
 
   return (
-    <main className="mx-auto flex max-w-md flex-col gap-6 px-4 py-16">
-      <h1 className="text-3xl font-bold">Log in</h1>
-      <Panel>
-        <Form method="post" className="space-y-4">
-          <label className="block text-sm font-semibold">
-            Email
-            <Input
-              className="mt-1"
-              name="email"
-              type="email"
-              required
-              autoComplete="email"
-            />
-          </label>
-          <label className="block text-sm font-semibold">
-            Password
-            <Input
-              className="mt-1"
-              name="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              minLength={10}
-            />
-          </label>
-          {actionData?.error && (
-            <p className="text-sm text-[var(--iwfw-danger)]">{actionData.error}</p>
-          )}
-          <Button type="submit" disabled={busy} className="w-full">
+    <main className="st-auth">
+      <div className="st-wrap">
+        <StepHeader
+          kicker="Account"
+          title="Log in"
+          lead="Prefer the guided path? Start from Get started — this page is kept for bookmarks."
+        />
+        <Form method="post" className="st-sheet st-form">
+          <QuestionnaireField
+            label="Email"
+            name="email"
+            type="email"
+            required
+            autoComplete="email"
+            markOptional={false}
+          />
+          <QuestionnaireField
+            label="Password"
+            name="password"
+            type="password"
+            required
+            minLength={10}
+            autoComplete="current-password"
+            markOptional={false}
+          />
+          {actionData?.error ? (
+            <FormAlert tone="error">{actionData.error}</FormAlert>
+          ) : null}
+          <button
+            type="submit"
+            className="st-btn st-btn--go st-btn--block"
+            disabled={busy}
+          >
             {busy ? "Signing in…" : "Log in"}
-          </Button>
+          </button>
         </Form>
-      </Panel>
-      <p className="text-sm text-[var(--iwfw-muted)]">
-        No account?{" "}
-        <Link
-          className="font-semibold text-[var(--iwfw-accent)]"
-          to="/get-started"
-        >
-          Get started
-        </Link>
-      </p>
+        <p className="st-fine">
+          <Link to="/forgot-password">Forgot password?</Link>
+          {" · "}
+          No account? <Link to="/get-started">Get started</Link>
+          {" · "}
+          Staff? <Link to="/admin/login">Operations sign in</Link>
+        </p>
+      </div>
     </main>
   );
 }

@@ -2,6 +2,12 @@ import { Form, redirect, useNavigation, data } from "react-router";
 import { createDb } from "@iwfw/db";
 import { MediaUploader } from "../components/media-uploader";
 import { QuestionnaireField } from "../components/questionnaire-field";
+import {
+  ArrowIcon,
+  DefaultSubmit,
+  FormAlert,
+  StepHeader,
+} from "../components/start-funnel";
 import { getEnv } from "../lib/env.server";
 import {
   getOrCreateDraftOrder,
@@ -79,92 +85,103 @@ export default function GetStartedMedia({
 }: Route.ComponentProps) {
   const navigation = useNavigation();
   const busy = navigation.state !== "idle";
+  const submitting =
+    navigation.state === "submitting"
+      ? String(navigation.formData?.get("intent") ?? "next")
+      : null;
   const data = actionData?.data ?? loaderData.data;
 
   return (
-    <div className="iwfw-start">
-      <header className="iwfw-start__intro">
-        <p className="iwfw-start__kicker">Step 3 of 5 · Media &amp; logos</p>
-        <h1>Media, logo &amp; photos</h1>
-        <p className="iwfw-start__lead">
-          Upload what you have — logo, photos of your work, or social links. No
-          logo or photos yet? That&apos;s fine — you can continue and add them
-          later. Files stay private and carry over after payment.
-        </p>
-        <div className="iwfw-order-progress" aria-hidden>
-          <span style={{ width: "60%" }} />
+    <div className="st-step">
+      <StepHeader
+        kicker="Step 3 of 5"
+        title="Logo, photos and links"
+        lead="Upload what you have. No logo or photos yet? That’s fine: continue, and add them later. Files stay private and carry over after payment."
+      />
+
+      <Form method="post" className="st-sheet st-form">
+        <DefaultSubmit disabled={busy} />
+
+        <div className="st-group st-uploads">
+          <MediaUploader
+            mode="order"
+            fixedCategory="logo"
+            title="Business logo"
+            description="Your main logo. JPG, PNG or WebP, up to 10 MB each."
+          />
+          <MediaUploader
+            mode="order"
+            fixedCategory="business_photo"
+            title="Business photographs"
+            description="Your premises, team at work, vehicles or shop front."
+          />
+          <MediaUploader
+            mode="order"
+            fixedCategory="portfolio"
+            title="Project images"
+            description="Before and after shots, finished jobs or portfolio examples."
+          />
         </div>
-      </header>
 
-      <Form method="post" className="iwfw-start__card iwfw-start__form">
-        <MediaUploader
-          mode="order"
-          fixedCategory="logo"
-          title="Business logo"
-          description="Your main logo — JPG, PNG or WebP · max 10 MB each."
-        />
-        <MediaUploader
-          mode="order"
-          fixedCategory="business_photo"
-          title="Business photographs"
-          description="Photos of your premises, team at work, vehicles or shop front."
-        />
-        <MediaUploader
-          mode="order"
-          fixedCategory="portfolio"
-          title="Project images"
-          description="Before/after shots, completed jobs or portfolio examples."
-        />
+        <section className="st-group" aria-labelledby="st-media-profiles">
+          <div className="st-group__head">
+            <h2 id="st-media-profiles">Online profiles</h2>
+            <p>So your website can point to where customers already find you.</p>
+          </div>
+          <QuestionnaireField
+            label="Social media links"
+            name="socialLinks"
+            multiline
+            rows={2}
+            defaultValue={data.media.socialLinks}
+            placeholder="Facebook, Instagram, LinkedIn…"
+          />
+          <QuestionnaireField
+            label="Google Business Profile link"
+            name="gbpLink"
+            inputMode="url"
+            defaultValue={data.media.gbpLink}
+            placeholder="https://g.page/…"
+          />
+        </section>
 
-        <h2 className="iwfw-start__subhead">Online profiles</h2>
-        <QuestionnaireField
-          label="Social media links"
-          name="socialLinks"
-          multiline
-          rows={2}
-          defaultValue={data.media.socialLinks}
-          placeholder="Facebook, Instagram, LinkedIn…"
-        />
-        <QuestionnaireField
-          label="Google Business Profile link"
-          name="gbpLink"
-          defaultValue={data.media.gbpLink}
-          placeholder="https://g.page/…"
-        />
+        {actionData && "saved" in actionData && actionData.saved ? (
+          <FormAlert tone="ok">
+            Progress saved. You can pick up where you left off on this device.
+          </FormAlert>
+        ) : null}
 
-        {actionData && "saved" in actionData && actionData.saved && (
-          <p className="iwfw-start__ok" role="status">
-            Progress saved. You can resume later on this device.
-          </p>
-        )}
-
-        <div className="iwfw-order-actions">
+        <div className="st-actions">
           <button
             type="submit"
             name="intent"
             value="back"
-            className="iwfw-btn iwfw-btn--outline"
+            formNoValidate
+            className="st-btn st-btn--quiet st-actions__back"
             disabled={busy}
           >
+            <ArrowIcon direction="left" />
             Back
           </button>
           <button
             type="submit"
             name="intent"
             value="save"
-            className="iwfw-btn iwfw-btn--outline"
+            formNoValidate
+            className="st-btn st-btn--quiet"
             disabled={busy}
           >
-            Save &amp; resume later
+            {submitting === "save" ? "Saving…" : "Save and finish later"}
           </button>
           <button
             type="submit"
             name="intent"
             value="next"
-            className="iwfw-btn iwfw-btn--green"
+            className="st-btn st-btn--go st-actions__next"
             disabled={busy}
           >
-            {busy ? "Saving…" : "Continue to domain"}
+            {submitting === "next" ? "Saving…" : "Continue to domain"}
+            <ArrowIcon />
           </button>
         </div>
       </Form>

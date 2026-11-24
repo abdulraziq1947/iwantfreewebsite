@@ -1,10 +1,12 @@
 import { Form, Link, redirect, useNavigation } from "react-router";
-import { Button, Input, Panel } from "@iwfw/ui";
 import { getConfig, getEnv } from "../lib/env.server";
 import { getOptionalAuth } from "../lib/session.server";
 import { redirectWithAuthCookies } from "../lib/auth-response.server";
 import { registerCustomer } from "../lib/register-customer.server";
+import { FormAlert, StepHeader } from "../components/start-funnel";
+import { QuestionnaireField } from "../components/questionnaire-field";
 import type { Route } from "./+types/signup";
+import "../start.css";
 
 export function meta(_args: Route.MetaArgs) {
   return [{ title: "Sign up — iwantfreewebsite" }];
@@ -40,64 +42,63 @@ export default function Signup({ actionData }: Route.ComponentProps) {
   const busy = navigation.state !== "idle";
 
   return (
-    <main className="mx-auto flex max-w-md flex-col gap-6 px-4 py-16">
-      <h1 className="text-3xl font-bold">Create your account</h1>
-      <p className="text-[var(--iwfw-muted)]">
-        Prefer the guided path? Start with Get My Website — £39.99/month, no
-        upfront design fee, cancel anytime.
-      </p>
-      <Panel>
-        <Form method="post" className="space-y-4">
-          <label className="block text-sm font-semibold">
-            Your name
-            <Input className="mt-1" name="name" required autoComplete="name" />
-          </label>
-          <label className="block text-sm font-semibold">
-            Business / trading name
-            <Input className="mt-1" name="tradingName" required />
-          </label>
-          <label className="block text-sm font-semibold">
-            Email
-            <Input
-              className="mt-1"
-              name="email"
-              type="email"
-              required
-              autoComplete="email"
-            />
-          </label>
-          <label className="block text-sm font-semibold">
-            Password
-            <Input
-              className="mt-1"
-              name="password"
-              type="password"
-              required
-              minLength={10}
-              autoComplete="new-password"
-            />
-          </label>
-          {actionData?.error && (
-            <p className="text-sm text-[var(--iwfw-danger)]">{actionData.error}</p>
-          )}
-          <Button type="submit" disabled={busy} className="w-full">
+    <main className="st-auth">
+      <div className="st-wrap">
+        <StepHeader
+          kicker="Account"
+          title="Create your account"
+          lead="Prefer the guided path? Get started is £39.99/month, no upfront design fee, cancel anytime."
+        />
+        <Form method="post" className="st-sheet st-form">
+          <QuestionnaireField
+            label="Your name"
+            name="name"
+            required
+            autoComplete="name"
+            markOptional={false}
+          />
+          <QuestionnaireField
+            label="Business / trading name"
+            name="tradingName"
+            required
+            markOptional={false}
+          />
+          <QuestionnaireField
+            label="Email"
+            name="email"
+            type="email"
+            required
+            autoComplete="email"
+            markOptional={false}
+          />
+          <QuestionnaireField
+            label="Password"
+            name="password"
+            type="password"
+            required
+            minLength={10}
+            autoComplete="new-password"
+            hint="At least 10 characters"
+            markOptional={false}
+          />
+          {actionData?.error ? (
+            <FormAlert tone="error">{actionData.error}</FormAlert>
+          ) : null}
+          <button
+            type="submit"
+            className="st-btn st-btn--go st-btn--block"
+            disabled={busy}
+          >
             {busy ? "Creating…" : "Create account"}
-          </Button>
+          </button>
         </Form>
-      </Panel>
-      <p className="text-sm text-[var(--iwfw-muted)]">
-        Prefer the full package overview?{" "}
-        <Link className="font-semibold text-[var(--iwfw-accent)]" to="/get-started">
-          Get started
-        </Link>
-        . Already have an account?{" "}
-        <Link
-          className="font-semibold text-[var(--iwfw-accent)]"
-          to="/get-started/account?mode=login"
-        >
-          Log in
-        </Link>
-      </p>
+        <p className="st-fine">
+          Prefer the full package? <Link to="/get-started">Get started</Link>
+          {" · "}
+          Already have an account?{" "}
+          <Link to="/get-started/account?mode=login">Log in</Link>
+        </p>
+      </div>
     </main>
   );
 }

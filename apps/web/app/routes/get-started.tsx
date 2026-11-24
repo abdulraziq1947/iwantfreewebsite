@@ -4,12 +4,12 @@ import { createDb } from "@iwfw/db";
 import { getEnv, getConfig } from "../lib/env.server";
 import { getCustomerWorkspace } from "../lib/customer-org.server";
 import {
-  PACKAGE_INCLUDES,
-  PACKAGE_NAME,
+  GET_STARTED_STEPS,
   PACKAGE_PRICE_LABEL,
   PACKAGE_PRICE_PERIOD,
+  type GetStartedStepKey,
 } from "../lib/get-started";
-import { CTA_REASSURANCE, PRIMARY_CTA } from "../lib/marketing";
+import { ArrowIcon, CheckIcon, StepHeader } from "../components/start-funnel";
 import type { Route } from "./+types/get-started";
 
 export function meta(_args: Route.MetaArgs) {
@@ -37,74 +37,68 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   return { signedIn: Boolean(auth), addingSite };
 }
 
+const STEP_DETAIL: Record<GetStartedStepKey, string> = {
+  personal: "Your name, email and phone number, so we know who to contact.",
+  business:
+    "What you do, where you work and the services you offer. Plain English is perfect.",
+  media:
+    "Upload a logo and photos if you have them. If not, skip this step and add them later.",
+  domain:
+    "Check a .co.uk, .com or .uk address, or tell us about one you already own.",
+  review:
+    "Check your answers, then pay £39.99 for your first month through Stripe’s secure checkout.",
+};
+
 export default function GetStartedPackage({ loaderData }: Route.ComponentProps) {
   const continueTo = loaderData.addingSite
     ? "/get-started/personal?new=1"
     : "/get-started/personal";
+  const ctaLabel = loaderData.addingSite ? "Start the new brief" : "Start your order";
+
+  const cta = (
+    <Link to={continueTo} className="st-btn st-btn--go st-btn--lg">
+      {ctaLabel}
+      <ArrowIcon />
+    </Link>
+  );
 
   return (
-    <div className="iwfw-start">
-      <header className="iwfw-start__intro">
-        <p className="iwfw-start__kicker">
-          {loaderData.addingSite ? "Add another website" : "Your website package"}
-        </p>
-        <h1>{PACKAGE_NAME}</h1>
-        <p className="iwfw-start__lead">
-          {loaderData.addingSite
+    <div className="st-intro">
+      <StepHeader
+        kicker={loaderData.addingSite ? "Add another website" : "Your website package"}
+        title={
+          loaderData.addingSite
+            ? "Start a brief for another website"
+            : "Let’s get your business online"
+        }
+        lead={
+          loaderData.addingSite
             ? "Start a fresh brief for another business or brand. You’ll get a separate site and subscription after payment."
-            : "You run your business — we’ll handle the website. Answer a few simple questions, choose a domain, then pay securely. No technical knowledge needed. Your account is created after payment."}
-        </p>
-      </header>
+            : "You run your business; we’ll handle the website. Answer a few simple questions, choose a web address, then pay securely. No technical knowledge needed, and your account is created after payment."
+        }
+      />
 
-      <div className="iwfw-start__plan">
-        <p className="iwfw-start__price">
-          {PACKAGE_PRICE_LABEL}
+      <ul className="st-offer" aria-label="The offer at a glance">
+        <li className="st-offer__price">
+          <strong>{PACKAGE_PRICE_LABEL}</strong>
           <span>{PACKAGE_PRICE_PERIOD}</span>
-        </p>
-        <p className="iwfw-start__upfront">
-          No upfront design fee · Fully managed · Cancel anytime
-        </p>
-        <ul className="iwfw-start__includes">
-          {PACKAGE_INCLUDES.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
+        </li>
+        <li>
+          <CheckIcon />
+          No upfront design fee
+        </li>
+        <li>
+          <CheckIcon />
+          Cancel anytime
+        </li>
+      </ul>
 
-        <div className="iwfw-start__terms-box">
-          <h2>What happens next</h2>
-          <ul>
-            <li>
-              <strong>Short questionnaire.</strong> Tell us about your business
-              — we only ask what we need to build your site.
-            </li>
-            <li>
-              <strong>£39.99/month</strong> billed in advance from checkout ·
-              design, hosting and domain renewals looked after · cancel anytime.
-            </li>
-            <li>
-              Domains are checked live, then registered by our team after
-              payment (or we work with a domain you already own).
-            </li>
-            <li>
-              After payment, we create your account and email a secure activation
-              link so you can follow progress.
-            </li>
-          </ul>
-        </div>
-
-        <Link
-          to={continueTo}
-          className="iwfw-btn iwfw-btn--green iwfw-btn--block"
-        >
-          {loaderData.addingSite
-            ? "Continue — Add another site"
-            : `Continue — ${PRIMARY_CTA}`}
-        </Link>
-        <p className="iwfw-start__fine">{CTA_REASSURANCE}</p>
-        <p className="iwfw-start__fine">
+      <div className="st-intro__cta">
+        {cta}
+        <p className="st-note">
           {loaderData.signedIn ? (
             <>
-              You&apos;re signed in.{" "}
+              You’re signed in.{" "}
               {loaderData.addingSite ? (
                 <>
                   This starts a new order, or{" "}
@@ -119,11 +113,41 @@ export default function GetStartedPackage({ loaderData }: Route.ComponentProps) 
             </>
           ) : (
             <>
-              Already paid? <Link to="/login">Log in</Link>
+              Already paid? <Link to="/get-started/account?mode=login">Log in</Link>
             </>
           )}
         </p>
       </div>
+
+      <section className="st-path" aria-labelledby="st-path-title">
+        <h2 id="st-path-title" className="st-section-title">
+          What happens next
+        </h2>
+        <ol>
+          {GET_STARTED_STEPS.map((step, index) => (
+            <li key={step.key}>
+              <span className="st-path__n" aria-hidden="true">
+                {index + 1}
+              </span>
+              <div>
+                <h3>{step.label}</h3>
+                <p>{STEP_DETAIL[step.key]}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <p className="st-path__after">
+          <strong>After payment</strong> we create your account and email you a
+          secure activation link, so you can follow progress. New domains are
+          registered by our team, or we work with a domain you already own.
+        </p>
+        <p className="st-path__resume">
+          You can save your answers at any step and come back later on this
+          device.
+        </p>
+      </section>
+
+      <div className="st-intro__cta st-intro__cta--end">{cta}</div>
     </div>
   );
 }

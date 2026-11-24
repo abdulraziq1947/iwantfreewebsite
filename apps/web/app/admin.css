@@ -1,0 +1,2028 @@
+/*
+ * Staff admin visual system.
+ * Scoped to the operations shell (.iwfw-admin) and staff login (.adm-login).
+ * Tokens match homepage :root in app.css. No glass, blobs, or identical KPI cards.
+ */
+
+.iwfw-admin,
+.adm-login {
+  --adm-ink: var(--brand-ink);
+  --adm-ink-deep: var(--brand-ink-deep);
+  --adm-paper: var(--brand-paper);
+  --adm-muted: var(--brand-muted);
+  --adm-muted-inv: var(--brand-muted-inv);
+  --adm-line: var(--brand-line);
+  --adm-line-inv: var(--brand-line-inv);
+  --adm-mark: var(--brand-mark);
+  --adm-blue: var(--brand-blue);
+  --adm-go: var(--brand-go);
+  --adm-go-hover: var(--brand-go-hover);
+  --adm-display: var(--brand-display);
+  --adm-ease: var(--brand-ease);
+  --adm-danger: #9b1c1c;
+  --adm-danger-bg: #f8e8e6;
+  --adm-warn: #8a5a00;
+  --adm-surface: #fffdf8;
+  --adm-rail-w: 15.75rem;
+  font-family: var(--iwfw-font-sans);
+  color: var(--adm-ink);
+}
+
+/* ——— Shell (overrides the older .iwfw-admin gradient in app.css) ——— */
+
+html body .iwfw-admin {
+  position: relative;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto minmax(0, 1fr);
+  color: var(--adm-ink);
+  background: var(--adm-paper);
+}
+
+@media (min-width: 960px) {
+  html body .iwfw-admin {
+    grid-template-columns: var(--adm-rail-w) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+}
+
+.iwfw-admin .adm-skip {
+  position: absolute;
+  left: 0.75rem;
+  top: 0.75rem;
+  z-index: 80;
+  padding: 0.55rem 0.85rem;
+  background: var(--adm-mark);
+  color: var(--adm-ink);
+  font-weight: 800;
+  text-decoration: none;
+  transform: translateY(-160%);
+}
+
+.iwfw-admin .adm-skip:focus {
+  transform: none;
+}
+
+.iwfw-admin .adm-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ——— Dark operations rail ——— */
+
+.iwfw-admin .adm-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  background: var(--adm-ink);
+  color: #f4f1ea;
+  border-bottom: 4px solid var(--adm-mark);
+  padding: 0.9rem 0.85rem 1rem;
+}
+
+@media (min-width: 960px) {
+  .iwfw-admin .adm-rail {
+    grid-row: 1 / -1;
+    min-height: 100dvh;
+    padding: 1.35rem 1.05rem 1.15rem;
+    border-bottom: 0;
+    border-right: 1px solid var(--adm-line-inv);
+    box-shadow: inset -4px 0 0 var(--adm-mark);
+  }
+}
+
+.iwfw-admin .adm-rail__top {
+  padding: 0 0.35rem 0.35rem;
+}
+
+.iwfw-admin .adm-rail__brand {
+  display: inline-flex;
+  text-decoration: none;
+  color: inherit;
+}
+
+.iwfw-admin .adm-rail .iwfw-brand__wordmark {
+  color: #fff;
+  font-family: var(--adm-display);
+  font-size: 0.92rem;
+  letter-spacing: -0.03em;
+}
+
+.iwfw-admin .adm-rail .iwfw-brand__tld {
+  color: var(--adm-muted-inv);
+}
+
+.iwfw-admin .adm-rail .iwfw-brand__mark {
+  box-shadow: none;
+}
+
+.iwfw-admin .adm-rail__tag {
+  margin: 0.45rem 0 0;
+  color: var(--adm-muted-inv);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.iwfw-admin .adm-rail__nav {
+  display: flex;
+  gap: 0.85rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 0.15rem;
+}
+
+.iwfw-admin .adm-rail__nav::-webkit-scrollbar {
+  height: 0;
+  width: 0;
+}
+
+@media (min-width: 960px) {
+  .iwfw-admin .adm-rail__nav {
+    display: grid;
+    gap: 1.15rem;
+    overflow: visible;
+    flex: 1 1 auto;
+    align-content: start;
+    padding-bottom: 0;
+  }
+}
+
+.iwfw-admin .adm-rail__group {
+  flex: 0 0 auto;
+  min-width: 9.5rem;
+}
+
+.iwfw-admin .adm-rail__label {
+  margin: 0 0 0.35rem 0.55rem;
+  color: var(--adm-muted-inv);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.iwfw-admin .adm-rail__group ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.iwfw-admin .adm-rail__link {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.42rem 0.55rem;
+  color: #d7dde8;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 650;
+  border-left: 3px solid transparent;
+}
+
+.iwfw-admin .adm-rail__link:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.iwfw-admin .adm-rail__link[aria-current="page"] {
+  color: #fff;
+  font-weight: 800;
+  border-left-color: var(--adm-mark);
+  background: rgba(245, 197, 24, 0.1);
+}
+
+.iwfw-admin .adm-rail__count {
+  flex: 0 0 auto;
+  min-width: 1.35rem;
+  padding: 0.05rem 0.35rem;
+  background: var(--adm-mark);
+  color: var(--adm-ink);
+  font-size: 0.68rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.iwfw-admin .adm-rail__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--adm-line-inv);
+}
+
+.iwfw-admin .adm-rail__user {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.iwfw-admin .adm-rail__avatar {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  background: var(--adm-mark);
+  color: var(--adm-ink);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.iwfw-admin .adm-rail__who {
+  display: grid;
+  min-width: 0;
+}
+
+.iwfw-admin .adm-rail__who strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.84rem;
+}
+
+.iwfw-admin .adm-rail__who span {
+  color: var(--adm-muted-inv);
+  font-size: 0.7rem;
+}
+
+.iwfw-admin .adm-rail__actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.iwfw-admin .adm-rail__action {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--adm-muted-inv);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.iwfw-admin .adm-rail__action:hover {
+  color: var(--adm-mark);
+}
+
+/* ——— Desk + find bar ——— */
+
+.iwfw-admin .adm-desk {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--adm-paper);
+}
+
+.iwfw-admin .adm-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--adm-line);
+  background: color-mix(in srgb, var(--adm-paper) 82%, #fff);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+@media (min-width: 960px) {
+  .iwfw-admin .adm-bar {
+    padding: 0.85rem 1.75rem;
+  }
+}
+
+.iwfw-admin .adm-find {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.iwfw-admin .adm-find__icon {
+  position: absolute;
+  left: 0;
+  color: var(--adm-muted);
+  pointer-events: none;
+}
+
+.iwfw-admin .adm-find__input {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.4rem 2rem 0.4rem 1.5rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--adm-ink);
+  font: inherit;
+  font-weight: 600;
+}
+
+.iwfw-admin .adm-find__input::placeholder {
+  color: var(--adm-muted);
+  font-weight: 500;
+}
+
+.iwfw-admin .adm-find__input:hover {
+  border-bottom-color: var(--adm-line);
+}
+
+.iwfw-admin .adm-find__input:focus {
+  outline: none;
+  border-bottom-color: var(--adm-ink);
+}
+
+.iwfw-admin .adm-find__key {
+  display: none;
+  position: absolute;
+  right: 0;
+  min-width: 1.35rem;
+  padding: 0.1rem 0.3rem;
+  border: 1px solid var(--adm-line);
+  color: var(--adm-muted);
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.3;
+}
+
+@media (min-width: 720px) {
+  .iwfw-admin .adm-find__key {
+    display: inline-block;
+  }
+}
+
+.iwfw-admin .adm-main {
+  min-width: 0;
+  padding: 1.15rem 1rem 2.5rem;
+}
+
+@media (min-width: 960px) {
+  .iwfw-admin .adm-main {
+    padding: 1.5rem 1.75rem 3rem;
+  }
+}
+
+.iwfw-admin .adm-main:focus {
+  outline: none;
+}
+
+.iwfw-admin .adm-main:focus-visible {
+  outline: 3px solid var(--adm-blue);
+  outline-offset: -3px;
+}
+
+/* ——— Page chrome ——— */
+
+.iwfw-admin .adm-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.iwfw-admin .adm-page--narrow {
+  max-width: 36rem;
+}
+
+.iwfw-admin .adm-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.85rem 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--adm-line);
+}
+
+.iwfw-admin .adm-kicker {
+  margin: 0 0 0.3rem;
+  color: var(--adm-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.iwfw-admin .adm-kicker a,
+.iwfw-admin .adm-head__lead a,
+.iwfw-admin .adm-note a {
+  color: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+}
+
+.iwfw-admin .adm-head__text {
+  min-width: 0;
+  flex: 1 1 16rem;
+}
+
+.iwfw-admin .adm-head__title {
+  margin: 0;
+  font-family: var(--adm-display);
+  font-size: clamp(1.55rem, 2.6vw, 2.15rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.iwfw-admin .adm-head__lead {
+  margin: 0.45rem 0 0;
+  max-width: 42rem;
+  color: var(--adm-muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.iwfw-admin .adm-head__aside {
+  display: grid;
+  justify-items: end;
+  gap: 0.35rem;
+}
+
+.iwfw-admin .adm-head__date {
+  margin: 0;
+  color: var(--adm-muted);
+  font-size: 0.84rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.iwfw-admin .adm-count {
+  margin: 0;
+  text-align: right;
+}
+
+.iwfw-admin .adm-count strong {
+  display: block;
+  font-family: var(--adm-display);
+  font-size: 1.85rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.iwfw-admin .adm-count span {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--adm-muted);
+}
+
+.iwfw-admin .adm-count small {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--adm-muted);
+  font-size: 0.78rem;
+}
+
+/* ——— Overview: work list + statement + funnel (not four equal cards) ——— */
+
+.iwfw-admin .adm-overview {
+  display: grid;
+  gap: 1.5rem 2rem;
+}
+
+@media (min-width: 1100px) {
+  .iwfw-admin .adm-overview {
+    grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.9fr);
+    grid-template-areas:
+      "queues book"
+      "queues funnel";
+    align-items: start;
+  }
+
+  .iwfw-admin .adm-overview > .adm-queues {
+    grid-area: queues;
+  }
+
+  .iwfw-admin .adm-overview > .adm-book {
+    grid-area: book;
+  }
+
+  .iwfw-admin .adm-overview > .adm-funnel {
+    grid-area: funnel;
+  }
+}
+
+.iwfw-admin .adm-split {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 960px) {
+  .iwfw-admin .adm-split {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.iwfw-admin .adm-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 900px) {
+  .iwfw-admin .adm-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.iwfw-admin .adm-grid--3 {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 960px) {
+  .iwfw-admin .adm-grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+.iwfw-admin .adm-brief-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 800px) {
+  .iwfw-admin .adm-brief-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Sheets: white editorial panels on warm paper — hairlines, not glass. */
+
+.iwfw-admin .adm-sheet {
+  min-width: 0;
+  padding: 1.1rem 1.2rem 1.2rem;
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line);
+}
+
+@media (min-width: 900px) {
+  .iwfw-admin .adm-sheet--wide,
+  .iwfw-admin .adm-grid > .iwfw-attention {
+    grid-column: 1 / -1;
+  }
+
+  .iwfw-admin .adm-split > .adm-sheet--wide {
+    grid-column: 1 / -1;
+  }
+}
+
+.iwfw-admin .adm-sheet--danger {
+  border-color: color-mix(in srgb, var(--adm-danger) 42%, var(--adm-line));
+  background: var(--adm-danger-bg);
+  box-shadow: inset 4px 0 0 var(--adm-danger);
+}
+
+.iwfw-admin .adm-sheet--danger .adm-sheet__head h2 {
+  color: var(--adm-danger);
+}
+
+.iwfw-admin .adm-sheet__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.iwfw-admin .adm-sheet__head h2 {
+  margin: 0;
+  font-family: var(--adm-display);
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.iwfw-admin .adm-sheet__meta {
+  margin: 0;
+  color: var(--adm-muted);
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.iwfw-admin .adm-sheet__head a,
+.iwfw-admin .adm-sheet__link {
+  color: var(--adm-blue);
+  font-size: 0.82rem;
+  font-weight: 750;
+  text-decoration: none;
+  text-underline-offset: 0.14em;
+}
+
+.iwfw-admin .adm-sheet__head a:hover,
+.iwfw-admin .adm-sheet__link:hover {
+  text-decoration: underline;
+}
+
+.iwfw-admin .adm-sheet__lead,
+.iwfw-admin .adm-note {
+  margin: 0 0 0.85rem;
+  color: var(--adm-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.iwfw-admin .adm-empty,
+.iwfw-admin .adm-quiet {
+  margin: 0;
+  color: var(--adm-muted);
+  font-size: 0.9rem;
+}
+
+.iwfw-admin .adm-sub,
+.iwfw-admin .adm-id {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--adm-muted);
+  font-size: 0.76rem;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.iwfw-admin .adm-id {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Queues: ranked work list, count is the dominant type. */
+
+.iwfw-admin .adm-queues__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--adm-line);
+}
+
+.iwfw-admin .adm-queues__list li {
+  border-bottom: 1px solid var(--adm-line);
+}
+
+.iwfw-admin .adm-queues__row {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr) auto;
+  gap: 0.75rem 1rem;
+  align-items: center;
+  padding: 0.7rem 0.15rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.iwfw-admin .adm-queues__row:hover {
+  background: color-mix(in srgb, var(--adm-mark) 12%, transparent);
+}
+
+.iwfw-admin .adm-queues__count {
+  font-family: var(--adm-display);
+  font-size: 1.55rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  text-align: right;
+}
+
+.iwfw-admin .adm-queues__list li.is-clear .adm-queues__count {
+  color: var(--adm-muted);
+  font-size: 1.15rem;
+}
+
+.iwfw-admin .adm-queues__list li.is-waiting .adm-queues__count {
+  color: var(--adm-ink);
+}
+
+.iwfw-admin .adm-queues__name {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.iwfw-admin .adm-queues__name strong {
+  font-size: 0.95rem;
+}
+
+.iwfw-admin .adm-queues__name span {
+  color: var(--adm-muted);
+  font-size: 0.8rem;
+}
+
+.iwfw-admin .adm-queues__go {
+  color: var(--adm-muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.iwfw-admin .adm-queues__list li.is-waiting .adm-queues__go {
+  color: var(--adm-ink);
+}
+
+.iwfw-admin .adm-queues__foot {
+  margin: 0.85rem 0 0;
+  color: var(--adm-muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.iwfw-admin .adm-queues__foot a {
+  color: var(--adm-blue);
+  font-weight: 750;
+}
+
+/* Book: one hero figure, then a ledger — not a KPI card. */
+
+.iwfw-admin .adm-book {
+  box-shadow: inset 0 4px 0 var(--adm-mark);
+}
+
+.iwfw-admin .adm-book__hero {
+  padding: 0.15rem 0 0.85rem;
+}
+
+.iwfw-admin .adm-book__label {
+  margin: 0;
+  color: var(--adm-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.iwfw-admin .adm-book__value {
+  margin: 0.25rem 0 0;
+  font-family: var(--adm-display);
+  font-size: clamp(2rem, 4vw, 2.65rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.iwfw-admin .adm-book__note {
+  margin: 0.4rem 0 0;
+  max-width: 22rem;
+  color: var(--adm-muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.iwfw-admin .adm-ledger {
+  margin: 0;
+  border-top: 1px solid var(--adm-line);
+}
+
+.iwfw-admin .adm-ledger > div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--adm-line);
+}
+
+.iwfw-admin .adm-ledger > div::after {
+  content: "";
+  order: 1;
+  flex: 1 1 auto;
+  min-width: 0.75rem;
+  border-bottom: 2px dotted color-mix(in srgb, var(--adm-ink) 22%, transparent);
+}
+
+.iwfw-admin .adm-ledger dt {
+  order: 0;
+  color: var(--adm-muted);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.iwfw-admin .adm-ledger dd {
+  order: 2;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.iwfw-admin .adm-ledger small {
+  color: var(--adm-muted);
+  font-weight: 600;
+}
+
+/* Funnel: labelled bars, not sparkline decoration. */
+
+.iwfw-admin .adm-funnel__body {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.iwfw-admin .adm-funnel__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.iwfw-admin .adm-funnel__steps li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "label value"
+    "bar bar"
+    "note note";
+  gap: 0.15rem 0.75rem;
+}
+
+.iwfw-admin .adm-funnel__label {
+  grid-area: label;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.iwfw-admin .adm-funnel__value {
+  grid-area: value;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.iwfw-admin .adm-funnel__bar {
+  grid-area: bar;
+  display: block;
+  height: 0.4rem;
+  background: color-mix(in srgb, var(--adm-ink) 8%, var(--adm-paper));
+}
+
+.iwfw-admin .adm-funnel__bar::after {
+  content: "";
+  display: block;
+  width: var(--adm-w, 0%);
+  max-width: 100%;
+  height: 100%;
+  background: var(--adm-ink);
+}
+
+.iwfw-admin .adm-funnel__note {
+  grid-area: note;
+  color: var(--adm-muted);
+  font-size: 0.74rem;
+}
+
+.iwfw-admin .adm-funnel__loss {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin: 0.95rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--adm-line);
+}
+
+.iwfw-admin .adm-funnel__loss dt {
+  color: var(--adm-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.iwfw-admin .adm-funnel__loss dd {
+  margin: 0.15rem 0 0;
+  font-family: var(--adm-display);
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.iwfw-admin .adm-funnel__loss .is-loss dd {
+  color: var(--adm-danger);
+}
+
+/* ——— Tables ——— */
+
+.iwfw-admin .adm-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-inline: -1.2rem;
+}
+
+.iwfw-admin .adm-table {
+  width: 100%;
+  min-width: 40rem;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.iwfw-admin .adm-table--compact {
+  min-width: 28rem;
+  font-size: 0.84rem;
+}
+
+.iwfw-admin .adm-table th,
+.iwfw-admin .adm-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.7rem 0.65rem;
+  border-bottom: 1px solid var(--adm-line);
+}
+
+.iwfw-admin .adm-table th:first-child,
+.iwfw-admin .adm-table td:first-child {
+  padding-left: 1.2rem;
+}
+
+.iwfw-admin .adm-table th:last-child,
+.iwfw-admin .adm-table td:last-child {
+  padding-right: 1.2rem;
+}
+
+.iwfw-admin .adm-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--adm-surface);
+  color: var(--adm-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 1px 0 var(--adm-line);
+}
+
+.iwfw-admin .adm-table td.is-num,
+.iwfw-admin .adm-table th.is-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.iwfw-admin .adm-table td strong {
+  display: block;
+  font-size: 0.9rem;
+}
+
+.iwfw-admin .adm-table__primary {
+  color: var(--adm-ink);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.iwfw-admin .adm-table__primary:hover,
+.iwfw-admin .adm-table a:hover {
+  color: var(--adm-blue);
+}
+
+.iwfw-admin .adm-table a {
+  color: var(--adm-ink);
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.iwfw-admin .adm-table tbody tr.is-flagged {
+  box-shadow: inset 3px 0 0 var(--adm-mark);
+  background: color-mix(in srgb, var(--adm-mark) 10%, var(--adm-surface));
+}
+
+.iwfw-admin .adm-table tbody tr:hover {
+  background: color-mix(in srgb, var(--adm-ink) 3%, var(--adm-surface));
+}
+
+/* ——— Status: shape + text (never colour alone) ——— */
+
+.iwfw-admin .adm-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.iwfw-admin .adm-status__mark {
+  flex: 0 0 auto;
+  width: 0.55rem;
+  height: 0.55rem;
+  background: currentColor;
+}
+
+.iwfw-admin .adm-status--ok {
+  color: var(--adm-go);
+}
+
+.iwfw-admin .adm-status--ok .adm-status__mark {
+  border-radius: 999px;
+}
+
+.iwfw-admin .adm-status--warn {
+  color: var(--adm-warn);
+}
+
+.iwfw-admin .adm-status--warn .adm-status__mark {
+  width: 0.58rem;
+  height: 0.58rem;
+  background: transparent;
+  border: 0 solid transparent;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  background: currentColor;
+}
+
+.iwfw-admin .adm-status--risk {
+  color: var(--adm-danger);
+}
+
+.iwfw-admin .adm-status--risk .adm-status__mark {
+  border-radius: 0;
+}
+
+.iwfw-admin .adm-status--idle {
+  color: var(--adm-muted);
+}
+
+.iwfw-admin .adm-status--idle .adm-status__mark {
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+
+/* ——— Forms, buttons, alerts ——— */
+
+.iwfw-admin .adm-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: flex-end;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--adm-line);
+}
+
+.iwfw-admin .adm-toolbar__search {
+  flex: 1 1 16rem;
+}
+
+.iwfw-admin .adm-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.iwfw-admin .adm-form,
+.iwfw-admin .adm-login .adm-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.iwfw-admin .adm-field,
+.adm-login .adm-field {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 750;
+}
+
+.iwfw-admin .adm-field em,
+.adm-login .adm-field em,
+.iwfw-admin .adm-hint {
+  font-style: normal;
+  color: var(--adm-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.iwfw-admin .adm-input,
+.adm-login .adm-input {
+  width: 100%;
+  min-height: 2.65rem;
+  padding: 0.55rem 0.7rem;
+  border: 0;
+  border-bottom: 2px solid var(--adm-line);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--adm-paper) 55%, #fff);
+  color: var(--adm-ink);
+  font: inherit;
+  font-weight: 600;
+}
+
+.iwfw-admin .adm-input:hover,
+.adm-login .adm-input:hover {
+  border-bottom-color: color-mix(in srgb, var(--adm-ink) 35%, var(--adm-line));
+}
+
+.iwfw-admin .adm-input:focus,
+.adm-login .adm-input:focus {
+  outline: none;
+  border-bottom-color: var(--adm-ink);
+  background: #fff;
+}
+
+.iwfw-admin textarea.adm-input,
+.adm-login textarea.adm-input {
+  min-height: 6.5rem;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.iwfw-admin select.adm-input {
+  cursor: pointer;
+}
+
+.iwfw-admin .adm-fields {
+  display: grid;
+  gap: 0.85rem;
+}
+
+@media (min-width: 640px) {
+  .iwfw-admin .adm-fields--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.iwfw-admin .adm-fieldset {
+  margin: 0;
+  padding: 0.85rem 0 0;
+  border: 0;
+  border-top: 1px solid var(--adm-line);
+  display: grid;
+  gap: 0.65rem;
+}
+
+.iwfw-admin .adm-fieldset legend {
+  padding: 0 0.4rem 0 0;
+  font-family: var(--adm-display);
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.iwfw-admin .adm-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.iwfw-admin .adm-check input {
+  margin-top: 0.2rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--adm-ink);
+  flex-shrink: 0;
+}
+
+.iwfw-admin .adm-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.iwfw-admin .adm-inline .adm-input {
+  width: auto;
+  min-width: 9.5rem;
+  min-height: 2.15rem;
+  padding: 0.3rem 0.45rem;
+}
+
+.iwfw-admin .adm-btn,
+.adm-login .adm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.45rem;
+  padding: 0.45rem 0.95rem;
+  border: 1.5px solid var(--adm-ink);
+  background: transparent;
+  color: var(--adm-ink);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.iwfw-admin .adm-btn:hover:not(:disabled),
+.adm-login .adm-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--adm-ink) 6%, transparent);
+}
+
+.iwfw-admin .adm-btn:disabled,
+.adm-login .adm-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.iwfw-admin .adm-btn--ink,
+.adm-login .adm-btn--ink {
+  background: var(--adm-ink);
+  color: #fff;
+  border-color: var(--adm-ink);
+}
+
+.iwfw-admin .adm-btn--ink:hover:not(:disabled),
+.adm-login .adm-btn--ink:hover:not(:disabled) {
+  background: var(--adm-ink-deep);
+}
+
+.adm-login .adm-btn {
+  width: 100%;
+}
+
+.iwfw-admin .adm-btn--go {
+  background: var(--adm-go);
+  border-color: var(--adm-go);
+  color: #fff;
+}
+
+.iwfw-admin .adm-btn--go:hover:not(:disabled) {
+  background: var(--adm-go-hover);
+  border-color: var(--adm-go-hover);
+}
+
+.iwfw-admin .adm-btn--danger {
+  background: var(--adm-danger);
+  border-color: var(--adm-danger);
+  color: #fff;
+}
+
+.iwfw-admin .adm-btn--danger:hover:not(:disabled) {
+  background: #7f1616;
+  border-color: #7f1616;
+}
+
+.iwfw-admin .adm-btn--sm {
+  min-height: 2rem;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.78rem;
+}
+
+.iwfw-admin .adm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.iwfw-admin .adm-alert {
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: 1px solid var(--adm-line);
+}
+
+.iwfw-admin .adm-alert--ok,
+.adm-login .adm-alert--ok {
+  background: color-mix(in srgb, var(--adm-go) 12%, #fff);
+  border-color: color-mix(in srgb, var(--adm-go) 32%, var(--adm-line));
+  color: var(--adm-go-hover);
+}
+
+.iwfw-admin .adm-alert--error,
+.adm-login .adm-alert--error {
+  background: var(--adm-danger-bg);
+  border-color: color-mix(in srgb, var(--adm-danger) 32%, var(--adm-line));
+  color: var(--adm-danger);
+}
+
+.iwfw-admin .adm-code {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}
+
+/* ——— Tabs, lists, definition lists, journey ——— */
+
+.iwfw-admin .adm-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border-bottom: 1px solid var(--adm-line);
+}
+
+.iwfw-admin .adm-tabs a {
+  padding: 0.55rem 0.85rem;
+  color: var(--adm-muted);
+  font-size: 0.88rem;
+  font-weight: 750;
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+}
+
+.iwfw-admin .adm-tabs a:hover {
+  color: var(--adm-ink);
+}
+
+.iwfw-admin .adm-tabs a.is-active {
+  color: var(--adm-ink);
+  border-bottom-color: var(--adm-mark);
+}
+
+.iwfw-admin .adm-dl {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+}
+
+.iwfw-admin .adm-dl div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.iwfw-admin .adm-dl dt {
+  color: var(--adm-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.iwfw-admin .adm-dl dd {
+  margin: 0;
+  font-size: 0.92rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.iwfw-admin .adm-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.iwfw-admin .adm-list li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--adm-line);
+}
+
+.iwfw-admin .adm-list li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.iwfw-admin .adm-list strong {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.92rem;
+}
+
+.iwfw-admin .adm-list p {
+  margin: 0.2rem 0 0;
+  color: var(--adm-muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.iwfw-admin .adm-list > li > span {
+  flex: 0 0 auto;
+  color: var(--adm-muted);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.iwfw-admin .adm-list a {
+  color: var(--adm-ink);
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.iwfw-admin .adm-list a:hover {
+  color: var(--adm-blue);
+}
+
+.iwfw-admin .adm-journey {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.iwfw-admin .adm-journey li {
+  display: grid;
+  grid-template-columns: 0.7rem 1fr;
+  gap: 0.7rem;
+  align-items: start;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--adm-line);
+}
+
+.iwfw-admin .adm-journey li:last-child {
+  border-bottom: 0;
+}
+
+.iwfw-admin .adm-journey__dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-top: 0.3rem;
+  background: color-mix(in srgb, var(--adm-muted) 40%, #fff);
+}
+
+.iwfw-admin .adm-journey__dot.is-done {
+  background: var(--adm-go);
+  border-radius: 999px;
+}
+
+.iwfw-admin .adm-journey__dot.is-current {
+  background: var(--adm-mark);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.iwfw-admin .adm-journey__dot.is-upcoming {
+  box-shadow: inset 0 0 0 1.5px var(--adm-muted);
+  background: transparent;
+  border-radius: 999px;
+}
+
+.iwfw-admin .adm-journey strong {
+  display: block;
+  font-size: 0.92rem;
+}
+
+.iwfw-admin .adm-journey p {
+  margin: 0.15rem 0 0;
+  color: var(--adm-muted);
+  font-size: 0.82rem;
+}
+
+/* ——— Media, tickets, thread, notifications ——— */
+
+.iwfw-admin .adm-media {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+}
+
+.iwfw-admin .adm-media__item {
+  display: grid;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--adm-line);
+}
+
+.iwfw-admin .adm-media__item:last-child {
+  border-bottom: 0;
+}
+
+@media (min-width: 700px) {
+  .iwfw-admin .adm-media__item {
+    grid-template-columns: 3.5rem minmax(0, 1fr) auto;
+  }
+}
+
+.iwfw-admin .adm-media__thumb {
+  width: 3.5rem;
+  height: 3.5rem;
+  object-fit: cover;
+  background: color-mix(in srgb, var(--adm-ink) 6%, #fff);
+}
+
+.iwfw-admin .adm-media__body strong {
+  display: block;
+  font-size: 0.92rem;
+}
+
+.iwfw-admin .adm-media__body p {
+  margin: 0.2rem 0 0;
+  color: var(--adm-muted);
+  font-size: 0.8rem;
+}
+
+.iwfw-admin .adm-media__website {
+  font-weight: 750;
+  color: var(--adm-ink) !important;
+}
+
+.iwfw-admin .adm-media__website a {
+  color: var(--adm-blue);
+  text-decoration: none;
+}
+
+.iwfw-admin .adm-media__website a:hover {
+  text-decoration: underline;
+}
+
+.iwfw-admin .adm-media__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.iwfw-admin .adm-tickets {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.iwfw-admin .adm-tickets li {
+  border-bottom: 1px solid var(--adm-line);
+}
+
+.iwfw-admin .adm-tickets a {
+  display: block;
+  padding: 0.85rem 0.1rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.iwfw-admin .adm-tickets a:hover {
+  background: color-mix(in srgb, var(--adm-mark) 10%, transparent);
+}
+
+.iwfw-admin .adm-tickets strong {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+}
+
+.iwfw-admin .adm-tickets p {
+  margin: 0.25rem 0 0;
+  color: var(--adm-muted);
+  font-size: 0.8rem;
+}
+
+.iwfw-admin .adm-unread {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.2rem;
+  padding: 0.05rem 0.35rem;
+  background: var(--adm-ink);
+  color: #fff;
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.iwfw-admin .adm-thread {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.iwfw-admin .adm-bubble {
+  padding: 0.85rem 1rem;
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line);
+}
+
+.iwfw-admin .adm-bubble--staff {
+  background: var(--adm-ink);
+  border-color: var(--adm-ink);
+  color: #f4f1ea;
+}
+
+.iwfw-admin .adm-bubble__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+  color: var(--adm-muted);
+  font-size: 0.76rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.iwfw-admin .adm-bubble--staff .adm-bubble__meta {
+  color: var(--adm-muted-inv);
+}
+
+.iwfw-admin .adm-bubble p {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.45;
+  font-size: 0.92rem;
+}
+
+.iwfw-admin .adm-notify {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.iwfw-admin .adm-notify li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--adm-line);
+}
+
+.iwfw-admin .adm-notify li.is-unread {
+  box-shadow: inset 3px 0 0 var(--adm-mark);
+  padding-left: 0.75rem;
+  background: color-mix(in srgb, var(--adm-mark) 10%, transparent);
+}
+
+.iwfw-admin .adm-notify strong {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.iwfw-admin .adm-notify p {
+  margin: 0;
+  color: var(--adm-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.iwfw-admin .adm-notify__meta {
+  margin-top: 0.3rem !important;
+  font-size: 0.76rem !important;
+  font-variant-numeric: tabular-nums;
+  text-transform: capitalize;
+}
+
+.iwfw-admin .adm-notify__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+/* ——— MFA enrollment (admin only) ——— */
+
+.iwfw-admin .adm-mfa-steps {
+  margin: 0 0 1rem;
+  padding-left: 1.15rem;
+  color: var(--adm-muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.iwfw-admin .adm-mfa-steps strong {
+  color: var(--adm-ink);
+}
+
+.iwfw-admin .adm-mfa-qr {
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+  margin: 0 0 1rem;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--adm-paper) 70%, #fff);
+  border: 1px solid var(--adm-line);
+  text-align: center;
+}
+
+.iwfw-admin .iwfw-mfa-qr {
+  width: min(100%, 14rem);
+  aspect-ratio: 1;
+}
+
+.iwfw-admin .iwfw-mfa-qr svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #fff;
+}
+
+.iwfw-admin .adm-mfa-box {
+  margin: 0 0 1rem;
+  padding: 0.85rem 0;
+  border-top: 1px dashed var(--adm-line);
+  border-bottom: 1px dashed var(--adm-line);
+}
+
+.iwfw-admin .adm-mfa-box__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.84rem;
+  font-weight: 750;
+  color: var(--adm-muted);
+}
+
+.iwfw-admin .adm-mfa-key {
+  display: block;
+  font-size: clamp(0.95rem, 3.6vw, 1.15rem);
+  letter-spacing: 0.08em;
+  word-break: break-all;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.iwfw-admin .adm-mfa-regen {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--adm-line);
+  display: grid;
+  gap: 0.65rem;
+}
+
+.iwfw-admin .adm-mfa-codes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem 0.75rem;
+}
+
+.iwfw-admin .adm-mfa-codes code {
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 480px) {
+  .iwfw-admin .adm-mfa-codes {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ——— Shared widgets inside the admin shell (bell, attention, leftover badges) ——— */
+
+.iwfw-admin .iwfw-bell__button {
+  min-height: 2.35rem;
+  padding: 0.35rem 0.7rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--adm-ink);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+.iwfw-admin .iwfw-bell__button:hover {
+  border-bottom-color: var(--adm-line);
+}
+
+.iwfw-admin .iwfw-bell__button[aria-expanded="true"] {
+  border-bottom-color: var(--adm-ink);
+}
+
+.iwfw-admin .iwfw-bell__icon {
+  background: var(--adm-go);
+}
+
+.iwfw-admin .iwfw-bell__panel {
+  border-radius: 0;
+  border: 1px solid var(--adm-line);
+  background: var(--adm-surface);
+  box-shadow: 0 18px 40px -24px rgba(11, 18, 32, 0.45);
+}
+
+.iwfw-admin .iwfw-bell__list li.is-unread a {
+  background: color-mix(in srgb, var(--adm-mark) 16%, transparent);
+}
+
+.iwfw-admin .iwfw-bell__list a:hover {
+  background: color-mix(in srgb, var(--adm-ink) 5%, transparent);
+}
+
+.iwfw-admin .iwfw-bell__panel-foot a,
+.iwfw-admin .iwfw-bell__mark {
+  color: var(--adm-blue);
+}
+
+.iwfw-admin .iwfw-notify-badge {
+  border-radius: 0;
+  background: var(--adm-ink);
+  color: #fff;
+}
+
+.iwfw-admin .iwfw-attention {
+  padding: 1.1rem 1.2rem 1.2rem;
+  border-radius: 0;
+  border: 1px solid var(--adm-line);
+  background: var(--adm-surface);
+  box-shadow: inset 4px 0 0 var(--adm-mark);
+}
+
+.iwfw-admin .iwfw-attention.has-pending {
+  border-color: color-mix(in srgb, var(--adm-mark) 55%, var(--adm-line));
+}
+
+.iwfw-admin .iwfw-attention__kicker {
+  color: var(--adm-warn);
+  letter-spacing: 0.14em;
+}
+
+.iwfw-admin .iwfw-attention h2 {
+  font-family: var(--adm-display);
+  letter-spacing: -0.02em;
+}
+
+.iwfw-admin .iwfw-ui-badge {
+  border-radius: 0;
+  padding: 0.15rem 0.4rem;
+  letter-spacing: 0.08em;
+  font-size: 0.68rem;
+}
+
+.iwfw-admin .iwfw-attention .iwfw-btn {
+  min-height: 2.15rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Profitability figures on the billing tab. */
+.iwfw-admin .adm-figures {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0.85rem 0 1rem;
+}
+
+.iwfw-admin .adm-figures div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--adm-line);
+}
+
+.iwfw-admin .adm-figures dt {
+  color: var(--adm-muted);
+  font-size: 0.82rem;
+}
+
+.iwfw-admin .adm-figures dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+/* ——— Staff login (outside the layout) ——— */
+
+html body .adm-login {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem 1rem;
+  color: #f4f1ea;
+  background: var(--adm-ink-deep);
+}
+
+.adm-login__card {
+  width: min(26.5rem, 100%);
+  padding: 1.75rem 1.5rem 1.5rem;
+  background: var(--adm-paper);
+  color: var(--adm-ink);
+  box-shadow: inset 0 4px 0 var(--adm-mark);
+}
+
+.adm-login__kicker {
+  margin: 0 0 0.7rem;
+  color: var(--adm-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.adm-login__brand {
+  display: inline-flex;
+  margin-bottom: 1rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.adm-login h1 {
+  margin: 0 0 0.4rem;
+  font-family: var(--adm-display);
+  font-size: 1.7rem;
+  letter-spacing: -0.03em;
+  color: var(--adm-ink);
+}
+
+.adm-login__lead {
+  margin: 0 0 1.25rem;
+  color: var(--adm-muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.adm-login__form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.adm-login .adm-alert {
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border: 1px solid var(--adm-line);
+}
+
+.adm-login__fine {
+  margin: 1rem 0 0;
+  color: var(--adm-muted);
+  font-size: 0.84rem;
+}
+
+.adm-login__fine a {
+  color: var(--adm-blue);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.adm-login__fine a:hover {
+  text-decoration: underline;
+}
+
+.adm-login .iwfw-brand__wordmark {
+  color: var(--adm-ink);
+}
+
+.adm-login .iwfw-brand__tld {
+  color: var(--adm-muted);
+}
+
+/* ——— Focus, links, reduced motion ——— */
+
+.iwfw-admin a:focus-visible,
+.iwfw-admin button:focus-visible,
+.iwfw-admin input:focus-visible,
+.iwfw-admin select:focus-visible,
+.iwfw-admin textarea:focus-visible,
+.iwfw-admin summary:focus-visible,
+.adm-login a:focus-visible,
+.adm-login button:focus-visible,
+.adm-login input:focus-visible {
+  outline: 3px solid var(--adm-blue);
+  outline-offset: 2px;
+}
+
+.iwfw-admin .adm-rail a:focus-visible,
+.iwfw-admin .adm-rail button:focus-visible {
+  outline-color: var(--adm-mark);
+}
+
+.iwfw-admin .adm-btn--ink:focus-visible,
+.iwfw-admin .adm-btn--go:focus-visible,
+.iwfw-admin .adm-btn--danger:focus-visible,
+.adm-login .adm-btn--ink:focus-visible,
+.iwfw-admin .adm-bubble--staff a:focus-visible {
+  outline-color: var(--adm-mark);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iwfw-admin *,
+  .iwfw-admin *::before,
+  .iwfw-admin *::after,
+  .adm-login *,
+  .adm-login *::before,
+  .adm-login *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  .iwfw-admin .adm-funnel__bar::after {
+    transition: none;
+  }
+}

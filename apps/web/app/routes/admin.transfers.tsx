@@ -1,13 +1,15 @@
-import { Form } from "react-router";
-import { Badge } from "@iwfw/ui";
+import { Form, Link } from "react-router";
 import { createDb } from "@iwfw/db";
 import { getEnv } from "../lib/env.server";
 import { requireStaffSession } from "../lib/session.server";
 import { formatAdminDate } from "../lib/admin-ops";
+import { listAdminTransfers, updateTransferTaskStatus } from "../lib/admin-ops.server";
 import {
-  listAdminTransfers,
-  updateTransferTaskStatus,
-} from "../lib/admin-ops.server";
+  AdminCount,
+  AdminPageHeader,
+  AdminStatus,
+  statusLabel,
+} from "../components/admin-ui";
 import type { Route } from "./+types/admin.transfers";
 
 export function meta(_args: Route.MetaArgs) {
@@ -32,78 +34,73 @@ export async function action({ request, context }: Route.ActionArgs) {
   return updateTransferTaskStatus(db, taskId, intent);
 }
 
-function transferTone(
-  status: string,
-): "success" | "warning" | "danger" | "neutral" {
+function transferTone(status: string): "success" | "warning" | "danger" | "neutral" {
   if (status === "completed") return "success";
   if (status === "pending" || status === "in_progress") return "warning";
   return "neutral";
 }
 
-export default function AdminTransfersPage({
-  loaderData,
-}: Route.ComponentProps) {
+export default function AdminTransfersPage({ loaderData }: Route.ComponentProps) {
   return (
-    <div className="iwfw-admin-page">
-      <header className="iwfw-admin-page__header">
-        <div>
-          <p className="iwfw-admin-page__eyebrow">Pending tasks</p>
-          <h1>Asset transfers</h1>
-          <p>
-            Hand-off queue when a subscription ends — transfer site assets to
-            the customer when due.
-          </p>
-        </div>
-        <p className="iwfw-admin-page__count">{loaderData.tasks.length} total</p>
-      </header>
+    <div className="adm-page">
+      <AdminPageHeader
+        kicker="Pending tasks"
+        title="Asset transfers"
+        lead="Hand-off queue when a subscription ends — transfer site assets to the customer when due."
+        aside={<AdminCount value={loaderData.tasks.length} label="total" />}
+      />
 
-      <section className="iwfw-admin-panel">
+      <section className="adm-sheet" aria-label="Asset transfers">
         {loaderData.tasks.length === 0 ? (
-          <p className="iwfw-admin-empty">No transfer tasks yet.</p>
+          <p className="adm-empty">No transfer tasks yet.</p>
         ) : (
-          <div className="iwfw-admin-table-wrap">
-            <table className="iwfw-admin-table">
+          <div className="adm-table-wrap">
+            <table className="adm-table">
               <thead>
                 <tr>
-                  <th>Client</th>
-                  <th>Status</th>
-                  <th>Period end</th>
-                  <th>Completed</th>
-                  <th>Created</th>
-                  <th>Actions</th>
+                  <th scope="col">Client</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" className="is-num">
+                    Period end
+                  </th>
+                  <th scope="col" className="is-num">
+                    Completed
+                  </th>
+                  <th scope="col" className="is-num">
+                    Created
+                  </th>
+                  <th scope="col">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loaderData.tasks.map((t) => (
                   <tr key={t.id}>
                     <td>
-                      <strong>{t.tradingName}</strong>
+                      <Link
+                        to={`/admin/clients/${t.organisationId}`}
+                        className="adm-table__primary"
+                      >
+                        {t.tradingName}
+                      </Link>
                       {t.adminNotes ? (
-                        <span className="iwfw-admin-table__sub">
-                          {t.adminNotes}
-                        </span>
+                        <span className="adm-sub">{t.adminNotes}</span>
                       ) : null}
                     </td>
                     <td>
-                      <Badge tone={transferTone(t.status)}>{t.status}</Badge>
+                      <AdminStatus tone={transferTone(t.status)}>
+                        {statusLabel(t.status)}
+                      </AdminStatus>
                     </td>
-                    <td>{formatAdminDate(t.periodEndAt)}</td>
-                    <td>{formatAdminDate(t.completedAt)}</td>
-                    <td>{formatAdminDate(t.createdAt)}</td>
+                    <td className="is-num">{formatAdminDate(t.periodEndAt)}</td>
+                    <td className="is-num">{formatAdminDate(t.completedAt)}</td>
+                    <td className="is-num">{formatAdminDate(t.createdAt)}</td>
                     <td>
-                      <div className="iwfw-admin-actions">
+                      <div className="adm-actions">
                         {t.status === "pending" ? (
                           <Form method="post">
                             <input type="hidden" name="taskId" value={t.id} />
-                            <input
-                              type="hidden"
-                              name="intent"
-                              value="mark_in_progress"
-                            />
-                            <button
-                              type="submit"
-                              className="iwfw-btn iwfw-btn--outline iwfw-admin__btn-sm"
-                            >
+                            <input type="hidden" name="intent" value="mark_in_progress" />
+                            <button type="submit" className="adm-btn adm-btn--sm">
                               Start
                             </button>
                           </Form>
@@ -111,14 +108,10 @@ export default function AdminTransfersPage({
                         {t.status === "pending" || t.status === "in_progress" ? (
                           <Form method="post">
                             <input type="hidden" name="taskId" value={t.id} />
-                            <input
-                              type="hidden"
-                              name="intent"
-                              value="mark_completed"
-                            />
+                            <input type="hidden" name="intent" value="mark_completed" />
                             <button
                               type="submit"
-                              className="iwfw-btn iwfw-btn--green iwfw-admin__btn-sm"
+                              className="adm-btn adm-btn--go adm-btn--sm"
                             >
                               Complete
                             </button>

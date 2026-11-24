@@ -1,5 +1,4 @@
 import { Form, Link, useNavigation } from "react-router";
-import { Badge } from "@iwfw/ui";
 import { createDb } from "@iwfw/db";
 import { getEnv } from "../lib/env.server";
 import { requireStaffSession } from "../lib/session.server";
@@ -12,6 +11,12 @@ import {
   updateOpsTaskStatus,
 } from "../lib/ops-tasks.server";
 import { writeAuditLog, clientIpFromRequest } from "../lib/audit-log.server";
+import {
+  AdminCount,
+  AdminPageHeader,
+  AdminStatus,
+  statusLabel,
+} from "../components/admin-ui";
 import type { Route } from "./+types/admin.ops";
 
 export function meta(_args: Route.MetaArgs) {
@@ -40,7 +45,10 @@ export async function action({ request, context }: Route.ActionArgs) {
       diff: result,
       ip,
     });
-    return { ok: true as const, message: `GBP tasks: ${result.created} created, ${result.skipped} skipped.` };
+    return {
+      ok: true as const,
+      message: `GBP tasks: ${result.created} created, ${result.skipped} skipped.`,
+    };
   }
 
   if (intent === "ensure_renewals") {
@@ -77,11 +85,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     const taskId = String(form.get("taskId") ?? "");
     if (!taskId) return { error: "Missing task." };
     const status =
-      intent === "mark_done"
-        ? "done"
-        : intent === "cancel"
-          ? "cancelled"
-          : "in_progress";
+      intent === "mark_done" ? "done" : intent === "cancel" ? "cancelled" : "in_progress";
     await updateOpsTaskStatus(db, taskId, status);
     await writeAuditLog(db, {
       actorUserId: auth.userId,
@@ -111,76 +115,70 @@ function kindLabel(kind: string): string {
   }
 }
 
-export default function AdminOpsPage({
-  loaderData,
-  actionData,
-}: Route.ComponentProps) {
+export default function AdminOpsPage({ loaderData, actionData }: Route.ComponentProps) {
   const navigation = useNavigation();
   const busy = navigation.state !== "idle";
 
   return (
-    <div className="iwfw-admin-page">
-      <header className="iwfw-admin-page__header">
-        <div>
-          <p className="iwfw-admin-page__eyebrow">Operations</p>
-          <h1>Ops tasks</h1>
-          <p>
-            Weekly Google Business work and domain renewal reminders. Tasks are
-            tracked here — nothing is published or purchased automatically.
-          </p>
-        </div>
-        <p className="iwfw-admin-page__count">{loaderData.tasks.length} open</p>
-      </header>
+    <div className="adm-page">
+      <AdminPageHeader
+        kicker="Operations"
+        title="Ops tasks"
+        lead="Weekly Google Business work and domain renewal reminders. Tasks are tracked here — nothing is published or purchased automatically."
+        aside={<AdminCount value={loaderData.tasks.length} label="open" />}
+      />
 
-      <div className="iwfw-admin-actions" style={{ marginBottom: "1rem" }}>
+      <div className="adm-actions">
         <Form method="post">
           <input type="hidden" name="intent" value="ensure_gbp" />
-          <button type="submit" className="iwfw-btn iwfw-btn--outline" disabled={busy}>
+          <button type="submit" className="adm-btn" disabled={busy}>
             {busy ? "Working…" : "Generate this week’s GBP tasks"}
           </button>
         </Form>
         <Form method="post">
           <input type="hidden" name="intent" value="ensure_renewals" />
-          <button type="submit" className="iwfw-btn iwfw-btn--outline" disabled={busy}>
+          <button type="submit" className="adm-btn" disabled={busy}>
             {busy ? "Working…" : "Generate domain renewal reminders"}
           </button>
         </Form>
         <Form method="post">
           <input type="hidden" name="intent" value="ensure_overdue" />
-          <button type="submit" className="iwfw-btn iwfw-btn--outline" disabled={busy}>
+          <button type="submit" className="adm-btn" disabled={busy}>
             {busy ? "Working…" : "Flag overdue websites"}
           </button>
         </Form>
       </div>
 
       {actionData && "message" in actionData && actionData.message ? (
-        <p className="iwfw-start__ok" role="status">
+        <p className="adm-alert adm-alert--ok" role="status">
           {actionData.message}
         </p>
       ) : null}
       {actionData && "error" in actionData && actionData.error ? (
-        <p className="iwfw-start__error" role="alert">
+        <p className="adm-alert adm-alert--error" role="alert">
           {actionData.error}
         </p>
       ) : null}
 
-      <section className="iwfw-admin-panel">
+      <section className="adm-sheet" aria-label="Ops tasks">
         {loaderData.tasks.length === 0 ? (
-          <p className="iwfw-admin-empty">
-            No open ops tasks. Generate GBP or renewal reminders above, or set a
-            domain renews-at date on the Domains queue.
+          <p className="adm-empty">
+            No open ops tasks. Generate GBP or renewal reminders above, or set a domain
+            renews-at date on the Domains queue.
           </p>
         ) : (
-          <div className="iwfw-admin-table-wrap">
-            <table className="iwfw-admin-table">
+          <div className="adm-table-wrap">
+            <table className="adm-table">
               <thead>
                 <tr>
-                  <th>Task</th>
-                  <th>Client</th>
-                  <th>Kind</th>
-                  <th>Due</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th scope="col">Task</th>
+                  <th scope="col">Client</th>
+                  <th scope="col">Kind</th>
+                  <th scope="col" className="is-num">
+                    Due
+                  </th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -188,9 +186,7 @@ export default function AdminOpsPage({
                   <tr key={t.id}>
                     <td>
                       <strong>{t.title}</strong>
-                      {t.notes ? (
-                        <span className="iwfw-admin-table__sub">{t.notes}</span>
-                      ) : null}
+                      {t.notes ? <span className="adm-sub">{t.notes}</span> : null}
                     </td>
                     <td>
                       <Link to={`/admin/clients/${t.organisationId}`}>
@@ -198,27 +194,25 @@ export default function AdminOpsPage({
                       </Link>
                     </td>
                     <td>
-                      <Badge tone="neutral">{kindLabel(t.kind)}</Badge>
+                      <AdminStatus tone="neutral">{kindLabel(t.kind)}</AdminStatus>
                     </td>
-                    <td>{formatAdminDate(t.dueAt)}</td>
+                    <td className="is-num">{formatAdminDate(t.dueAt)}</td>
                     <td>
-                      <Badge
-                        tone={
-                          t.status === "in_progress" ? "warning" : "neutral"
-                        }
+                      <AdminStatus
+                        tone={t.status === "in_progress" ? "warning" : "neutral"}
                       >
-                        {t.status}
-                      </Badge>
+                        {statusLabel(t.status)}
+                      </AdminStatus>
                     </td>
                     <td>
-                      <div className="iwfw-admin-actions">
+                      <div className="adm-actions">
                         {t.status === "pending" ? (
                           <Form method="post">
                             <input type="hidden" name="intent" value="mark_in_progress" />
                             <input type="hidden" name="taskId" value={t.id} />
                             <button
                               type="submit"
-                              className="iwfw-btn iwfw-btn--outline iwfw-btn--sm"
+                              className="adm-btn adm-btn--sm"
                               disabled={busy}
                             >
                               Start
@@ -230,7 +224,7 @@ export default function AdminOpsPage({
                           <input type="hidden" name="taskId" value={t.id} />
                           <button
                             type="submit"
-                            className="iwfw-btn iwfw-btn--green iwfw-btn--sm"
+                            className="adm-btn adm-btn--go adm-btn--sm"
                             disabled={busy}
                           >
                             Done
@@ -241,7 +235,7 @@ export default function AdminOpsPage({
                           <input type="hidden" name="taskId" value={t.id} />
                           <button
                             type="submit"
-                            className="iwfw-btn iwfw-btn--outline iwfw-btn--sm"
+                            className="adm-btn adm-btn--sm"
                             disabled={busy}
                           >
                             Cancel

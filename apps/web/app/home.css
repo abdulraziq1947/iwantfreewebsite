@@ -5,24 +5,6 @@
  * frame) and the solid "panel" (ledger, plan, care card, answer, monthly).
  */
 
-/* Archivo (SIL Open Font License 1.1), semi-expanded static cuts, latin subset.
- * Self-hosted so the homepage makes no third-party font requests. */
-@font-face {
-  font-family: "Archivo SemiExpanded";
-  src: url("/fonts/archivo-semiexpanded-700-latin.woff2") format("woff2");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Archivo SemiExpanded";
-  src: url("/fonts/archivo-semiexpanded-800-latin.woff2") format("woff2");
-  font-weight: 800;
-  font-style: normal;
-  font-display: swap;
-}
-
 .iwfw-public--home,
 .hp {
   --hp-ink: #0b1220;

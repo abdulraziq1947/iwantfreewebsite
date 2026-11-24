@@ -1,10 +1,15 @@
 import { Form, Link, redirect, useNavigation, useSearchParams } from "react-router";
-import { Button, Input, Panel } from "@iwfw/ui";
 import { createAuth } from "@iwfw/auth";
 import { getConfig, getEnv } from "../lib/env.server";
 import { getOptionalAuth, homePathForAuth } from "../lib/session.server";
 import { log } from "../lib/logger";
+import {
+  FormAlert,
+  StepHeader,
+} from "../components/start-funnel";
+import { QuestionnaireField } from "../components/questionnaire-field";
 import type { Route } from "./+types/reset-password";
+import "../start.css";
 
 export function meta(_args: Route.MetaArgs) {
   return [{ title: "Reset password — iwantfreewebsite" }];
@@ -67,97 +72,81 @@ export default function ResetPassword({
 
   if (actionData && "ok" in actionData && actionData.ok) {
     return (
-      <main className="mx-auto flex max-w-md flex-col gap-6 px-4 py-16">
-        <h1 className="text-3xl font-bold">Password updated</h1>
-        <Panel>
-          <p role="status">
-            Your password has been changed. You can log in with the new
-            password.
+      <main className="st-auth">
+        <div className="st-wrap">
+          <StepHeader
+            kicker="Account"
+            title="Password updated"
+            lead="You can log in with the new password."
+          />
+          <FormAlert tone="ok">Your password has been changed.</FormAlert>
+          <p className="st-fine">
+            <Link to="/get-started/account?mode=login">Customer log in</Link>
+            {" · "}
+            <Link to="/admin/login">Staff sign in</Link>
           </p>
-        </Panel>
-        <p className="text-sm">
-          <Link
-            className="font-semibold text-[var(--iwfw-accent)]"
-            to="/get-started/account?mode=login"
-          >
-            Customer log in
-          </Link>
-          {" · "}
-          <Link
-            className="font-semibold text-[var(--iwfw-accent)]"
-            to="/admin/login"
-          >
-            Staff sign in
-          </Link>
-        </p>
-        <p className="text-sm text-[var(--iwfw-muted)]">
-          Staff with MFA enabled will be asked for an authenticator code after
-          the password step.
-        </p>
+          <p className="st-fine">
+            Staff with MFA enabled will be asked for an authenticator code after
+            the password step.
+          </p>
+        </div>
       </main>
     );
   }
 
   if (!loaderData.hasToken && !token) {
     return (
-      <main className="mx-auto flex max-w-md flex-col gap-6 px-4 py-16">
-        <h1 className="text-3xl font-bold">Reset password</h1>
-        <Panel>
-          <p>
-            This page needs a valid reset link from your email. Request a new
-            link if yours has expired.
+      <main className="st-auth">
+        <div className="st-wrap">
+          <StepHeader
+            kicker="Account"
+            title="Reset password"
+            lead="This page needs a valid reset link from your email. Request a new link if yours has expired."
+          />
+          <p className="st-fine">
+            <Link to="/forgot-password">Request a reset link</Link>
           </p>
-        </Panel>
-        <p className="text-sm">
-          <Link
-            className="font-semibold text-[var(--iwfw-accent)]"
-            to="/forgot-password"
-          >
-            Request a reset link
-          </Link>
-        </p>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto flex max-w-md flex-col gap-6 px-4 py-16">
-      <h1 className="text-3xl font-bold">Choose a new password</h1>
-      <Panel>
-        <Form method="post" className="space-y-4">
+    <main className="st-auth">
+      <div className="st-wrap">
+        <StepHeader
+          kicker="Account"
+          title="Choose a new password"
+          lead="Pick a password of at least 10 characters."
+        />
+        <Form method="post" className="st-sheet st-form">
           <input type="hidden" name="token" value={token} />
-          <label className="block text-sm font-semibold">
-            New password
-            <Input
-              className="mt-1"
-              name="password"
-              type="password"
-              required
-              minLength={10}
-              autoComplete="new-password"
-            />
-          </label>
-          <label className="block text-sm font-semibold">
-            Confirm password
-            <Input
-              className="mt-1"
-              name="confirmPassword"
-              type="password"
-              required
-              minLength={10}
-              autoComplete="new-password"
-            />
-          </label>
+          <QuestionnaireField
+            label="New password"
+            name="password"
+            type="password"
+            required
+            minLength={10}
+            autoComplete="new-password"
+            markOptional={false}
+          />
+          <QuestionnaireField
+            label="Confirm password"
+            name="confirmPassword"
+            type="password"
+            required
+            minLength={10}
+            autoComplete="new-password"
+            markOptional={false}
+          />
           {actionData && "error" in actionData && actionData.error ? (
-            <p className="text-sm text-[var(--iwfw-danger)]" role="alert">
-              {actionData.error}
-            </p>
+            <FormAlert tone="error">{actionData.error}</FormAlert>
           ) : null}
-          <Button type="submit" disabled={busy} className="w-full">
+          <button type="submit" className="st-btn st-btn--go st-btn--block" disabled={busy}>
             {busy ? "Saving…" : "Update password"}
-          </Button>
+          </button>
         </Form>
-      </Panel>
+      </div>
     </main>
   );
 }

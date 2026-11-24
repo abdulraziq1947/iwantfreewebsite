@@ -1,6 +1,13 @@
-import { Form, Link, redirect, useNavigation, data } from "react-router";
+import { Form, redirect, useNavigation, data } from "react-router";
 import { createDb } from "@iwfw/db";
 import { QuestionnaireField } from "../components/questionnaire-field";
+import {
+  ArrowIcon,
+  ChevronIcon,
+  DefaultSubmit,
+  FormAlert,
+  StepHeader,
+} from "../components/start-funnel";
 import { getEnv } from "../lib/env.server";
 import {
   getOrCreateDraftOrder,
@@ -68,192 +75,244 @@ export async function action({ request, context }: Route.ActionArgs) {
   throw redirect("/get-started/media");
 }
 
+/** Which field each step-1 validation message belongs to. */
+const ERROR_FIELD: Record<string, string> = {
+  "Please enter your business name.": "tradingName",
+  "Please enter your industry.": "industry",
+  "Please enter your business address.": "address",
+  "Please list your services.": "list",
+  "Please add a short business introduction.": "introduction",
+};
+
 export default function GetStartedBusiness({
   loaderData,
   actionData,
 }: Route.ComponentProps) {
   const navigation = useNavigation();
   const busy = navigation.state !== "idle";
+  const submitting =
+    navigation.state === "submitting"
+      ? String(navigation.formData?.get("intent") ?? "next")
+      : null;
   const data = actionData?.data ?? loaderData.data;
+  const error = actionData && "error" in actionData ? actionData.error : null;
+  const fieldError = (name: string) =>
+    error && ERROR_FIELD[error] === name ? error : null;
+  const hasDesignNotes = [
+    data.website.designPreferences,
+    data.website.colours,
+    data.website.exampleWebsites,
+    data.website.additionalInstructions,
+  ].some((value) => value.trim());
 
   return (
-    <div className="iwfw-start">
-      <header className="iwfw-start__intro">
-        <p className="iwfw-start__kicker">Step 2 of 5 · Business details</p>
-        <h1>Business details</h1>
-        <p className="iwfw-start__lead">
-          Tell us what you do in plain English. We use this to build a website
-          that represents your business properly.
-        </p>
-        <div className="iwfw-order-progress" aria-hidden>
-          <span style={{ width: "40%" }} />
-        </div>
-      </header>
+    <div className="st-step">
+      <StepHeader
+        kicker="Step 2 of 5"
+        title="About your business"
+        lead="Tell us what you do in plain English. We use this to build a website that represents your business properly."
+      />
 
-      <Form method="post" className="iwfw-start__card iwfw-start__form">
-        <h2 className="iwfw-start__subhead">Business</h2>
-        <QuestionnaireField
-          label="Business / trading name"
-          name="tradingName"
-          required
-          defaultValue={data.business.tradingName}
-          placeholder="Acme Plumbing"
-          autoComplete="organization"
-        />
-        <QuestionnaireField
-          label="Industry / category"
-          name="industry"
-          required
-          defaultValue={data.business.industry}
-          placeholder="Plumbing, dental, removals…"
-        />
-        <QuestionnaireField
-          label="Business address"
-          name="address"
-          required
-          multiline
-          rows={3}
-          defaultValue={data.business.address}
-          placeholder="Street, town, postcode"
-        />
-        <QuestionnaireField
-          label="Service areas"
-          name="serviceAreas"
-          multiline
-          rows={2}
-          defaultValue={data.business.serviceAreas}
-          placeholder="Towns, postcodes, or nationwide"
-          hint="Optional — helps us write location pages that match how you trade."
-        />
+      <Form method="post" className="st-sheet st-form">
+        <DefaultSubmit disabled={busy} />
 
-        <h2 className="iwfw-start__subhead">Services</h2>
-        <QuestionnaireField
-          label="Services offered"
-          name="list"
-          required
-          multiline
-          rows={5}
-          defaultValue={data.services.list}
-          placeholder={"Boiler repairs\nBathroom installation\nEmergency call-outs"}
-          hint="One service per line works best."
-        />
-        <input type="hidden" name="descriptions" value={data.services.descriptions} />
-
-        <h2 className="iwfw-start__subhead">About &amp; hours</h2>
-        <QuestionnaireField
-          label="About your business"
-          name="introduction"
-          required
-          multiline
-          rows={4}
-          defaultValue={data.about.introduction}
-          placeholder="A short introduction customers can trust…"
-        />
-        <div className="iwfw-field-grid iwfw-field-grid--2">
+        <section className="st-group" aria-labelledby="st-biz-basics">
+          <div className="st-group__head">
+            <h2 id="st-biz-basics">The basics</h2>
+          </div>
           <QuestionnaireField
-            label="Phone to show on the website"
-            name="displayPhone"
-            defaultValue={data.about.displayPhone}
-            placeholder="Same as contact phone is fine"
+            label="Business or trading name"
+            name="tradingName"
+            required
+            defaultValue={data.business.tradingName}
+            placeholder="Acme Plumbing"
+            autoComplete="organization"
+            error={fieldError("tradingName")}
           />
           <QuestionnaireField
-            label="Email to show on the website"
-            name="displayEmail"
-            type="email"
-            defaultValue={data.about.displayEmail}
-            placeholder="hello@yourbusiness.co.uk"
+            label="Industry or trade"
+            name="industry"
+            required
+            defaultValue={data.business.industry}
+            placeholder="Plumbing, dental, removals…"
+            error={fieldError("industry")}
           />
-        </div>
-        <QuestionnaireField
-          label="Opening hours"
-          name="openingHours"
-          multiline
-          rows={3}
-          defaultValue={data.about.openingHours}
-          placeholder={"Mon–Fri 8am–6pm\nSat 9am–1pm"}
-        />
-        <QuestionnaireField
-          label="Existing website or domain"
-          name="existingWebsite"
-          defaultValue={data.about.existingWebsite}
-          placeholder="https://… or leave blank"
-        />
+          <QuestionnaireField
+            label="Business address"
+            name="address"
+            required
+            multiline
+            rows={3}
+            defaultValue={data.business.address}
+            placeholder="Street, town, postcode"
+            autoComplete="street-address"
+            error={fieldError("address")}
+          />
+          <QuestionnaireField
+            label="Areas you cover"
+            name="serviceAreas"
+            multiline
+            rows={2}
+            defaultValue={data.business.serviceAreas}
+            placeholder="Towns, postcodes, or nationwide"
+            hint="Helps us write location pages that match how you trade."
+          />
+        </section>
 
-        <h2 className="iwfw-start__subhead">Website preferences</h2>
+        <section className="st-group" aria-labelledby="st-biz-services">
+          <div className="st-group__head">
+            <h2 id="st-biz-services">What you offer</h2>
+          </div>
+          <QuestionnaireField
+            label="Services you offer"
+            name="list"
+            required
+            multiline
+            rows={5}
+            defaultValue={data.services.list}
+            placeholder={"Boiler repairs\nBathroom installation\nEmergency call-outs"}
+            hint="One service per line works best."
+            error={fieldError("list")}
+          />
+          <input type="hidden" name="descriptions" value={data.services.descriptions} />
+          <QuestionnaireField
+            label="About your business"
+            name="introduction"
+            required
+            multiline
+            rows={4}
+            defaultValue={data.about.introduction}
+            placeholder="How long you’ve been trading, what you’re known for, why customers choose you…"
+            hint="A few sentences is plenty."
+            error={fieldError("introduction")}
+          />
+        </section>
+
+        <section className="st-group" aria-labelledby="st-biz-contact">
+          <div className="st-group__head">
+            <h2 id="st-biz-contact">On your website</h2>
+            <p>How customers should reach you. Leave anything blank that you’d rather not show.</p>
+          </div>
+          <div className="st-pair">
+            <QuestionnaireField
+              label="Phone to show"
+              name="displayPhone"
+              type="tel"
+              defaultValue={data.about.displayPhone}
+              placeholder="Same as contact phone is fine"
+            />
+            <QuestionnaireField
+              label="Email to show"
+              name="displayEmail"
+              type="email"
+              defaultValue={data.about.displayEmail}
+              placeholder="hello@yourbusiness.co.uk"
+            />
+          </div>
+          <QuestionnaireField
+            label="Opening hours"
+            name="openingHours"
+            multiline
+            rows={3}
+            defaultValue={data.about.openingHours}
+            placeholder={"Mon–Fri 8am–6pm\nSat 9am–1pm"}
+          />
+          <QuestionnaireField
+            label="Existing website or domain"
+            name="existingWebsite"
+            inputMode="url"
+            defaultValue={data.about.existingWebsite}
+            placeholder="https://…"
+          />
+        </section>
+
         <input
           type="hidden"
           name="preferredPages"
           value={data.website.preferredPages}
         />
-        <QuestionnaireField
-          label="Design preferences"
-          name="designPreferences"
-          multiline
-          rows={2}
-          defaultValue={data.website.designPreferences}
-          placeholder="Clean and modern, bold and trustworthy…"
-        />
-        <QuestionnaireField
-          label="Brand colours"
-          name="colours"
-          defaultValue={data.website.colours}
-          placeholder="Navy and white, or leave blank"
-        />
-        <QuestionnaireField
-          label="Example websites you like"
-          name="exampleWebsites"
-          multiline
-          rows={2}
-          defaultValue={data.website.exampleWebsites}
-          placeholder="Links or brand names"
-        />
-        <QuestionnaireField
-          label="Additional instructions"
-          name="additionalInstructions"
-          multiline
-          rows={2}
-          defaultValue={data.website.additionalInstructions}
-          placeholder="Anything else we should know before we build"
-        />
+        <details className="st-group st-more" open={hasDesignNotes}>
+          <summary>
+            <span>
+              <strong>Design preferences</strong>
+              <span className="st-more__note">
+                Optional. Add colours, styles or sites you like, or skip this.
+              </span>
+            </span>
+            <ChevronIcon />
+          </summary>
+          <div className="st-more__body">
+            <QuestionnaireField
+              label="Look and feel"
+              name="designPreferences"
+              multiline
+              rows={2}
+              defaultValue={data.website.designPreferences}
+              placeholder="Clean and modern, bold and trustworthy…"
+            />
+            <QuestionnaireField
+              label="Brand colours"
+              name="colours"
+              defaultValue={data.website.colours}
+              placeholder="Navy and white"
+            />
+            <QuestionnaireField
+              label="Websites you like"
+              name="exampleWebsites"
+              multiline
+              rows={2}
+              defaultValue={data.website.exampleWebsites}
+              placeholder="Links or brand names"
+            />
+            <QuestionnaireField
+              label="Anything else we should know"
+              name="additionalInstructions"
+              multiline
+              rows={2}
+              defaultValue={data.website.additionalInstructions}
+              placeholder="Pages you need, things to avoid, deadlines…"
+            />
+          </div>
+        </details>
 
-        {actionData?.error && (
-          <p className="iwfw-start__error" role="alert">
-            {actionData.error}
-          </p>
-        )}
-        {actionData && "saved" in actionData && actionData.saved && (
-          <p className="iwfw-start__ok" role="status">
-            Progress saved. You can resume later on this device.
-          </p>
-        )}
+        {error ? <FormAlert tone="error">{error}</FormAlert> : null}
+        {actionData && "saved" in actionData && actionData.saved ? (
+          <FormAlert tone="ok">
+            Progress saved. You can pick up where you left off on this device.
+          </FormAlert>
+        ) : null}
 
-        <div className="iwfw-order-actions">
+        <div className="st-actions">
           <button
             type="submit"
             name="intent"
             value="back"
-            className="iwfw-btn iwfw-btn--outline"
+            formNoValidate
+            className="st-btn st-btn--quiet st-actions__back"
             disabled={busy}
           >
+            <ArrowIcon direction="left" />
             Back
           </button>
           <button
             type="submit"
             name="intent"
             value="save"
-            className="iwfw-btn iwfw-btn--outline"
+            formNoValidate
+            className="st-btn st-btn--quiet"
             disabled={busy}
           >
-            Save &amp; resume later
+            {submitting === "save" ? "Saving…" : "Save and finish later"}
           </button>
           <button
             type="submit"
             name="intent"
             value="next"
-            className="iwfw-btn iwfw-btn--green"
+            className="st-btn st-btn--go st-actions__next"
             disabled={busy}
           >
-            {busy ? "Saving…" : "Continue"}
+            {submitting === "next" ? "Saving…" : "Continue"}
+            <ArrowIcon />
           </button>
         </div>
       </Form>

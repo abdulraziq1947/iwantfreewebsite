@@ -1,9 +1,10 @@
-import { Badge } from "@iwfw/ui";
+import { Link } from "react-router";
 import { createDb, customerUploads, desc, eq, organisations } from "@iwfw/db";
 import { getEnv } from "../lib/env.server";
 import { requireStaffSession } from "../lib/session.server";
 import { categoryLabel, isUploadCategory } from "../lib/image-sniff";
 import { formatAdminDate } from "../lib/admin-ops";
+import { AdminCount, AdminPageHeader, AdminStatus } from "../components/admin-ui";
 import type { Route } from "./+types/admin.media";
 
 export function meta(_args: Route.MetaArgs) {
@@ -32,9 +33,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       byteSize: r.byteSize,
       organisationId: r.organisationId,
       pendingOrderId: r.pendingOrderId,
-      tradingName: r.organisationId
-        ? (orgName.get(r.organisationId) ?? null)
-        : null,
+      tradingName: r.organisationId ? (orgName.get(r.organisationId) ?? null) : null,
       createdAt: r.createdAt.toISOString(),
       contentUrl: `/api/uploads/${r.id}/content`,
     })),
@@ -48,42 +47,35 @@ function formatBytes(n: number) {
 
 export default function AdminMediaPage({ loaderData }: Route.ComponentProps) {
   return (
-    <div className="iwfw-admin-page">
-      <header className="iwfw-admin-page__header">
-        <div>
-          <p className="iwfw-admin-page__eyebrow">Assets</p>
-          <h1>Customer images</h1>
-          <p>
-            Private R2 assets for website builds. Open a file only when you need
-            it for production work.
-          </p>
-        </div>
-        <p className="iwfw-admin-page__count">
-          {loaderData.uploads.length} shown
-        </p>
-      </header>
+    <div className="adm-page">
+      <AdminPageHeader
+        kicker="Assets"
+        title="Customer images"
+        lead="Private R2 assets for website builds. Open a file only when you need it for production work."
+        aside={<AdminCount value={loaderData.uploads.length} label="shown" />}
+      />
 
-      <section className="iwfw-admin-panel">
+      <section className="adm-sheet" aria-label="Customer images">
         {loaderData.uploads.length === 0 ? (
-          <p className="iwfw-admin-empty">No customer images yet.</p>
+          <p className="adm-empty">No customer images yet.</p>
         ) : (
-          <ul className="iwfw-admin-media">
+          <ul className="adm-media">
             {loaderData.uploads.map((u) => (
-              <li key={u.id} className="iwfw-admin-media__item">
+              <li key={u.id} className="adm-media__item">
                 <img
                   src={u.contentUrl}
                   alt=""
-                  className="iwfw-admin-media__thumb"
+                  className="adm-media__thumb"
                   loading="lazy"
                 />
-                <div className="iwfw-admin-media__body">
+                <div className="adm-media__body">
                   <strong>{u.originalFilename}</strong>
-                  <p className="iwfw-admin-media__website">
+                  <p className="adm-media__website">
                     Website:{" "}
                     {u.organisationId && u.tradingName ? (
-                      <a href={`/admin/clients/${u.organisationId}?tab=images`}>
+                      <Link to={`/admin/clients/${u.organisationId}?tab=images`}>
                         {u.tradingName}
-                      </a>
+                      </Link>
                     ) : u.pendingOrderId ? (
                       <>Order {u.pendingOrderId.slice(0, 10)}…</>
                     ) : (
@@ -97,13 +89,15 @@ export default function AdminMediaPage({ loaderData }: Route.ComponentProps) {
                     · {formatBytes(u.byteSize)} · {formatAdminDate(u.createdAt)}
                   </p>
                 </div>
-                <div className="iwfw-admin-media__meta">
-                  <Badge>{u.contentType.replace("image/", "")}</Badge>
+                <div className="adm-media__meta">
+                  <AdminStatus tone="neutral">
+                    {u.contentType.replace("image/", "")}
+                  </AdminStatus>
                   <a
                     href={u.contentUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="iwfw-btn iwfw-btn--outline iwfw-admin__btn-sm"
+                    className="adm-btn adm-btn--sm"
                   >
                     Open
                   </a>

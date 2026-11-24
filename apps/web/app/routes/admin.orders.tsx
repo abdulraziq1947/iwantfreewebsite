@@ -1,9 +1,15 @@
-import { Badge } from "@iwfw/ui";
+import { Link } from "react-router";
 import { createDb } from "@iwfw/db";
 import { getEnv } from "../lib/env.server";
 import { requireStaffSession } from "../lib/session.server";
 import { formatAdminDate } from "../lib/admin-ops";
 import { listAdminOrders } from "../lib/admin-ops.server";
+import {
+  AdminCount,
+  AdminPageHeader,
+  AdminStatus,
+  statusLabel,
+} from "../components/admin-ui";
 import type { Route } from "./+types/admin.orders";
 
 export function meta(_args: Route.MetaArgs) {
@@ -29,65 +35,71 @@ function orderTone(status: string): "success" | "warning" | "danger" | "neutral"
 
 export default function AdminOrdersPage({ loaderData }: Route.ComponentProps) {
   return (
-    <div className="iwfw-admin-page">
-      <header className="iwfw-admin-page__header">
-        <div>
-          <p className="iwfw-admin-page__eyebrow">Funnel</p>
-          <h1>Orders</h1>
-          <p>
-            Pending and paid checkout orders from the get-started funnel —
-            including drafts still in progress.
-          </p>
-        </div>
-        <p className="iwfw-admin-page__count">{loaderData.orders.length} total</p>
-      </header>
+    <div className="adm-page">
+      <AdminPageHeader
+        kicker="Funnel"
+        title="Orders"
+        lead="Pending and paid checkout orders from the get-started funnel — including drafts still in progress."
+        aside={<AdminCount value={loaderData.orders.length} label="total" />}
+      />
 
-      <section className="iwfw-admin-panel">
+      <section className="adm-sheet" aria-label="Orders">
         {loaderData.orders.length === 0 ? (
-          <p className="iwfw-admin-empty">No orders yet.</p>
+          <p className="adm-empty">No orders yet.</p>
         ) : (
-          <div className="iwfw-admin-table-wrap">
-            <table className="iwfw-admin-table">
+          <div className="adm-table-wrap">
+            <table className="adm-table">
               <thead>
                 <tr>
-                  <th>Business</th>
-                  <th>Contact</th>
-                  <th>Domain</th>
-                  <th>Status</th>
-                  <th>Paid</th>
-                  <th>Created</th>
+                  <th scope="col">Business</th>
+                  <th scope="col">Contact</th>
+                  <th scope="col">Domain</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" className="is-num">
+                    Paid
+                  </th>
+                  <th scope="col" className="is-num">
+                    Created
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {loaderData.orders.map((o) => (
                   <tr key={o.id}>
                     <td>
-                      <strong>{o.tradingName || "—"}</strong>
-                      <span className="iwfw-admin-table__sub">{o.id}</span>
+                      {o.organisationId ? (
+                        <Link
+                          to={`/admin/clients/${o.organisationId}`}
+                          className="adm-table__primary"
+                        >
+                          {o.tradingName || "—"}
+                        </Link>
+                      ) : (
+                        <strong>{o.tradingName || "—"}</strong>
+                      )}
+                      <span className="adm-id">{o.id}</span>
                     </td>
                     <td>
                       <strong>{o.fullName || "—"}</strong>
-                      <span className="iwfw-admin-table__sub">
-                        {o.email || "—"}
-                      </span>
+                      <span className="adm-sub">{o.email || "—"}</span>
                     </td>
                     <td>
                       {o.domainName ? (
                         <>
                           <strong>{o.domainName}</strong>
-                          <span className="iwfw-admin-table__sub">
-                            {o.domainMode ?? "—"}
-                          </span>
+                          <span className="adm-sub">{o.domainMode ?? "—"}</span>
                         </>
                       ) : (
-                        <span className="iwfw-admin-muted">None</span>
+                        <span className="adm-quiet">None</span>
                       )}
                     </td>
                     <td>
-                      <Badge tone={orderTone(o.status)}>{o.status}</Badge>
+                      <AdminStatus tone={orderTone(o.status)}>
+                        {statusLabel(o.status)}
+                      </AdminStatus>
                     </td>
-                    <td>{formatAdminDate(o.paidAt)}</td>
-                    <td>{formatAdminDate(o.createdAt)}</td>
+                    <td className="is-num">{formatAdminDate(o.paidAt)}</td>
+                    <td className="is-num">{formatAdminDate(o.createdAt)}</td>
                   </tr>
                 ))}
               </tbody>

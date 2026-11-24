@@ -1,4 +1,9 @@
 import { Form, Link, redirect, useNavigation } from "react-router";
+import {
+  FormAlert,
+  StepHeader,
+} from "../components/start-funnel";
+import { QuestionnaireField } from "../components/questionnaire-field";
 import { createAuth } from "@iwfw/auth";
 import { createDb } from "@iwfw/db";
 import { requestActivationEmailResend } from "../lib/activation-email.server";
@@ -88,95 +93,89 @@ export default function ActivateAccount({
     Boolean(actionData && "error" in actionData && actionData.error);
 
   return (
-    <div className="iwfw-start">
-      <header className="iwfw-start__intro">
-        <p className="iwfw-start__kicker">Account activation</p>
-        <h1>Choose your password</h1>
-        <p className="iwfw-start__lead">
-          Your subscription is confirmed. Set a password to open your dashboard.
-          We never send your password by email.
-        </p>
-      </header>
+    <div className="st-step">
+      <StepHeader
+        kicker="Account activation"
+        title="Choose your password"
+        lead="Your subscription is confirmed. Set a password to open your dashboard. We never send your password by email."
+      />
 
-      <Form method="post" className="iwfw-start__card iwfw-start__form">
+      <Form method="post" className="st-sheet st-form">
         <input type="hidden" name="intent" value="activate" />
         <input type="hidden" name="token" value={loaderData.token} />
-        {!loaderData.hasToken && (
-          <p className="iwfw-start__error" role="alert">
+        {!loaderData.hasToken ? (
+          <FormAlert tone="error">
             This activation link is missing a token. Use the link from your
             email, or request a new one below.
-          </p>
-        )}
-        <label className="iwfw-field">
-          <span>New password (min 10 characters)</span>
-          <input type="password" name="password" required minLength={10} />
-        </label>
-        <label className="iwfw-field">
-          <span>Confirm password</span>
-          <input type="password" name="confirm" required minLength={10} />
-        </label>
-        {actionData && "error" in actionData && actionData.error && (
-          <p className="iwfw-start__error" role="alert">
-            {actionData.error}
-          </p>
-        )}
+          </FormAlert>
+        ) : null}
+        <QuestionnaireField
+          label="New password"
+          name="password"
+          type="password"
+          required
+          minLength={10}
+          hint="At least 10 characters"
+          markOptional={false}
+        />
+        <QuestionnaireField
+          label="Confirm password"
+          name="confirm"
+          type="password"
+          required
+          minLength={10}
+          markOptional={false}
+        />
+        {actionData && "error" in actionData && actionData.error ? (
+          <FormAlert tone="error">{actionData.error}</FormAlert>
+        ) : null}
         <button
           type="submit"
-          className="iwfw-btn iwfw-btn--green"
+          className="st-btn st-btn--go st-btn--block"
           disabled={busy || !loaderData.hasToken}
         >
           {busy ? "Saving…" : "Activate & continue"}
         </button>
       </Form>
 
-      {showResend && (
-        <section className="iwfw-start__card" style={{ marginTop: "1.25rem" }}>
-          <h2 style={{ marginTop: 0, fontSize: "1.15rem" }}>
-            Need a new activation link?
-          </h2>
-          <p className="iwfw-start__fine">
+      {showResend ? (
+        <section className="st-card" style={{ marginTop: "1.15rem" }}>
+          <h2>Need a new activation link?</h2>
+          <p className="st-fine">
             If your email never arrived or the link expired, enter the email you
             used at checkout. We only send a new link after a verified payment.
           </p>
-          <Form method="post" className="iwfw-start__form">
+          <Form method="post" className="st-form">
             <input type="hidden" name="intent" value="resend" />
-            <label className="iwfw-field">
-              <span>Account email</span>
-              <input
-                type="email"
-                name="email"
-                required
-                autoComplete="email"
-                placeholder="you@business.co.uk"
-              />
-            </label>
+            <QuestionnaireField
+              label="Account email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="you@business.co.uk"
+              markOptional={false}
+            />
             {actionData &&
-              "resendError" in actionData &&
-              actionData.resendError && (
-                <p className="iwfw-start__error" role="alert">
-                  {actionData.resendError}
-                </p>
-              )}
+            "resendError" in actionData &&
+            actionData.resendError ? (
+              <FormAlert tone="error">{actionData.resendError}</FormAlert>
+            ) : null}
             {actionData &&
-              "resendMessage" in actionData &&
-              actionData.resendMessage && (
-                <p className="iwfw-start__fine" role="status">
-                  {actionData.resendMessage}
-                </p>
-              )}
-            <button
-              type="submit"
-              className="iwfw-btn iwfw-btn--outline"
-              disabled={busy}
-            >
+            "resendMessage" in actionData &&
+            actionData.resendMessage ? (
+              <FormAlert tone="ok">{actionData.resendMessage}</FormAlert>
+            ) : null}
+            <button type="submit" className="st-btn st-btn--quiet" disabled={busy}>
               {busy ? "Sending…" : "Email me a new link"}
             </button>
           </Form>
-          <p className="iwfw-start__fine">
-            Already activated? <Link to="/login">Log in</Link>
+          <p className="st-fine">
+            Already activated?{" "}
+            <Link to="/get-started/account?mode=login">Log in</Link>
           </p>
         </section>
-      )}
+      ) : null}
     </div>
   );
 }

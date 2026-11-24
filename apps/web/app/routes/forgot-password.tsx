@@ -1,11 +1,16 @@
 import { Form, Link, useNavigation } from "react-router";
-import { Button, Input, Panel } from "@iwfw/ui";
 import { createAuth } from "@iwfw/auth";
 import { getConfig, getEnv } from "../lib/env.server";
 import { getOptionalAuth, homePathForAuth } from "../lib/session.server";
 import { log } from "../lib/logger";
 import { redirect } from "react-router";
+import {
+  FormAlert,
+  StepHeader,
+} from "../components/start-funnel";
+import { QuestionnaireField } from "../components/questionnaire-field";
 import type { Route } from "./+types/forgot-password";
+import "../start.css";
 
 export function meta(_args: Route.MetaArgs) {
   return [{ title: "Forgot password — iwantfreewebsite" }];
@@ -55,45 +60,39 @@ export default function ForgotPassword({ actionData }: Route.ComponentProps) {
   const busy = navigation.state !== "idle";
 
   return (
-    <main className="mx-auto flex max-w-md flex-col gap-6 px-4 py-16">
-      <h1 className="text-3xl font-bold">Forgot password</h1>
-      <p className="text-[var(--iwfw-muted)]">
-        Enter your account email and we’ll send a one-time reset link.
-      </p>
-      <Panel>
-        {actionData && "ok" in actionData && actionData.ok ? (
-          <p role="status">{actionData.message}</p>
-        ) : (
-          <Form method="post" className="space-y-4">
-            <label className="block text-sm font-semibold">
-              Email
-              <Input
-                className="mt-1"
+    <main className="st-auth">
+      <div className="st-wrap">
+        <StepHeader
+          kicker="Account"
+          title="Forgot password"
+          lead="Enter your account email and we’ll send a one-time reset link."
+        />
+        <div className="st-sheet">
+          {actionData && "ok" in actionData && actionData.ok ? (
+            <FormAlert tone="ok">{actionData.message}</FormAlert>
+          ) : (
+            <Form method="post" className="st-form">
+              <QuestionnaireField
+                label="Email"
                 name="email"
                 type="email"
                 required
                 autoComplete="email"
+                markOptional={false}
               />
-            </label>
-            {actionData && "error" in actionData && actionData.error ? (
-              <p className="text-sm text-[var(--iwfw-danger)]" role="alert">
-                {actionData.error}
-              </p>
-            ) : null}
-            <Button type="submit" disabled={busy} className="w-full">
-              {busy ? "Sending…" : "Send reset link"}
-            </Button>
-          </Form>
-        )}
-      </Panel>
-      <p className="text-sm text-[var(--iwfw-muted)]">
-        <Link
-          className="font-semibold text-[var(--iwfw-accent)]"
-          to="/get-started/account?mode=login"
-        >
-          Back to log in
-        </Link>
-      </p>
+              {actionData && "error" in actionData && actionData.error ? (
+                <FormAlert tone="error">{actionData.error}</FormAlert>
+              ) : null}
+              <button type="submit" className="st-btn st-btn--go st-btn--block" disabled={busy}>
+                {busy ? "Sending…" : "Send reset link"}
+              </button>
+            </Form>
+          )}
+        </div>
+        <p className="st-fine">
+          <Link to="/get-started/account?mode=login">Back to log in</Link>
+        </p>
+      </div>
     </main>
   );
 }
