@@ -80,8 +80,19 @@ export default function ResetPassword({
             className="font-semibold text-[var(--iwfw-accent)]"
             to="/get-started/account?mode=login"
           >
-            Log in
+            Customer log in
           </Link>
+          {" · "}
+          <Link
+            className="font-semibold text-[var(--iwfw-accent)]"
+            to="/admin/login"
+          >
+            Staff sign in
+          </Link>
+        </p>
+        <p className="text-sm text-[var(--iwfw-muted)]">
+          Staff with MFA enabled will be asked for an authenticator code after
+          the password step.
         </p>
       </main>
     );
