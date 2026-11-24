@@ -5,7 +5,7 @@ import {
   isAssignableRole,
   PLATFORM_ROLE_LABELS,
   TEAM_MANAGER_ROLES,
-} from "./admin-team.server";
+} from "./admin-team";
 
 function auth(roles: AuthContext["staffRoles"]): AuthContext {
   return {

@@ -3,7 +3,7 @@ import { createDb } from "@iwfw/db";
 import { requireStaffSession } from "../lib/session.server";
 import { getEnv } from "../lib/env.server";
 import { ADMIN_NAV } from "../lib/admin-ops";
-import { TEAM_MANAGER_ROLES } from "../lib/admin-team.server";
+import { TEAM_MANAGER_ROLES } from "../lib/admin-team";
 import { BrandLogo } from "../components/brand-logo";
 import { NotificationBell } from "../components/notification-bell";
 import { countOpenStaffTickets } from "../lib/support.server";
