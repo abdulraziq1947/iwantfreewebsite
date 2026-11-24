@@ -22,7 +22,7 @@ Staff sign in at **`/admin/login`** (separate from customer `/get-started/accoun
 | Staff login | `/admin/login` | Staff-only; customers redirected away |
 | Overview | `/admin` | Ops snapshot |
 | Clients | `/admin/clients` | Search, live/not-live, attention filters |
-| Client folder | `/admin/clients/:orgId` | Brief, mark live/preview, mailbox, notify, billing |
+| Client folder | `/admin/clients/:orgId` | Brief, mark live/preview, mailbox, notify, billing; permanent delete (owner/admin) |
 | Ops tasks | `/admin/ops` | GBP weekly + domain renewal reminders (manual generate; no auto-publish/purchase) |
 | Subscriptions | `/admin/subscriptions` | Stripe-synced status |
 | Orders | `/admin/orders` | Pending order funnel |
@@ -36,7 +36,7 @@ Staff sign in at **`/admin/login`** (separate from customer `/get-started/accoun
 
 ## Audit logs
 
-Sensitive actions write to `audit_logs` (mark live, preview, mailbox upsert, org status, ops task changes, domain renews-at, staff/customer create). Passwords are redacted.
+Sensitive actions write to `audit_logs` (mark live, preview, mailbox upsert, org status, permanent delete, ops task changes, domain renews-at, staff/customer create). Passwords are redacted. Permanent delete requires typing the trading name and is limited to platform owners / administrators; active Stripe subscriptions must be cancelled first.
 
 ## Domain & GBP ops
 
