@@ -3,9 +3,44 @@
 /* Self-hosted fonts — avoid Google Fonts CDN (PECR / third-party IP transfer). */
 @import "@fontsource-variable/plus-jakarta-sans/wght.css";
 
+/* Archivo (SIL Open Font License 1.1), semi-expanded static cuts, latin subset. */
+@font-face {
+  font-family: "Archivo SemiExpanded";
+  src: url("/fonts/archivo-semiexpanded-700-latin.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Archivo SemiExpanded";
+  src: url("/fonts/archivo-semiexpanded-800-latin.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --font-sans: var(--iwfw-font-sans);
   --font-display: var(--iwfw-font-display);
+}
+
+/* Brand system shared by the homepage, registration, customer and admin areas. */
+:root {
+  --brand-ink: #0b1220;
+  --brand-ink-deep: #070c17;
+  --brand-paper: #f5f3ee;
+  --brand-muted: #4a5568;
+  --brand-muted-inv: #a3aec0;
+  --brand-line: rgba(11, 18, 32, 0.12);
+  --brand-line-inv: rgba(255, 255, 255, 0.12);
+  --brand-mark: #f5c518;
+  --brand-blue: #1e5eff;
+  /* White text on this green meets WCAG AA (≈5:1); #16a34a does not. */
+  --brand-go: #15803d;
+  --brand-go-hover: #116632;
+  --brand-display: "Archivo SemiExpanded", var(--iwfw-font-display);
+  --brand-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 html {
