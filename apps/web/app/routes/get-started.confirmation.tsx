@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { StepHeader } from "../components/start-funnel";
 import { createDb, eq, pendingOrders } from "@iwfw/db";
 import { getConfig, getEnv } from "../lib/env.server";
 import { getStripe } from "../lib/stripe.server";
@@ -83,29 +84,29 @@ export default function GetStartedConfirmation({
   loaderData,
 }: Route.ComponentProps) {
   return (
-    <div className="iwfw-start">
-      <header className="iwfw-start__intro">
-        <p className="iwfw-start__kicker">Confirmation</p>
-        <h1>
-          {loaderData.pending
+    <div className="st-step">
+      <StepHeader
+        kicker="Confirmation"
+        title={
+          loaderData.pending
             ? "Confirming your payment"
-            : "Payment confirmed — set up your login"}
-        </h1>
-        <p className="iwfw-start__lead">
-          {loaderData.pending
+            : "Payment confirmed — set up your login"
+        }
+        lead={
+          loaderData.pending
             ? "We’re confirming your payment. This usually takes a few seconds — refresh this page if it hasn’t updated yet."
-            : `Thanks${loaderData.tradingName ? `, ${loaderData.tradingName}` : ""} — your order is active. Check your email for an activation link, or log in if you already have a password.`}
-        </p>
-      </header>
+            : `Thanks${loaderData.tradingName ? `, ${loaderData.tradingName}` : ""} — your order is active. Check your email for an activation link, or log in if you already have a password.`
+        }
+      />
 
-      <section className="iwfw-start__card">
-        <dl className="iwfw-start__dl">
-          {loaderData.email && (
+      <section className="st-card">
+        <dl className="st-dl">
+          {loaderData.email ? (
             <div>
               <dt>Account email</dt>
               <dd>{loaderData.email}</dd>
             </div>
-          )}
+          ) : null}
           <div>
             <dt>Status</dt>
             <dd>
@@ -124,30 +125,25 @@ export default function GetStartedConfirmation({
           </div>
         </dl>
 
-        {!loaderData.pending && (
-          <div className="iwfw-start__form iwfw-start__form--spaced">
-            <Link
-              to="/get-started/activate"
-              className="iwfw-btn iwfw-btn--green iwfw-btn--block"
-            >
+        {!loaderData.pending ? (
+          <div className="st-form" style={{ marginTop: "1rem" }}>
+            <Link to="/get-started/activate" className="st-btn st-btn--go st-btn--block">
               {loaderData.activationHint
                 ? "Set your password"
                 : "Set your password / resend email"}
             </Link>
-            <Link to="/login" className="iwfw-btn iwfw-btn--outline iwfw-btn--block">
+            <Link
+              to="/get-started/account?mode=login"
+              className="st-btn st-btn--quiet st-btn--block"
+            >
               Go to login
             </Link>
-            <Link
-              to="/dashboard"
-              className="iwfw-btn iwfw-btn--outline iwfw-btn--block"
-            >
+            <Link to="/dashboard" className="st-btn st-btn--quiet st-btn--block">
               Open dashboard
             </Link>
           </div>
-        )}
-
-        {loaderData.pending && (
-          <p className="iwfw-start__fine">
+        ) : (
+          <p className="st-fine">
             Need help?{" "}
             <a href="mailto:support@iwantfreewebsite.com">
               support@iwantfreewebsite.com

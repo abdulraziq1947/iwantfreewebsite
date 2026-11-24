@@ -17,6 +17,11 @@ import {
   TERMS_VERSION,
 } from "../lib/get-started";
 import { CTA_REASSURANCE } from "../lib/marketing";
+import {
+  ArrowIcon,
+  FormAlert,
+  StepHeader,
+} from "../components/start-funnel";
 import type { Route } from "./+types/get-started.review";
 
 export function meta(_args: Route.MetaArgs) {
@@ -125,154 +130,145 @@ export default function GetStartedReview({
   const busy = navigation.state !== "idle";
 
   return (
-    <div className="iwfw-start">
-      <header className="iwfw-start__intro">
-        <p className="iwfw-start__kicker">Step 5 of 5 · Review &amp; pay</p>
-        <h1>Review &amp; pay</h1>
-        <p className="iwfw-start__lead">
-          You&apos;re about to start a £39.99/month managed website subscription.
-          Confirm your details, then pay securely with Stripe. Your account is
-          created after payment is confirmed.
-        </p>
-        <div className="iwfw-order-progress" aria-hidden>
-          <span style={{ width: "100%" }} />
-        </div>
-      </header>
+    <div className="st-step st-review">
+      <StepHeader
+        kicker="Step 5 of 5"
+        title="Review & pay"
+        lead="You’re about to start a £39.99/month managed website subscription. Confirm your details, then pay securely with Stripe. Your account is created after payment is confirmed."
+      />
 
-      <div className="iwfw-start__split">
-        <section className="iwfw-start__card">
-          <h2>Your order</h2>
-          <dl className="iwfw-start__dl">
-            <div>
-              <dt>Business</dt>
-              <dd>{loaderData.tradingName}</dd>
-            </div>
-            <div>
-              <dt>Email</dt>
-              <dd>{loaderData.email}</dd>
-            </div>
-            <div>
-              <dt>Domain</dt>
-              <dd>
-                {loaderData.domainName}{" "}
-                <span className="iwfw-start__fine">
-                  ({loaderData.domainMode === "existing"
-                    ? "you already own this"
-                    : "we’ll register it after payment"})
-                </span>
-              </dd>
-            </div>
-            <div>
-              <dt>Package</dt>
-              <dd>{PACKAGE_NAME}</dd>
-            </div>
-            <div>
-              <dt>Monthly price</dt>
-              <dd>
-                {PACKAGE_PRICE_LABEL}/month · design, hosting &amp; renewals
-                included
-              </dd>
-            </div>
-          </dl>
-          <h3 className="iwfw-start__subhead">Website requirements</h3>
-          <ul className="iwfw-start__includes iwfw-start__includes--compact">
-            {loaderData.summary.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-          <h3 className="iwfw-start__subhead">Included</h3>
-          <ul className="iwfw-start__includes iwfw-start__includes--compact">
-            {PACKAGE_INCLUDES.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-          {loaderData.domainRecheck && (
-            <p className="iwfw-start__fine">
-              {loaderData.domainRecheck.availability === "available"
-                ? "Domain still looks available."
-                : loaderData.domainRecheck.availability === "unavailable"
-                  ? "This domain may no longer be available — go back to choose another."
-                  : loaderData.domainRecheck.message}
-            </p>
-          )}
-          <p className="iwfw-start__fine">{loaderData.disclaimer}</p>
-        </section>
-
-        <section className="iwfw-start__card">
-          <h2>Before you pay</h2>
-          <ul className="iwfw-start__policy">
-            <li>
-              <strong>£39.99/month</strong> billed in advance — no separate
-              upfront design fee.
-            </li>
-            <li>No minimum term and no cancellation fee.</li>
-            <li>Access continues until the end of the current paid period.</li>
-            <li>
-              If you leave later, we&apos;ll help transfer your website and
-              domain. After that, you arrange hosting yourself.
-            </li>
-            <li>Your account is created after payment is confirmed.</li>
-          </ul>
-
-          <Form method="post" className="iwfw-start__form">
-            <label className="iwfw-check">
-              <input type="checkbox" name="termsAccepted" required />
-              <span>
-                I agree to the{" "}
-                <Link to="/terms" target="_blank" rel="noreferrer">
-                  Terms &amp; Conditions
-                </Link>{" "}
-                and{" "}
-                <Link to="/privacy" target="_blank" rel="noreferrer">
-                  Privacy Policy
-                </Link>
-                . *
+      <section className="st-card">
+        <h2>Your order</h2>
+        <dl className="st-dl">
+          <div>
+            <dt>Business</dt>
+            <dd>{loaderData.tradingName}</dd>
+          </div>
+          <div>
+            <dt>Email</dt>
+            <dd>{loaderData.email}</dd>
+          </div>
+          <div>
+            <dt>Domain</dt>
+            <dd>
+              {loaderData.domainName}{" "}
+              <span className="st-fine" style={{ margin: 0, display: "inline" }}>
+                ({loaderData.domainMode === "existing"
+                  ? "you already own this"
+                  : "we’ll register it after payment"})
               </span>
-            </label>
-            <label className="iwfw-check">
-              <input type="checkbox" name="marketingOptIn" />
-              <span>
-                Optional: email me product tips and offers. Not required for the
-                service. You can unsubscribe anytime. See our{" "}
-                <Link to="/privacy" target="_blank" rel="noreferrer">
-                  Privacy Policy
-                </Link>
-                .
-              </span>
-            </label>
+            </dd>
+          </div>
+          <div>
+            <dt>Package</dt>
+            <dd>{PACKAGE_NAME}</dd>
+          </div>
+          <div>
+            <dt>Monthly price</dt>
+            <dd>
+              {PACKAGE_PRICE_LABEL}/month · design, hosting &amp; renewals
+              included
+            </dd>
+          </div>
+        </dl>
+        <h3 className="st-subhead">Website requirements</h3>
+        <ul className="st-list">
+          {loaderData.summary.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+        <h3 className="st-subhead">Included</h3>
+        <ul className="st-list">
+          {PACKAGE_INCLUDES.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+        {loaderData.domainRecheck ? (
+          <p className="st-fine">
+            {loaderData.domainRecheck.availability === "available"
+              ? "Domain still looks available."
+              : loaderData.domainRecheck.availability === "unavailable"
+                ? "This domain may no longer be available — go back to choose another."
+                : loaderData.domainRecheck.message}
+          </p>
+        ) : null}
+        <p className="st-fine">{loaderData.disclaimer}</p>
+      </section>
 
-            {actionData?.error && (
-              <p className="iwfw-start__error" role="alert">
-                {actionData.error}
-              </p>
-            )}
-            {!loaderData.stripeConfigured && (
-              <p className="iwfw-start__error" role="status">
-                Checkout isn’t available right now. Please try again shortly or
-                contact support@iwantfreewebsite.com.
-              </p>
-            )}
+      <section className="st-card">
+        <h2>Before you pay</h2>
+        <ul className="st-policy">
+          <li>
+            <strong>£39.99/month</strong> billed in advance — no separate
+            upfront design fee.
+          </li>
+          <li>No minimum term and no cancellation fee.</li>
+          <li>Access continues until the end of the current paid period.</li>
+          <li>
+            If you leave later, we’ll help transfer your website and domain.
+            After that, you arrange hosting yourself.
+          </li>
+          <li>Your account is created after payment is confirmed.</li>
+        </ul>
 
-            <div className="iwfw-order-actions">
-              <Link to="/get-started/domain" className="iwfw-btn iwfw-btn--outline">
-                ← Domain
+        <Form method="post" className="st-form">
+          <label className="st-check">
+            <input type="checkbox" name="termsAccepted" required />
+            <span>
+              I agree to the{" "}
+              <Link to="/terms" target="_blank" rel="noreferrer">
+                Terms &amp; Conditions
+              </Link>{" "}
+              and{" "}
+              <Link to="/privacy" target="_blank" rel="noreferrer">
+                Privacy Policy
               </Link>
-              <button
-                type="submit"
-                className="iwfw-btn iwfw-btn--green"
-                disabled={busy || !loaderData.stripeConfigured}
-              >
-                {busy ? "Redirecting…" : "Pay £39.99/month securely"}
-              </button>
-            </div>
-            <p className="iwfw-start__fine">
-              You&apos;ll be taken to Stripe&apos;s secure checkout to start your
-              £39.99/month subscription.
-            </p>
-            <p className="iwfw-start__fine">{CTA_REASSURANCE}</p>
-          </Form>
-        </section>
-      </div>
+              . *
+            </span>
+          </label>
+          <label className="st-check">
+            <input type="checkbox" name="marketingOptIn" />
+            <span>
+              Optional: email me product tips and offers. Not required for the
+              service. You can unsubscribe anytime. See our{" "}
+              <Link to="/privacy" target="_blank" rel="noreferrer">
+                Privacy Policy
+              </Link>
+              .
+            </span>
+          </label>
+
+          {actionData?.error ? (
+            <FormAlert tone="error">{actionData.error}</FormAlert>
+          ) : null}
+          {!loaderData.stripeConfigured ? (
+            <FormAlert tone="error">
+              Checkout isn’t available right now. Please try again shortly or
+              contact support@iwantfreewebsite.com.
+            </FormAlert>
+          ) : null}
+
+          <div className="st-actions">
+            <Link to="/get-started/domain" className="st-btn st-btn--quiet st-actions__back">
+              <ArrowIcon direction="left" />
+              Domain
+            </Link>
+            <button
+              type="submit"
+              className="st-btn st-btn--go st-actions__next"
+              disabled={busy || !loaderData.stripeConfigured}
+            >
+              {busy ? "Redirecting…" : "Pay £39.99/month securely"}
+              <ArrowIcon />
+            </button>
+          </div>
+          <p className="st-fine">
+            You’ll be taken to Stripe’s secure checkout to start your
+            £39.99/month subscription.
+          </p>
+          <p className="st-fine">{CTA_REASSURANCE}</p>
+        </Form>
+      </section>
     </div>
   );
 }

@@ -14,6 +14,12 @@ import {
   type DomainCheckResult,
 } from "../lib/domain-lookup.server";
 import { DOMAIN_DISCLAIMER } from "../lib/get-started";
+import {
+  ArrowIcon,
+  FormAlert,
+  StepHeader,
+} from "../components/start-funnel";
+import { QuestionnaireField } from "../components/questionnaire-field";
 import type { Route } from "./+types/get-started.domain";
 
 export function meta(_args: Route.MetaArgs) {
@@ -131,78 +137,68 @@ export default function GetStartedDomain({
       ? actionData.check.domain
       : null;
 
-  return (
-    <div className="iwfw-start">
-      <header className="iwfw-start__intro">
-        <p className="iwfw-start__kicker">Step 4 of 5 · Domain</p>
-        <h1>Find your web address</h1>
-        <p className="iwfw-start__lead">
-          Choose a professional address for your business (.co.uk, .com or .uk),
-          or tell us a domain you already own. New domains are registered for you
-          after payment as part of your subscription.
-        </p>
-        <div className="iwfw-order-progress" aria-hidden>
-          <span style={{ width: "80%" }} />
-        </div>
-      </header>
+  const check =
+    actionData && "check" in actionData ? actionData.check : null;
+  const alternatives =
+    actionData && "alternatives" in actionData ? actionData.alternatives : [];
 
-      <section className="iwfw-start__card">
+  return (
+    <div className="st-step st-domain">
+      <StepHeader
+        kicker="Step 4 of 5"
+        title="Find your web address"
+        lead="Choose a professional address for your business (.co.uk, .com or .uk), or tell us a domain you already own. New domains are registered for you after payment as part of your subscription."
+      />
+
+      <section className="st-card">
         <h2>Search availability</h2>
-        <Form method="post" className="iwfw-start__form">
+        <Form method="post" className="st-form">
           <input type="hidden" name="intent" value="check" />
-          <div className="iwfw-domain-search">
-            <label className="iwfw-field">
-              <span className="iwfw-field__label">Domain to check</span>
-              <em className="iwfw-field__hint">
-                Try .co.uk, .com or .uk — availability is provisional until we register.
-              </em>
-              <input
-                name="query"
-                placeholder="yourbusiness.co.uk"
-                defaultValue={
-                  (actionData && "query" in actionData && actionData.query) ||
-                  loaderData.domainName ||
-                  ""
-                }
-              />
-            </label>
-            <button
-              type="submit"
-              className="iwfw-btn iwfw-btn--outline"
-              disabled={busy}
-            >
+          <div className="st-search">
+            <QuestionnaireField
+              label="Domain to check"
+              name="query"
+              placeholder="yourbusiness.co.uk"
+              defaultValue={
+                (actionData && "query" in actionData && actionData.query) ||
+                loaderData.domainName ||
+                ""
+              }
+              hint="Try .co.uk, .com or .uk — availability is provisional until we register."
+              markOptional={false}
+            />
+            <button type="submit" className="st-btn st-btn--quiet" disabled={busy}>
               {busy ? "Checking…" : "Check availability"}
             </button>
           </div>
         </Form>
 
-        {actionData && "check" in actionData && actionData.check && (
-          <div className="iwfw-domain-result">
+        {check ? (
+          <div className="st-result" data-avail={check.availability}>
             <p>
-              <strong>{actionData.check.domain}</strong> —{" "}
-              {actionData.check.message}
+              {check.domain} — {check.message}
             </p>
-            {actionData.alternatives && actionData.alternatives.length > 0 && (
-              <ul className="iwfw-domain-alts">
-                {actionData.alternatives.map((alt) => (
+            {alternatives && alternatives.length > 0 ? (
+              <ul className="st-alts">
+                {alternatives.map((alt) => (
                   <li key={alt.domain}>
                     <span>{alt.domain}</span>
                     <span data-avail={alt.availability}>{alt.availability}</span>
                   </li>
                 ))}
               </ul>
-            )}
+            ) : null}
           </div>
-        )}
+        ) : null}
       </section>
 
-      <section className="iwfw-start__card">
+      <section className="st-card">
         <h2>Confirm your choice</h2>
-        <Form method="post" className="iwfw-start__form">
+        <Form method="post" className="st-form">
           <input type="hidden" name="intent" value="save" />
-          <fieldset className="iwfw-fieldset">
+          <fieldset className="st-fieldset">
             <legend>Domain type</legend>
-            <label className="iwfw-check">
+            <label className="st-check">
               <input
                 type="radio"
                 name="domainMode"
@@ -211,11 +207,10 @@ export default function GetStartedDomain({
               />
               <span>
                 <strong>Register a new domain</strong>
-                <br />
                 We’ll register it for you after payment.
               </span>
             </label>
-            <label className="iwfw-check">
+            <label className="st-check">
               <input
                 type="radio"
                 name="domainMode"
@@ -224,41 +219,33 @@ export default function GetStartedDomain({
               />
               <span>
                 <strong>I already own a domain</strong>
-                <br />
                 We’ll connect it after checkout.
               </span>
             </label>
           </fieldset>
-          <label className="iwfw-field">
-            <span className="iwfw-field__label">
-              Domain name <span className="iwfw-field__req">*</span>
-            </span>
-            <input
-              name="domainName"
-              required
-              defaultValue={selectedFromCheck || loaderData.domainName}
-              placeholder="yourbusiness.co.uk"
-            />
-          </label>
-          <label className="iwfw-check">
+          <QuestionnaireField
+            label="Domain name"
+            name="domainName"
+            required
+            defaultValue={selectedFromCheck || loaderData.domainName}
+            placeholder="yourbusiness.co.uk"
+            markOptional={false}
+          />
+          <label className="st-check">
             <input type="checkbox" name="acknowledged" required />
             <span>{loaderData.disclaimer}</span>
           </label>
-          {actionData && "error" in actionData && actionData.error && (
-            <p className="iwfw-start__error" role="alert">
-              {actionData.error}
-            </p>
-          )}
-          <div className="iwfw-order-actions">
-            <Link to="/get-started/media" className="iwfw-btn iwfw-btn--outline">
-              ← Media &amp; logos
+          {actionData && "error" in actionData && actionData.error ? (
+            <FormAlert tone="error">{actionData.error}</FormAlert>
+          ) : null}
+          <div className="st-actions">
+            <Link to="/get-started/media" className="st-btn st-btn--quiet st-actions__back">
+              <ArrowIcon direction="left" />
+              Media
             </Link>
-            <button
-              type="submit"
-              className="iwfw-btn iwfw-btn--green"
-              disabled={busy}
-            >
+            <button type="submit" className="st-btn st-btn--go st-actions__next" disabled={busy}>
               {busy ? "Saving…" : "Continue to review"}
+              <ArrowIcon />
             </button>
           </div>
         </Form>

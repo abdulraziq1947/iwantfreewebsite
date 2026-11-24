@@ -1,5 +1,4 @@
 import { Form, Link, redirect, useNavigation, useSearchParams } from "react-router";
-import { Button, Input } from "@iwfw/ui";
 import { createAuth } from "@iwfw/auth";
 import { createDb, eq, platformRoles } from "@iwfw/db";
 import { getConfig, getEnv } from "../lib/env.server";
@@ -15,6 +14,11 @@ import { registerCustomer } from "../lib/register-customer.server";
 import { getCustomerWorkspace } from "../lib/customer-org.server";
 import { newId } from "../lib/ids";
 import { log } from "../lib/logger";
+import {
+  FormAlert,
+  StepHeader,
+} from "../components/start-funnel";
+import { QuestionnaireField } from "../components/questionnaire-field";
 import type { Route } from "./+types/get-started.account";
 
 export function meta(_args: Route.MetaArgs) {
@@ -144,21 +148,21 @@ export default function GetStartedAccount({
     (params.get("mode") === "login" ? "login" : "signup");
 
   return (
-    <div className="iwfw-start">
-      <header className="iwfw-start__intro">
-        <p className="iwfw-start__kicker">Step 2 of 3</p>
-        <h1>{mode === "login" ? "Welcome back" : "Create your account"}</h1>
-        <p className="iwfw-start__lead">
-          {mode === "login"
-            ? "Log in to continue to payment. We’ll never create a duplicate account."
-            : "Set up your login. You can finish business details after payment."}
-        </p>
-      </header>
+    <div className="st-step">
+      <StepHeader
+        kicker={mode === "login" ? "Customer login" : "Create an account"}
+        title={mode === "login" ? "Welcome back" : "Set up your login"}
+        lead={
+          mode === "login"
+            ? "Log in to continue. We’ll never create a duplicate account."
+            : "Most customers now create their account after payment. If you already have a login, use Existing customer."
+        }
+      />
 
-      <div className="iwfw-start__tabs" role="tablist" aria-label="Account">
+      <div className="st-tabs" role="tablist" aria-label="Account">
         <Link
           to="/get-started/account"
-          className={`iwfw-start__tab${mode === "signup" ? " is-active" : ""}`}
+          className={`st-tab${mode === "signup" ? " is-active" : ""}`}
           role="tab"
           aria-selected={mode === "signup"}
         >
@@ -166,7 +170,7 @@ export default function GetStartedAccount({
         </Link>
         <Link
           to="/get-started/account?mode=login"
-          className={`iwfw-start__tab${mode === "login" ? " is-active" : ""}`}
+          className={`st-tab${mode === "login" ? " is-active" : ""}`}
           role="tab"
           aria-selected={mode === "login"}
         >
@@ -174,74 +178,83 @@ export default function GetStartedAccount({
         </Link>
       </div>
 
-      <Form method="post" className="iwfw-start__card iwfw-start__form">
+      <Form method="post" className="st-sheet st-form">
         {mode === "login" ? (
           <>
             <input type="hidden" name="intent" value="login" />
-            <label className="iwfw-field">
-              <span>Email</span>
-              <Input name="email" type="email" required autoComplete="email" />
-            </label>
-            <label className="iwfw-field">
-              <span>Password</span>
-              <Input
-                name="password"
-                type="password"
-                required
-                minLength={10}
-                autoComplete="current-password"
-              />
-            </label>
-            <p className="iwfw-start__fine">
+            <QuestionnaireField
+              label="Email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              markOptional={false}
+            />
+            <QuestionnaireField
+              label="Password"
+              name="password"
+              type="password"
+              required
+              minLength={10}
+              autoComplete="current-password"
+              markOptional={false}
+            />
+            <p className="st-fine">
               <Link to="/forgot-password">Forgot password?</Link>
             </p>
           </>
         ) : (
           <>
             <input type="hidden" name="intent" value="signup" />
-            <label className="iwfw-field">
-              <span>Full name *</span>
-              <Input name="name" required autoComplete="name" />
-            </label>
-            <label className="iwfw-field">
-              <span>Business / trading name *</span>
-              <Input name="tradingName" required autoComplete="organization" />
-            </label>
-            <label className="iwfw-field">
-              <span>Email *</span>
-              <Input name="email" type="email" required autoComplete="email" />
-            </label>
-            <label className="iwfw-field">
-              <span>Password *</span>
-              <Input
-                name="password"
-                type="password"
-                required
-                minLength={10}
-                autoComplete="new-password"
-              />
-              <em>At least 10 characters</em>
-            </label>
-            <label className="iwfw-field">
-              <span>Confirm password *</span>
-              <Input
-                name="confirmPassword"
-                type="password"
-                required
-                minLength={10}
-                autoComplete="new-password"
-              />
-            </label>
+            <QuestionnaireField
+              label="Full name"
+              name="name"
+              required
+              autoComplete="name"
+              markOptional={false}
+            />
+            <QuestionnaireField
+              label="Business / trading name"
+              name="tradingName"
+              required
+              autoComplete="organization"
+              markOptional={false}
+            />
+            <QuestionnaireField
+              label="Email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              markOptional={false}
+            />
+            <QuestionnaireField
+              label="Password"
+              name="password"
+              type="password"
+              required
+              minLength={10}
+              autoComplete="new-password"
+              hint="At least 10 characters"
+              markOptional={false}
+            />
+            <QuestionnaireField
+              label="Confirm password"
+              name="confirmPassword"
+              type="password"
+              required
+              minLength={10}
+              autoComplete="new-password"
+              markOptional={false}
+            />
           </>
         )}
 
-        {actionData?.error && (
-          <p className="iwfw-start__error" role="alert">
-            {actionData.error}
-          </p>
-        )}
+        {actionData?.error ? (
+          <FormAlert tone="error">{actionData.error}</FormAlert>
+        ) : null}
 
-        <Button type="submit" disabled={busy} className="w-full">
+        <button type="submit" className="st-btn st-btn--go st-btn--block" disabled={busy}>
           {busy
             ? mode === "login"
               ? "Signing in…"
@@ -249,10 +262,10 @@ export default function GetStartedAccount({
             : mode === "login"
               ? "Log in & continue"
               : "Create account & continue"}
-        </Button>
+        </button>
       </Form>
 
-      <p className="iwfw-start__fine">
+      <p className="st-fine">
         <Link to="/get-started">← Back to package</Link>
         {mode === "login" ? (
           <>
