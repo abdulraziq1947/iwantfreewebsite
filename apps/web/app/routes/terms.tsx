@@ -127,10 +127,12 @@ export default function TermsPage() {
       </section>
 
       <section>
-        <h2>8. Privacy</h2>
+        <h2>8. Privacy and cookies</h2>
         <p>
           How we handle personal data is described in our{" "}
-          <Link to="/privacy">Privacy Policy</Link>.
+          <Link to="/privacy">Privacy Policy</Link>. How we use cookies and
+          similar technologies is described in our{" "}
+          <Link to="/cookies">Cookie Policy</Link>.
         </p>
       </section>
 

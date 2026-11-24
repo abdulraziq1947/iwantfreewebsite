@@ -49,7 +49,7 @@ Every item includes **acceptance criteria**. Items marked `[verified]` are groun
 | FB-20 | GBP ops task board (weekly post / reviews) | feature | 4 | 4 | 2 | 2 | **[judgment]** Only if marketing keeps hard promise. **AC:** Staff queue per org; customer sees last completed week — or keep FB-06. |
 | FB-21 | Domain renewal reminders (Cron) | ops | 4 | 4 | 2 | 2 | Jobs stub today. **AC:** Tasks 60/30/14/7 days before expiry; admin queue; no auto-purchase. |
 | FB-22 | Staging D1 parity + migrate habit | infra | 3 | 2 | 3 | 4 | Staging DB previously empty of migrations when probed. **AC:** Staging has same migration head as prod; smoke checkout on staging. |
-| FB-23 | Cookie Policy page / footer link | docs | 2 | 1 | 2 | 3 | Journey docs list it; only Privacy § cookies. **AC:** `/cookies` or clear Privacy section + footer link. |
+| FB-23 | Cookie Policy page / footer link | docs | 2 | 1 | 2 | 3 | **Done** — `/cookies`, PECR banner, footer Cookie settings. |
 | FB-24 | Desktop Log in in public topbar | ux | 2 | 1 | 2 | 3 | Login only in drawer/footer for logged-out desktop. **AC:** Visible Log in when logged out. |
 | FB-25 | Shorten get-started Business step | ux | 4 | 3 | 3 | 4 | Split services/about or mark more optional. **AC:** Time-to-review reduced; required fields still collect brief-ready data. |
 | FB-26 | Design-system unification plan | ux | 2 | 4 | 1 | 1 | Dual button/panel systems. **AC:** Single button API adopted on marketing + dashboard (can follow `plan-uiux-unification`). |
@@ -83,6 +83,7 @@ Every item includes **acceptance criteria**. Items marked `[verified]` are groun
 
 | Area | Status |
 | --- | --- |
+| Cookie Policy + PECR consent banner (FB-23) | Done |
 | Pay-first pending-order Checkout (test) | Done |
 | Webhook signature + idempotent events | Done |
 | Activation email + set password | Done |

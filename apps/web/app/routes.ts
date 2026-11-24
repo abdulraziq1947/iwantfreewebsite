@@ -17,6 +17,7 @@ export default [
     route("contact", "routes/contact.tsx"),
     route("terms", "routes/terms.tsx"),
     route("privacy", "routes/privacy.tsx"),
+    route("cookies", "routes/cookies.tsx"),
     layout("routes/get-started._layout.tsx", [
       route("get-started", "routes/get-started.tsx"),
       route("get-started/personal", "routes/get-started.personal.tsx"),

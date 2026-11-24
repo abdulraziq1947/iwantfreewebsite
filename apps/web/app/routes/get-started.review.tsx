@@ -231,7 +231,14 @@ export default function GetStartedReview({
             </label>
             <label className="iwfw-check">
               <input type="checkbox" name="marketingOptIn" />
-              <span>Optional: product tips and offers by email.</span>
+              <span>
+                Optional: email me product tips and offers. Not required for the
+                service. You can unsubscribe anytime. See our{" "}
+                <Link to="/privacy" target="_blank" rel="noreferrer">
+                  Privacy Policy
+                </Link>
+                .
+              </span>
             </label>
 
             {actionData?.error && (

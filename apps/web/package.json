@@ -21,6 +21,7 @@
     "preview": "pnpm run build && vite preview"
   },
   "dependencies": {
+    "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
     "@iwfw/auth": "workspace:*",
     "@iwfw/config": "workspace:*",
     "@iwfw/db": "workspace:*",
