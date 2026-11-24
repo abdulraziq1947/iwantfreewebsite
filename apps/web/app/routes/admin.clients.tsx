@@ -43,6 +43,7 @@ function statusTone(status: string): "success" | "warning" | "danger" | "neutral
 export default function AdminClientsPage({ loaderData }: Route.ComponentProps) {
   const [params] = useSearchParams();
   const { filters } = loaderData;
+  const deleted = params.get("deleted") === "1";
 
   return (
     <div className="iwfw-admin-page">
@@ -59,6 +60,12 @@ export default function AdminClientsPage({ loaderData }: Route.ComponentProps) {
           {loaderData.clients.length} shown · {loaderData.total} total
         </p>
       </header>
+
+      {deleted ? (
+        <p className="iwfw-admin-banner iwfw-admin-banner--ok" role="status">
+          Client permanently deleted.
+        </p>
+      ) : null}
 
       <Form method="get" className="iwfw-admin-filters">
         <label className="iwfw-field">

@@ -19,6 +19,10 @@ import { mailboxStatusLabel } from "../lib/mailbox";
 import { listOrganisationInvoices } from "../lib/billing.server";
 import { writeAuditLog, clientIpFromRequest } from "../lib/audit-log.server";
 import {
+  assertCanPermanentlyDeleteClient,
+  permanentlyDeleteClientOrganisation,
+} from "../lib/admin-delete-client.server";
+import {
   getOrganisationCostEstimate,
   penceFromPoundsInput,
   upsertOrganisationCosts,
@@ -207,6 +211,26 @@ export async function action({ request, context, params }: Route.ActionArgs) {
       ip,
     });
     throw redirect(`/admin/clients/${params.orgId}?tab=billing`);
+  }
+
+  if (intent === "permanently_delete") {
+    try {
+      assertCanPermanentlyDeleteClient(staff);
+    } catch {
+      return {
+        error: "Only platform owners and administrators can permanently delete clients.",
+      };
+    }
+    const result = await permanentlyDeleteClientOrganisation({
+      db,
+      env: getEnv(context),
+      actor: staff,
+      organisationId: params.orgId,
+      confirmName: String(form.get("confirmName") ?? ""),
+      ip,
+    });
+    if (!result.ok) return { error: result.error };
+    throw redirect("/admin/clients?deleted=1");
   }
 
   return { error: "Unknown action." };
@@ -579,6 +603,46 @@ export default function AdminClientDetailPage({
                 </dd>
               </div>
             </dl>
+          </section>
+
+          <section className="iwfw-admin-panel iwfw-admin-panel--danger">
+            <div className="iwfw-admin-panel__head">
+              <h2>Danger zone</h2>
+            </div>
+            <p className="iwfw-admin-muted" style={{ marginBottom: "0.85rem" }}>
+              Permanently delete this website folder and its related data
+              (brief, images, mailbox record, tickets, tasks). Login accounts
+              are only removed if they have no other websites and are not
+              staff. Active Stripe subscriptions must be cancelled first. This
+              cannot be undone.
+            </p>
+            {actionData && "error" in actionData && actionData.error ? (
+              <p className="iwfw-start__error" role="alert">
+                {actionData.error}
+              </p>
+            ) : null}
+            <Form method="post" className="iwfw-start__form">
+              <input type="hidden" name="intent" value="permanently_delete" />
+              <label className="iwfw-field">
+                <span>
+                  Type <strong>{client.org.tradingName}</strong> to confirm
+                </span>
+                <input
+                  className="iwfw-control"
+                  name="confirmName"
+                  autoComplete="off"
+                  required
+                  placeholder={client.org.tradingName}
+                />
+              </label>
+              <button
+                type="submit"
+                className="iwfw-btn iwfw-btn--danger"
+                disabled={busy}
+              >
+                {busy ? "Deleting…" : "Permanently delete client"}
+              </button>
+            </Form>
           </section>
         </div>
       ) : null}
