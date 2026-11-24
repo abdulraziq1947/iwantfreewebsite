@@ -1,9 +1,6 @@
 import { Form, redirect, useNavigation } from "react-router";
 import { createDb } from "@iwfw/db";
-import {
-  assignableRolesFor,
-  PLATFORM_ROLE_LABELS,
-} from "../lib/admin-team";
+import { assignableRolesFor, PLATFORM_ROLE_LABELS } from "../lib/admin-team";
 import {
   assertCanManageTeam,
   createCustomerUser,
@@ -15,6 +12,7 @@ import { clientIpFromRequest } from "../lib/audit-log.server";
 import { formatAdminDate } from "../lib/admin-ops";
 import { getEnv } from "../lib/env.server";
 import { requireStaffSession } from "../lib/session.server";
+import { AdminCount, AdminPageHeader } from "../components/admin-ui";
 import type { Route } from "./+types/admin.team";
 
 export function meta(_args: Route.MetaArgs) {
@@ -90,102 +88,99 @@ export async function action({ request, context }: Route.ActionArgs) {
   return { error: "Unknown action." };
 }
 
-export default function AdminTeamPage({
-  loaderData,
-  actionData,
-}: Route.ComponentProps) {
+export default function AdminTeamPage({ loaderData, actionData }: Route.ComponentProps) {
   const navigation = useNavigation();
   const busy = navigation.state !== "idle";
   const roles = loaderData.assignableRoles;
 
   return (
-    <div className="iwfw-admin-page">
-      <header className="iwfw-admin-page__header">
-        <div>
-          <p className="iwfw-admin-page__eyebrow">Access</p>
-          <h1>Team</h1>
-          <p>
-            Add staff to the operations console, grant roles to existing
-            accounts, or create customer logins.
-          </p>
-        </div>
-        <p className="iwfw-admin-page__count">
-          {loaderData.staff.length} staff
-        </p>
-      </header>
+    <div className="adm-page">
+      <AdminPageHeader
+        kicker="Access"
+        title="Team"
+        lead="Add staff to the operations console, grant roles to existing accounts, or create customer logins."
+        aside={<AdminCount value={loaderData.staff.length} label="staff" />}
+      />
 
       {actionData?.ok && actionData.message ? (
-        <p className="iwfw-admin-banner iwfw-admin-banner--ok" role="status">
+        <p className="adm-alert adm-alert--ok" role="status">
           {actionData.message}
         </p>
       ) : null}
       {actionData?.error ? (
-        <p className="iwfw-admin-banner iwfw-admin-banner--error" role="alert">
+        <p className="adm-alert adm-alert--error" role="alert">
           {actionData.error}
         </p>
       ) : null}
 
-      <section className="iwfw-admin-panel">
-        <h2>Staff accounts</h2>
-        <div className="iwfw-admin-table-wrap">
-          <table className="iwfw-admin-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Roles</th>
-                <th>Joined</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loaderData.staff.map((member) => (
-                <tr key={member.userId}>
-                  <td>{member.name}</td>
-                  <td>{member.email}</td>
-                  <td>
-                    {member.roles
-                      .map((role) => PLATFORM_ROLE_LABELS[role] ?? role)
-                      .join(", ")}
-                  </td>
-                  <td>{formatAdminDate(member.createdAt)}</td>
-                </tr>
-              ))}
-              {loaderData.staff.length === 0 ? (
-                <tr>
-                  <td colSpan={4}>No staff accounts yet.</td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+      <section className="adm-sheet" aria-labelledby="adm-staff-h">
+        <div className="adm-sheet__head">
+          <h2 id="adm-staff-h">Staff accounts</h2>
         </div>
+        {loaderData.staff.length === 0 ? (
+          <p className="adm-empty">No staff accounts yet.</p>
+        ) : (
+          <div className="adm-table-wrap">
+            <table className="adm-table">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Email</th>
+                  <th scope="col">Roles</th>
+                  <th scope="col" className="is-num">
+                    Joined
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {loaderData.staff.map((member) => (
+                  <tr key={member.userId}>
+                    <td>
+                      <strong>{member.name}</strong>
+                    </td>
+                    <td>{member.email}</td>
+                    <td>
+                      {member.roles
+                        .map((role) => PLATFORM_ROLE_LABELS[role] ?? role)
+                        .join(", ")}
+                    </td>
+                    <td className="is-num">{formatAdminDate(member.createdAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
-      <div className="iwfw-admin-team-grid">
-        <section className="iwfw-admin-panel">
-          <h2>Add staff</h2>
-          <p className="iwfw-admin-panel__lead">
+      <div className="adm-grid--3">
+        <section className="adm-sheet" aria-labelledby="adm-add-staff">
+          <div className="adm-sheet__head">
+            <h2 id="adm-add-staff">Add staff</h2>
+          </div>
+          <p className="adm-sheet__lead">
             Creates a new login for the operations console.
           </p>
-          <Form method="post" className="iwfw-admin-form">
+          <Form method="post" className="adm-form">
             <input type="hidden" name="intent" value="create_staff" />
-            <label className="iwfw-field">
+            <label className="adm-field">
               <span>Full name</span>
-              <input className="iwfw-control" name="name" required />
+              <input className="adm-input" name="name" required />
             </label>
-            <label className="iwfw-field">
+            <label className="adm-field">
               <span>Email</span>
               <input
-                className="iwfw-control"
+                className="adm-input"
                 name="email"
                 type="email"
                 required
                 autoComplete="off"
               />
             </label>
-            <label className="iwfw-field">
+            <label className="adm-field">
               <span>Temporary password</span>
               <input
-                className="iwfw-control"
+                className="adm-input"
                 name="password"
                 type="password"
                 required
@@ -194,9 +189,9 @@ export default function AdminTeamPage({
               />
               <em>At least 10 characters. Share it securely once.</em>
             </label>
-            <label className="iwfw-field">
+            <label className="adm-field">
               <span>Role</span>
-              <select className="iwfw-control" name="role" required>
+              <select className="adm-input" name="role" required>
                 {roles.map((role) => (
                   <option key={role} value={role}>
                     {PLATFORM_ROLE_LABELS[role]}
@@ -204,36 +199,34 @@ export default function AdminTeamPage({
                 ))}
               </select>
             </label>
-            <button
-              type="submit"
-              className="iwfw-btn iwfw-btn--primary"
-              disabled={busy}
-            >
+            <button type="submit" className="adm-btn adm-btn--ink" disabled={busy}>
               {busy ? "Saving…" : "Create staff account"}
             </button>
           </Form>
         </section>
 
-        <section className="iwfw-admin-panel">
-          <h2>Grant role to existing user</h2>
-          <p className="iwfw-admin-panel__lead">
+        <section className="adm-sheet" aria-labelledby="adm-grant-role">
+          <div className="adm-sheet__head">
+            <h2 id="adm-grant-role">Grant role to existing user</h2>
+          </div>
+          <p className="adm-sheet__lead">
             Promote an existing account into staff access.
           </p>
-          <Form method="post" className="iwfw-admin-form">
+          <Form method="post" className="adm-form">
             <input type="hidden" name="intent" value="grant_role" />
-            <label className="iwfw-field">
+            <label className="adm-field">
               <span>Account email</span>
               <input
-                className="iwfw-control"
+                className="adm-input"
                 name="email"
                 type="email"
                 required
                 autoComplete="off"
               />
             </label>
-            <label className="iwfw-field">
+            <label className="adm-field">
               <span>Role</span>
-              <select className="iwfw-control" name="role" required>
+              <select className="adm-input" name="role" required>
                 {roles.map((role) => (
                   <option key={role} value={role}>
                     {PLATFORM_ROLE_LABELS[role]}
@@ -241,46 +234,44 @@ export default function AdminTeamPage({
                 ))}
               </select>
             </label>
-            <button
-              type="submit"
-              className="iwfw-btn iwfw-btn--outline"
-              disabled={busy}
-            >
+            <button type="submit" className="adm-btn" disabled={busy}>
               {busy ? "Saving…" : "Grant role"}
             </button>
           </Form>
         </section>
 
-        <section className="iwfw-admin-panel">
-          <h2>Add customer user</h2>
-          <p className="iwfw-admin-panel__lead">
-            Creates a customer login and prospect website folder. They sign in
-            on the customer site, not here.
+        <section className="adm-sheet" aria-labelledby="adm-add-customer">
+          <div className="adm-sheet__head">
+            <h2 id="adm-add-customer">Add customer user</h2>
+          </div>
+          <p className="adm-sheet__lead">
+            Creates a customer login and prospect website folder. They sign in on the
+            customer site, not here.
           </p>
-          <Form method="post" className="iwfw-admin-form">
+          <Form method="post" className="adm-form">
             <input type="hidden" name="intent" value="create_customer" />
-            <label className="iwfw-field">
+            <label className="adm-field">
               <span>Full name</span>
-              <input className="iwfw-control" name="name" required />
+              <input className="adm-input" name="name" required />
             </label>
-            <label className="iwfw-field">
+            <label className="adm-field">
               <span>Business / trading name</span>
-              <input className="iwfw-control" name="tradingName" required />
+              <input className="adm-input" name="tradingName" required />
             </label>
-            <label className="iwfw-field">
+            <label className="adm-field">
               <span>Email</span>
               <input
-                className="iwfw-control"
+                className="adm-input"
                 name="email"
                 type="email"
                 required
                 autoComplete="off"
               />
             </label>
-            <label className="iwfw-field">
+            <label className="adm-field">
               <span>Temporary password</span>
               <input
-                className="iwfw-control"
+                className="adm-input"
                 name="password"
                 type="password"
                 required
@@ -288,11 +279,7 @@ export default function AdminTeamPage({
                 autoComplete="new-password"
               />
             </label>
-            <button
-              type="submit"
-              className="iwfw-btn iwfw-btn--outline"
-              disabled={busy}
-            >
+            <button type="submit" className="adm-btn" disabled={busy}>
               {busy ? "Saving…" : "Create customer account"}
             </button>
           </Form>

@@ -1,5 +1,4 @@
 import { Form, Link, redirect, useNavigation, useSearchParams } from "react-router";
-import { Badge } from "@iwfw/ui";
 import { createDb } from "@iwfw/db";
 import { getConfig, getEnv } from "../lib/env.server";
 import { requireStaffSession } from "../lib/session.server";
@@ -28,6 +27,7 @@ import {
   upsertOrganisationCosts,
 } from "../lib/org-costs.server";
 import { AttentionBoardCard } from "../components/attention-board";
+import { AdminPageHeader, AdminStatus, statusLabel } from "../components/admin-ui";
 import type { Route } from "./+types/admin.clients.$orgId";
 
 const TABS = [
@@ -46,11 +46,7 @@ export function meta(_args: Route.MetaArgs) {
 export async function loader({ request, context, params }: Route.LoaderArgs) {
   await requireStaffSession(request, context);
   const db = createDb(getEnv(context).DB);
-  const client = await getAdminClientDetail(
-    db,
-    params.orgId,
-    getConfig(context),
-  );
+  const client = await getAdminClientDetail(db, params.orgId, getConfig(context));
   if (!client) {
     throw new Response("Client not found", { status: 404 });
   }
@@ -156,8 +152,12 @@ export async function action({ request, context, params }: Route.ActionArgs) {
   }
 
   if (intent === "notify_customer") {
-    const title = String(form.get("title") ?? "").trim().slice(0, 120);
-    const body = String(form.get("body") ?? "").trim().slice(0, 500);
+    const title = String(form.get("title") ?? "")
+      .trim()
+      .slice(0, 120);
+    const body = String(form.get("body") ?? "")
+      .trim()
+      .slice(0, 500);
     if (title.length < 3 || body.length < 3) {
       return { error: "Add a short title and message for the customer." };
     }
@@ -275,27 +275,29 @@ export default function AdminClientDetailPage({
     null;
 
   return (
-    <div className="iwfw-admin-page">
-      <header className="iwfw-admin-page__header">
-        <div>
-          <p className="iwfw-admin-page__eyebrow">
+    <div className="adm-page">
+      <AdminPageHeader
+        kicker={
+          <>
             <Link to="/admin/clients">Clients</Link> / folder
-          </p>
-          <h1>{client.org.tradingName}</h1>
-          <p>
-            {client.stageLabel}. {client.banner.body}
-          </p>
-        </div>
-        <div style={{ display: "grid", gap: "0.35rem", justifyItems: "end" }}>
-          <Badge tone={statusTone(client.org.status)}>{client.org.status}</Badge>
-          <Badge tone={isLive ? "success" : "warning"}>
-            {isLive ? "Website live" : "Not live yet"}
-          </Badge>
-          <Badge tone="neutral">{client.stageLabel}</Badge>
-        </div>
-      </header>
+          </>
+        }
+        title={client.org.tradingName}
+        lead={`${client.stageLabel}. ${client.banner.body}`}
+        aside={
+          <>
+            <AdminStatus tone={statusTone(client.org.status)}>
+              {statusLabel(client.org.status)}
+            </AdminStatus>
+            <AdminStatus tone={isLive ? "success" : "warning"}>
+              {isLive ? "Website live" : "Not live yet"}
+            </AdminStatus>
+            <AdminStatus tone="neutral">{client.stageLabel}</AdminStatus>
+          </>
+        }
+      />
 
-      <nav className="iwfw-admin-tabs" aria-label="Client sections">
+      <nav className="adm-tabs" aria-label="Client sections">
         {TABS.map((t) => (
           <Link
             key={t.id}
@@ -315,28 +317,28 @@ export default function AdminClientDetailPage({
       </nav>
 
       {tab === "overview" ? (
-        <div className="iwfw-admin-grid">
-          <section className="iwfw-admin-panel">
-            <div className="iwfw-admin-panel__head">
+        <div className="adm-grid">
+          <section className="adm-sheet">
+            <div className="adm-sheet__head">
               <h2>Status &amp; launch</h2>
             </div>
-            <p className="iwfw-admin-muted" style={{ marginBottom: "0.85rem" }}>
-              When the site is ready for the customer, mark it live. That
-              completes their “Go live” stage.
+            <p className="adm-note" style={{ marginBottom: "0.85rem" }}>
+              When the site is ready for the customer, mark it live. That completes their
+              “Go live” stage.
               {liveDomain ? ` Domain: ${liveDomain}.` : ""}
             </p>
             {actionData && "error" in actionData && actionData.error ? (
-              <p className="iwfw-start__error" role="alert">
+              <p className="adm-alert adm-alert--error" role="alert">
                 {actionData.error}
               </p>
             ) : null}
-            <Form method="post" className="iwfw-start__form" style={{ marginBottom: "1rem" }}>
+            <Form method="post" className="adm-form" style={{ marginBottom: "1rem" }}>
               <input type="hidden" name="intent" value="update_org_status" />
               <input type="hidden" name="tab" value="overview" />
-              <label className="iwfw-field">
+              <label className="adm-field">
                 <span>Organisation status</span>
                 <select
-                  className="iwfw-control"
+                  className="adm-input"
                   name="status"
                   defaultValue={client.org.status}
                 >
@@ -347,84 +349,64 @@ export default function AdminClientDetailPage({
                   <option value="churned">Churned</option>
                 </select>
               </label>
-              <button
-                type="submit"
-                className="iwfw-btn iwfw-btn--outline"
-                disabled={busy}
-              >
+              <button type="submit" className="adm-btn" disabled={busy}>
                 {busy ? "Saving…" : "Save status"}
               </button>
             </Form>
             {!isLive ? (
               <>
-                <Form method="post" className="iwfw-start__form">
+                <Form method="post" className="adm-form">
                   <input type="hidden" name="intent" value="set_preview" />
                   <input type="hidden" name="tab" value="overview" />
-                  <label className="iwfw-field">
+                  <label className="adm-field">
                     <span>Preview URL (before go-live)</span>
                     <input
-                      className="iwfw-control"
+                      className="adm-input"
                       type="url"
                       name="previewUrl"
                       placeholder="https://preview.example.com/…"
-                      defaultValue={
-                        client.domainTasks[0]?.previewUrl ?? undefined
-                      }
+                      defaultValue={client.domainTasks[0]?.previewUrl ?? undefined}
                     />
                   </label>
-                  <p className="iwfw-admin-muted">
-                    Customers can open this while the site is still being
-                    finished. Clear the field and save to remove it.
+                  <p className="adm-note">
+                    Customers can open this while the site is still being finished. Clear
+                    the field and save to remove it.
                   </p>
-                  <button
-                    type="submit"
-                    className="iwfw-btn iwfw-btn--outline"
-                    disabled={busy}
-                  >
+                  <button type="submit" className="adm-btn" disabled={busy}>
                     {busy ? "Saving…" : "Save preview URL"}
                   </button>
                 </Form>
-                <Form method="post" className="iwfw-start__form">
+                <Form method="post" className="adm-form">
                   <input type="hidden" name="intent" value="mark_live" />
                   <input type="hidden" name="tab" value="overview" />
-                  <label className="iwfw-field">
+                  <label className="adm-field">
                     <span>Live website URL</span>
                     <input
-                      className="iwfw-control"
+                      className="adm-input"
                       type="url"
                       name="liveUrl"
                       placeholder={
-                        liveDomain
-                          ? `https://${liveDomain}`
-                          : "https://example.co.uk"
+                        liveDomain ? `https://${liveDomain}` : "https://example.co.uk"
                       }
-                      defaultValue={
-                        liveDomain ? `https://${liveDomain}` : undefined
-                      }
+                      defaultValue={liveDomain ? `https://${liveDomain}` : undefined}
                     />
                   </label>
-                  <p className="iwfw-admin-muted">
-                    Customers see this link and get a congratulations
-                    notification. Mark live only when DNS and content are ready.
+                  <p className="adm-note">
+                    Customers see this link and get a congratulations notification. Mark
+                    live only when DNS and content are ready.
                   </p>
-                  <button
-                    type="submit"
-                    className="iwfw-btn iwfw-btn--green"
-                    disabled={busy}
-                  >
+                  <button type="submit" className="adm-btn adm-btn--go" disabled={busy}>
                     {busy ? "Updating…" : "Mark website live"}
                   </button>
                 </Form>
               </>
             ) : (
-              <div className="iwfw-admin-actions">
-                {client.domainTasks.find((t) => t.status === "connected")
-                  ?.liveUrl ? (
+              <div className="adm-actions">
+                {client.domainTasks.find((t) => t.status === "connected")?.liveUrl ? (
                   <a
-                    className="iwfw-btn iwfw-btn--green"
+                    className="adm-btn adm-btn--go"
                     href={
-                      client.domainTasks.find((t) => t.status === "connected")!
-                        .liveUrl!
+                      client.domainTasks.find((t) => t.status === "connected")!.liveUrl!
                     }
                     target="_blank"
                     rel="noreferrer"
@@ -435,11 +417,7 @@ export default function AdminClientDetailPage({
                 <Form method="post">
                   <input type="hidden" name="intent" value="unmark_live" />
                   <input type="hidden" name="tab" value="overview" />
-                  <button
-                    type="submit"
-                    className="iwfw-btn iwfw-btn--outline"
-                    disabled={busy}
-                  >
+                  <button type="submit" className="adm-btn" disabled={busy}>
                     {busy ? "Updating…" : "Mark not live yet"}
                   </button>
                 </Form>
@@ -447,17 +425,14 @@ export default function AdminClientDetailPage({
             )}
           </section>
 
-          <section className="iwfw-admin-panel">
-            <div className="iwfw-admin-panel__head">
+          <section className="adm-sheet">
+            <div className="adm-sheet__head">
               <h2>Where they are</h2>
             </div>
-            <ul className="iwfw-admin-journey">
+            <ul className="adm-journey">
               {client.journey.map((stage) => (
                 <li key={stage.id}>
-                  <span
-                    className={`iwfw-admin-journey__dot is-${stage.state}`}
-                    aria-hidden
-                  />
+                  <span className={`adm-journey__dot is-${stage.state}`} aria-hidden />
                   <div>
                     <strong>{stage.title}</strong>
                     <p>{stage.detail}</p>
@@ -476,11 +451,7 @@ export default function AdminClientDetailPage({
                 <Form method="post">
                   <input type="hidden" name="intent" value="gbp_revoke" />
                   <input type="hidden" name="tab" value="overview" />
-                  <button
-                    type="submit"
-                    className="iwfw-btn iwfw-btn--outline"
-                    disabled={busy}
-                  >
+                  <button type="submit" className="adm-btn" disabled={busy}>
                     Revoke GMB for {client.org.tradingName}
                   </button>
                 </Form>
@@ -488,48 +459,44 @@ export default function AdminClientDetailPage({
                 <Form method="post">
                   <input type="hidden" name="intent" value="gbp_grant" />
                   <input type="hidden" name="tab" value="overview" />
-                  <button
-                    type="submit"
-                    className="iwfw-btn iwfw-btn--green"
-                    disabled={busy}
-                  >
+                  <button type="submit" className="adm-btn adm-btn--go" disabled={busy}>
                     Mark GMB granted · {client.org.tradingName}
                   </button>
                 </Form>
               )
             }
           />
-          <p className="iwfw-admin-muted" style={{ marginTop: "-0.35rem" }}>
+          <p className="adm-note" style={{ marginTop: "-0.35rem" }}>
             Google Business status on this folder is for{" "}
-            <strong>{client.org.tradingName}</strong> only. Other websites for
-            the same customer have their own client folders.
+            <strong>{client.org.tradingName}</strong> only. Other websites for the same
+            customer have their own client folders.
           </p>
 
-          <section className="iwfw-admin-panel">
-            <div className="iwfw-admin-panel__head">
+          <section className="adm-sheet">
+            <div className="adm-sheet__head">
               <h2>Notify customer</h2>
             </div>
-            <p className="iwfw-admin-muted" style={{ marginBottom: "0.75rem" }}>
-              Send a live alert when you need them to do something or you’ve
-              made a change.
+            <p className="adm-note" style={{ marginBottom: "0.75rem" }}>
+              Send a live alert when you need them to do something or you’ve made a
+              change.
             </p>
-            <Form method="post" className="iwfw-start__form">
+            <Form method="post" className="adm-form">
               <input type="hidden" name="intent" value="notify_customer" />
               <input type="hidden" name="tab" value="overview" />
-              <label className="iwfw-field">
+              <label className="adm-field">
                 <span>Title</span>
                 <input
-                  className="iwfw-control"
+                  className="adm-input"
                   name="title"
                   required
                   maxLength={120}
                   placeholder="We need a quick decision"
                 />
               </label>
-              <label className="iwfw-field">
+              <label className="adm-field">
                 <span>Message</span>
                 <textarea
-                  className="iwfw-control"
+                  className="adm-input"
                   name="body"
                   required
                   rows={3}
@@ -537,26 +504,20 @@ export default function AdminClientDetailPage({
                   placeholder="Please reply in support with your preferred domain."
                 />
               </label>
-              <button
-                type="submit"
-                className="iwfw-btn iwfw-btn--green"
-                disabled={busy}
-              >
+              <button type="submit" className="adm-btn adm-btn--go" disabled={busy}>
                 {busy ? "Sending…" : "Send notification"}
               </button>
             </Form>
           </section>
 
-          <section className="iwfw-admin-panel">
-            <div className="iwfw-admin-panel__head">
+          <section className="adm-sheet">
+            <div className="adm-sheet__head">
               <h2>Contact</h2>
             </div>
-            <dl className="iwfw-admin-dl">
+            <dl className="adm-dl">
               <div>
                 <dt>Primary contact</dt>
-                <dd>
-                  {(primary?.name ?? data.business.contactName) || "—"}
-                </dd>
+                <dd>{(primary?.name ?? data.business.contactName) || "—"}</dd>
               </div>
               <div>
                 <dt>Email</dt>
@@ -579,11 +540,11 @@ export default function AdminClientDetailPage({
             </dl>
           </section>
 
-          <section className="iwfw-admin-panel">
-            <div className="iwfw-admin-panel__head">
+          <section className="adm-sheet">
+            <div className="adm-sheet__head">
               <h2>Organisation</h2>
             </div>
-            <dl className="iwfw-admin-dl">
+            <dl className="adm-dl">
               <div>
                 <dt>Registered name</dt>
                 <dd>{client.org.registeredCompanyName || "—"}</dd>
@@ -599,47 +560,42 @@ export default function AdminClientDetailPage({
               <div>
                 <dt>Org ID</dt>
                 <dd>
-                  <code className="iwfw-admin-code">{client.org.id}</code>
+                  <code className="adm-code">{client.org.id}</code>
                 </dd>
               </div>
             </dl>
           </section>
 
-          <section className="iwfw-admin-panel iwfw-admin-panel--danger">
-            <div className="iwfw-admin-panel__head">
+          <section className="adm-sheet adm-sheet--danger">
+            <div className="adm-sheet__head">
               <h2>Danger zone</h2>
             </div>
-            <p className="iwfw-admin-muted" style={{ marginBottom: "0.85rem" }}>
-              Permanently delete this website folder and its related data
-              (brief, images, mailbox record, tickets, tasks). Login accounts
-              are only removed if they have no other websites and are not
-              staff. Active Stripe subscriptions must be cancelled first. This
-              cannot be undone.
+            <p className="adm-note" style={{ marginBottom: "0.85rem" }}>
+              Permanently delete this website folder and its related data (brief, images,
+              mailbox record, tickets, tasks). Login accounts are only removed if they
+              have no other websites and are not staff. Active Stripe subscriptions must
+              be cancelled first. This cannot be undone.
             </p>
             {actionData && "error" in actionData && actionData.error ? (
-              <p className="iwfw-start__error" role="alert">
+              <p className="adm-alert adm-alert--error" role="alert">
                 {actionData.error}
               </p>
             ) : null}
-            <Form method="post" className="iwfw-start__form">
+            <Form method="post" className="adm-form">
               <input type="hidden" name="intent" value="permanently_delete" />
-              <label className="iwfw-field">
+              <label className="adm-field">
                 <span>
                   Type <strong>{client.org.tradingName}</strong> to confirm
                 </span>
                 <input
-                  className="iwfw-control"
+                  className="adm-input"
                   name="confirmName"
                   autoComplete="off"
                   required
                   placeholder={client.org.tradingName}
                 />
               </label>
-              <button
-                type="submit"
-                className="iwfw-btn iwfw-btn--danger"
-                disabled={busy}
-              >
+              <button type="submit" className="adm-btn adm-btn--danger" disabled={busy}>
                 {busy ? "Deleting…" : "Permanently delete client"}
               </button>
             </Form>
@@ -648,7 +604,7 @@ export default function AdminClientDetailPage({
       ) : null}
 
       {tab === "brief" ? (
-        <div className="iwfw-admin-brief-grid">
+        <div className="adm-brief-grid">
           <BriefCard
             title="Business"
             rows={[
@@ -714,12 +670,12 @@ export default function AdminClientDetailPage({
       ) : null}
 
       {tab === "email" ? (
-        <div className="iwfw-admin-grid">
-          <section className="iwfw-admin-panel">
-            <div className="iwfw-admin-panel__head">
+        <div className="adm-grid">
+          <section className="adm-sheet">
+            <div className="adm-sheet__head">
               <h2>Customer preference</h2>
             </div>
-            <dl className="iwfw-admin-dl">
+            <dl className="adm-dl">
               <div>
                 <dt>Preferred local part</dt>
                 <dd>{data.email.localPart || "info"}</dd>
@@ -737,19 +693,18 @@ export default function AdminClientDetailPage({
                 <dd>{data.email.mxOverwriteApproved ? "Yes" : "No"}</dd>
               </div>
             </dl>
-            <p className="iwfw-admin-muted" style={{ marginTop: "0.75rem" }}>
-              Enter the real mailbox details below once you’ve created the
-              account with the provider. The customer sees them on Email in
-              their dashboard (password is encrypted at rest and shown with
-              Show/Hide).
+            <p className="adm-note" style={{ marginTop: "0.75rem" }}>
+              Enter the real mailbox details below once you’ve created the account with
+              the provider. The customer sees them on Email in their dashboard (password
+              is encrypted at rest and shown with Show/Hide).
             </p>
           </section>
 
-          <section className="iwfw-admin-panel iwfw-admin-panel--wide">
-            <div className="iwfw-admin-panel__head">
+          <section className="adm-sheet adm-sheet--wide">
+            <div className="adm-sheet__head">
               <h2>Mailbox details</h2>
               {client.mailbox ? (
-                <Badge
+                <AdminStatus
                   tone={
                     client.mailbox.status === "active"
                       ? "success"
@@ -759,24 +714,24 @@ export default function AdminClientDetailPage({
                   }
                 >
                   {mailboxStatusLabel(client.mailbox.status)}
-                </Badge>
+                </AdminStatus>
               ) : (
-                <Badge tone="neutral">Not set</Badge>
+                <AdminStatus tone="neutral">Not set</AdminStatus>
               )}
             </div>
             {actionData && "error" in actionData && actionData.error ? (
-              <p className="iwfw-start__error" role="alert">
+              <p className="adm-alert adm-alert--error" role="alert">
                 {actionData.error}
               </p>
             ) : null}
-            <Form method="post" className="iwfw-start__form">
+            <Form method="post" className="adm-form">
               <input type="hidden" name="intent" value="save_mailbox" />
               <input type="hidden" name="tab" value="email" />
-              <div className="iwfw-field-grid iwfw-field-grid--2">
-                <label className="iwfw-field">
+              <div className="adm-fields adm-fields--2">
+                <label className="adm-field">
                   <span>Email address</span>
                   <input
-                    className="iwfw-control"
+                    className="adm-input"
                     name="emailAddress"
                     type="email"
                     required
@@ -784,19 +739,19 @@ export default function AdminClientDetailPage({
                     placeholder="info@example.co.uk"
                   />
                 </label>
-                <label className="iwfw-field">
+                <label className="adm-field">
                   <span>Username</span>
                   <input
-                    className="iwfw-control"
+                    className="adm-input"
                     name="username"
                     defaultValue={client.mailbox?.username ?? ""}
                     placeholder="Usually the full email address"
                   />
                 </label>
-                <label className="iwfw-field">
+                <label className="adm-field">
                   <span>Password</span>
                   <input
-                    className="iwfw-control"
+                    className="adm-input"
                     name="password"
                     type="text"
                     autoComplete="off"
@@ -804,20 +759,20 @@ export default function AdminClientDetailPage({
                     placeholder="Mailbox password from MXroute"
                   />
                 </label>
-                <label className="iwfw-field">
+                <label className="adm-field">
                   <span>Webmail URL</span>
                   <input
-                    className="iwfw-control"
+                    className="adm-input"
                     name="webmailUrl"
                     type="url"
                     defaultValue={client.mailbox?.webmailUrl ?? ""}
                     placeholder="https://…"
                   />
                 </label>
-                <label className="iwfw-field">
+                <label className="adm-field">
                   <span>Status</span>
                   <select
-                    className="iwfw-control"
+                    className="adm-input"
                     name="status"
                     defaultValue={client.mailbox?.status ?? "pending"}
                   >
@@ -827,43 +782,42 @@ export default function AdminClientDetailPage({
                   </select>
                 </label>
               </div>
-              <p className="iwfw-admin-muted">
-                Customers see this password on their Email page (Show to reveal).
-                Paste the MXroute mailbox password here when you create the
-                account.
+              <p className="adm-note">
+                Customers see this password on their Email page (Show to reveal). Paste
+                the MXroute mailbox password here when you create the account.
               </p>
               {client.mailbox?.password ? (
-                <label className="iwfw-check">
+                <label className="adm-check">
                   <input type="checkbox" name="clearPassword" />
                   <span>Clear saved password</span>
                 </label>
               ) : null}
 
-              <fieldset className="iwfw-fieldset">
+              <fieldset className="adm-fieldset">
                 <legend>IMAP (incoming)</legend>
-                <div className="iwfw-field-grid iwfw-field-grid--2">
-                  <label className="iwfw-field">
+                <div className="adm-fields adm-fields--2">
+                  <label className="adm-field">
                     <span>Host</span>
                     <input
-                      className="iwfw-control"
+                      className="adm-input"
                       name="imapHost"
                       defaultValue={client.mailbox?.imapHost ?? ""}
                       placeholder="mail.example.com"
                     />
                   </label>
-                  <label className="iwfw-field">
+                  <label className="adm-field">
                     <span>Port</span>
                     <input
-                      className="iwfw-control"
+                      className="adm-input"
                       name="imapPort"
                       type="number"
                       defaultValue={client.mailbox?.imapPort ?? 993}
                     />
                   </label>
-                  <label className="iwfw-field">
+                  <label className="adm-field">
                     <span>Security</span>
                     <select
-                      className="iwfw-control"
+                      className="adm-input"
                       name="imapSecurity"
                       defaultValue={client.mailbox?.imapSecurity ?? "ssl"}
                     >
@@ -875,31 +829,31 @@ export default function AdminClientDetailPage({
                 </div>
               </fieldset>
 
-              <fieldset className="iwfw-fieldset">
+              <fieldset className="adm-fieldset">
                 <legend>SMTP (outgoing)</legend>
-                <div className="iwfw-field-grid iwfw-field-grid--2">
-                  <label className="iwfw-field">
+                <div className="adm-fields adm-fields--2">
+                  <label className="adm-field">
                     <span>Host</span>
                     <input
-                      className="iwfw-control"
+                      className="adm-input"
                       name="smtpHost"
                       defaultValue={client.mailbox?.smtpHost ?? ""}
                       placeholder="mail.example.com"
                     />
                   </label>
-                  <label className="iwfw-field">
+                  <label className="adm-field">
                     <span>Port</span>
                     <input
-                      className="iwfw-control"
+                      className="adm-input"
                       name="smtpPort"
                       type="number"
                       defaultValue={client.mailbox?.smtpPort ?? 465}
                     />
                   </label>
-                  <label className="iwfw-field">
+                  <label className="adm-field">
                     <span>Security</span>
                     <select
-                      className="iwfw-control"
+                      className="adm-input"
                       name="smtpSecurity"
                       defaultValue={client.mailbox?.smtpSecurity ?? "ssl"}
                     >
@@ -911,31 +865,31 @@ export default function AdminClientDetailPage({
                 </div>
               </fieldset>
 
-              <fieldset className="iwfw-fieldset">
+              <fieldset className="adm-fieldset">
                 <legend>POP3 (optional)</legend>
-                <div className="iwfw-field-grid iwfw-field-grid--2">
-                  <label className="iwfw-field">
+                <div className="adm-fields adm-fields--2">
+                  <label className="adm-field">
                     <span>Host</span>
                     <input
-                      className="iwfw-control"
+                      className="adm-input"
                       name="popHost"
                       defaultValue={client.mailbox?.popHost ?? ""}
                       placeholder="Leave blank if unused"
                     />
                   </label>
-                  <label className="iwfw-field">
+                  <label className="adm-field">
                     <span>Port</span>
                     <input
-                      className="iwfw-control"
+                      className="adm-input"
                       name="popPort"
                       type="number"
                       defaultValue={client.mailbox?.popPort ?? 995}
                     />
                   </label>
-                  <label className="iwfw-field">
+                  <label className="adm-field">
                     <span>Security</span>
                     <select
-                      className="iwfw-control"
+                      className="adm-input"
                       name="popSecurity"
                       defaultValue={client.mailbox?.popSecurity ?? "ssl"}
                     >
@@ -947,34 +901,30 @@ export default function AdminClientDetailPage({
                 </div>
               </fieldset>
 
-              <label className="iwfw-field">
+              <label className="adm-field">
                 <span>Customer notes</span>
                 <textarea
-                  className="iwfw-control"
+                  className="adm-input"
                   name="customerNotes"
                   rows={3}
                   defaultValue={client.mailbox?.customerNotes ?? ""}
                   placeholder="Optional tip for the customer (e.g. change password after first login)"
                 />
               </label>
-              <label className="iwfw-field">
+              <label className="adm-field">
                 <span>Admin notes (internal)</span>
                 <textarea
-                  className="iwfw-control"
+                  className="adm-input"
                   name="adminNotes"
                   rows={2}
                   defaultValue={client.mailbox?.adminNotes ?? ""}
                 />
               </label>
-              <label className="iwfw-check">
+              <label className="adm-check">
                 <input type="checkbox" name="notifyCustomer" defaultChecked />
                 <span>Notify customer that email details were updated</span>
               </label>
-              <button
-                type="submit"
-                className="iwfw-btn iwfw-btn--green"
-                disabled={busy}
-              >
+              <button type="submit" className="adm-btn adm-btn--go" disabled={busy}>
                 {busy ? "Saving…" : "Save mailbox details"}
               </button>
             </Form>
@@ -983,30 +933,29 @@ export default function AdminClientDetailPage({
       ) : null}
 
       {tab === "images" ? (
-        <section className="iwfw-admin-panel">
-          <div className="iwfw-admin-panel__head">
+        <section className="adm-sheet">
+          <div className="adm-sheet__head">
             <h2>Images for {client.org.tradingName}</h2>
           </div>
-          <p className="iwfw-admin-muted" style={{ marginBottom: "0.85rem" }}>
-            These uploads belong to this website only. If the customer has
-            several sites, open each client folder to see that site’s images and
-            Google Business details.
+          <p className="adm-note" style={{ marginBottom: "0.85rem" }}>
+            These uploads belong to this website only. If the customer has several sites,
+            open each client folder to see that site’s images and Google Business details.
           </p>
           {client.uploads.length === 0 ? (
-            <p className="iwfw-admin-empty">No images uploaded yet.</p>
+            <p className="adm-empty">No images uploaded yet.</p>
           ) : (
-            <ul className="iwfw-admin-media">
+            <ul className="adm-media">
               {client.uploads.map((u) => (
-                <li key={u.id} className="iwfw-admin-media__item">
+                <li key={u.id} className="adm-media__item">
                   <img
                     src={u.contentUrl}
                     alt=""
-                    className="iwfw-admin-media__thumb"
+                    className="adm-media__thumb"
                     loading="lazy"
                   />
-                  <div className="iwfw-admin-media__body">
+                  <div className="adm-media__body">
                     <strong>{u.originalFilename}</strong>
-                    <p className="iwfw-admin-media__website">
+                    <p className="adm-media__website">
                       Website: {client.org.tradingName}
                     </p>
                     <p>
@@ -1017,7 +966,7 @@ export default function AdminClientDetailPage({
                     href={u.contentUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="iwfw-btn iwfw-btn--outline iwfw-admin__btn-sm"
+                    className="adm-btn adm-btn--sm"
                   >
                     Open
                   </a>
@@ -1029,16 +978,16 @@ export default function AdminClientDetailPage({
       ) : null}
 
       {tab === "billing" ? (
-        <div className="iwfw-admin-grid">
-          <section className="iwfw-admin-panel">
-            <div className="iwfw-admin-panel__head">
+        <div className="adm-grid">
+          <section className="adm-sheet">
+            <div className="adm-sheet__head">
               <h2>Profitability estimate</h2>
             </div>
-            <p className="iwfw-admin-muted">
-              Simple estimate from £39.99/mo revenue minus staff-entered
-              operating costs. Not accounting software.
+            <p className="adm-note">
+              Simple estimate from £39.99/mo revenue minus staff-entered operating costs.
+              Not accounting software.
             </p>
-            <dl className="iwfw-dash-dl">
+            <dl className="adm-figures">
               <div>
                 <dt>Revenue / month</dt>
                 <dd>{formatGbpFromPence(loaderData.costs.revenuePence)}</dd>
@@ -1052,13 +1001,13 @@ export default function AdminClientDetailPage({
                 <dd>{formatGbpFromPence(loaderData.costs.profitMonthlyPence)}</dd>
               </div>
             </dl>
-            <Form method="post" className="iwfw-start__form">
+            <Form method="post" className="adm-form">
               <input type="hidden" name="intent" value="save_costs" />
               <input type="hidden" name="tab" value="billing" />
-              <label className="iwfw-field">
+              <label className="adm-field">
                 <span>Domain cost £ / year</span>
                 <input
-                  className="iwfw-control"
+                  className="adm-input"
                   name="domainAnnual"
                   type="number"
                   min="0"
@@ -1066,10 +1015,10 @@ export default function AdminClientDetailPage({
                   defaultValue={(loaderData.costs.domainAnnualPence / 100).toFixed(2)}
                 />
               </label>
-              <label className="iwfw-field">
+              <label className="adm-field">
                 <span>Mailbox £ / month</span>
                 <input
-                  className="iwfw-control"
+                  className="adm-input"
                   name="mailboxMonthly"
                   type="number"
                   min="0"
@@ -1077,10 +1026,10 @@ export default function AdminClientDetailPage({
                   defaultValue={(loaderData.costs.mailboxMonthlyPence / 100).toFixed(2)}
                 />
               </label>
-              <label className="iwfw-field">
+              <label className="adm-field">
                 <span>Hosting £ / month</span>
                 <input
-                  className="iwfw-control"
+                  className="adm-input"
                   name="hostingMonthly"
                   type="number"
                   min="0"
@@ -1088,10 +1037,10 @@ export default function AdminClientDetailPage({
                   defaultValue={(loaderData.costs.hostingMonthlyPence / 100).toFixed(2)}
                 />
               </label>
-              <label className="iwfw-field">
+              <label className="adm-field">
                 <span>Other £ / month</span>
                 <input
-                  className="iwfw-control"
+                  className="adm-input"
                   name="otherMonthly"
                   type="number"
                   min="0"
@@ -1099,33 +1048,35 @@ export default function AdminClientDetailPage({
                   defaultValue={(loaderData.costs.otherMonthlyPence / 100).toFixed(2)}
                 />
               </label>
-              <label className="iwfw-field">
+              <label className="adm-field">
                 <span>Notes</span>
                 <input
-                  className="iwfw-control"
+                  className="adm-input"
                   name="costNotes"
                   defaultValue={loaderData.costs.notes ?? ""}
                 />
               </label>
-              <button type="submit" className="iwfw-btn iwfw-btn--outline" disabled={busy}>
+              <button type="submit" className="adm-btn" disabled={busy}>
                 {busy ? "Saving…" : "Save costs"}
               </button>
             </Form>
           </section>
-          <section className="iwfw-admin-panel">
-            <div className="iwfw-admin-panel__head">
+          <section className="adm-sheet">
+            <div className="adm-sheet__head">
               <h2>Subscriptions</h2>
             </div>
             {client.subscriptions.length === 0 ? (
-              <p className="iwfw-admin-empty">No subscription yet.</p>
+              <p className="adm-empty">No subscription yet.</p>
             ) : (
-              <ul className="iwfw-admin-list">
+              <ul className="adm-list">
                 {client.subscriptions.map((s) => (
                   <li key={s.id}>
                     <div>
                       <strong>
                         {s.planLabel}{" "}
-                        <Badge tone={statusTone(s.status)}>{s.status}</Badge>
+                        <AdminStatus tone={statusTone(s.status)}>
+                          {statusLabel(s.status)}
+                        </AdminStatus>
                       </strong>
                       <p>
                         {formatAdminDate(s.currentPeriodStart)} →{" "}
@@ -1139,34 +1090,33 @@ export default function AdminClientDetailPage({
               </ul>
             )}
           </section>
-          <section className="iwfw-admin-panel">
-            <div className="iwfw-admin-panel__head">
+          <section className="adm-sheet">
+            <div className="adm-sheet__head">
               <h2>Invoices</h2>
             </div>
             {loaderData.invoiceError ? (
-              <p className="iwfw-admin-empty">{loaderData.invoiceError}</p>
+              <p className="adm-empty">{loaderData.invoiceError}</p>
             ) : loaderData.invoices.length === 0 ? (
-              <p className="iwfw-admin-empty">No Stripe invoices yet.</p>
+              <p className="adm-empty">No Stripe invoices yet.</p>
             ) : (
-              <ul className="iwfw-invoice-list">
+              <ul className="adm-list">
                 {loaderData.invoices.map((inv) => (
                   <li key={inv.id}>
                     <div>
                       <strong>
                         {inv.number || inv.id}{" "}
-                        <Badge tone={statusTone(inv.status || "")}>
-                          {inv.status || "—"}
-                        </Badge>
+                        <AdminStatus tone={statusTone(inv.status || "")}>
+                          {statusLabel(inv.status) || "—"}
+                        </AdminStatus>
                       </strong>
-                      <p className="iwfw-admin-muted">
-                        {formatAdminDate(inv.createdAt)} ·{" "}
-                        {formatGbpFromPence(inv.total)}
+                      <p className="adm-note">
+                        {formatAdminDate(inv.createdAt)} · {formatGbpFromPence(inv.total)}
                       </p>
                     </div>
                     {inv.invoicePdfUrl ? (
                       <a
                         href={`/admin/clients/${client.org.id}/invoice/${inv.id}.pdf`}
-                        className="iwfw-btn iwfw-btn--outline iwfw-admin__btn-sm"
+                        className="adm-btn adm-btn--sm"
                       >
                         PDF
                       </a>
@@ -1176,20 +1126,22 @@ export default function AdminClientDetailPage({
               </ul>
             )}
           </section>
-          <section className="iwfw-admin-panel iwfw-admin-panel--wide">
-            <div className="iwfw-admin-panel__head">
+          <section className="adm-sheet adm-sheet--wide">
+            <div className="adm-sheet__head">
               <h2>Orders</h2>
             </div>
             {client.orders.length === 0 ? (
-              <p className="iwfw-admin-empty">No linked orders.</p>
+              <p className="adm-empty">No linked orders.</p>
             ) : (
-              <ul className="iwfw-admin-list">
+              <ul className="adm-list">
                 {client.orders.map((o) => (
                   <li key={o.id}>
                     <div>
                       <strong>
                         {o.tradingName || o.id}{" "}
-                        <Badge tone={statusTone(o.status)}>{o.status}</Badge>
+                        <AdminStatus tone={statusTone(o.status)}>
+                          {statusLabel(o.status)}
+                        </AdminStatus>
                       </strong>
                       <p>
                         {o.email || "—"} · {o.domainName || "no domain"}
@@ -1205,22 +1157,26 @@ export default function AdminClientDetailPage({
       ) : null}
 
       {tab === "tasks" ? (
-        <div className="iwfw-admin-grid">
-          <section className="iwfw-admin-panel">
-            <div className="iwfw-admin-panel__head">
+        <div className="adm-grid">
+          <section className="adm-sheet">
+            <div className="adm-sheet__head">
               <h2>Domain tasks</h2>
-              <Link to="/admin/domains">Queue</Link>
+              <Link to="/admin/domains" className="adm-sheet__link">
+                Queue
+              </Link>
             </div>
             {client.domainTasks.length === 0 ? (
-              <p className="iwfw-admin-empty">No domain tasks.</p>
+              <p className="adm-empty">No domain tasks.</p>
             ) : (
-              <ul className="iwfw-admin-list">
+              <ul className="adm-list">
                 {client.domainTasks.map((t) => (
                   <li key={t.id}>
                     <div>
                       <strong>
                         {t.domainName}{" "}
-                        <Badge tone={statusTone(t.status)}>{t.status}</Badge>
+                        <AdminStatus tone={statusTone(t.status)}>
+                          {statusLabel(t.status)}
+                        </AdminStatus>
                       </strong>
                       <p>
                         {t.domainMode} · {t.statusLabel}
@@ -1232,21 +1188,25 @@ export default function AdminClientDetailPage({
               </ul>
             )}
           </section>
-          <section className="iwfw-admin-panel">
-            <div className="iwfw-admin-panel__head">
+          <section className="adm-sheet">
+            <div className="adm-sheet__head">
               <h2>Asset transfers</h2>
-              <Link to="/admin/transfers">Queue</Link>
+              <Link to="/admin/transfers" className="adm-sheet__link">
+                Queue
+              </Link>
             </div>
             {client.transfers.length === 0 ? (
-              <p className="iwfw-admin-empty">No transfer tasks.</p>
+              <p className="adm-empty">No transfer tasks.</p>
             ) : (
-              <ul className="iwfw-admin-list">
+              <ul className="adm-list">
                 {client.transfers.map((t) => (
                   <li key={t.id}>
                     <div>
                       <strong>
                         Transfer{" "}
-                        <Badge tone={statusTone(t.status)}>{t.status}</Badge>
+                        <AdminStatus tone={statusTone(t.status)}>
+                          {statusLabel(t.status)}
+                        </AdminStatus>
                       </strong>
                       <p>Period end {formatAdminDate(t.periodEndAt)}</p>
                     </div>
@@ -1262,19 +1222,13 @@ export default function AdminClientDetailPage({
   );
 }
 
-function BriefCard({
-  title,
-  rows,
-}: {
-  title: string;
-  rows: Array<[string, string]>;
-}) {
+function BriefCard({ title, rows }: { title: string; rows: Array<[string, string]> }) {
   return (
-    <section className="iwfw-admin-panel">
-      <div className="iwfw-admin-panel__head">
+    <section className="adm-sheet">
+      <div className="adm-sheet__head">
         <h2>{title}</h2>
       </div>
-      <dl className="iwfw-admin-dl">
+      <dl className="adm-dl">
         {rows.map(([label, value]) => (
           <div key={label}>
             <dt>{label}</dt>

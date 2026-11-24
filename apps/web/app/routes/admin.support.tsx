@@ -1,15 +1,20 @@
 import { Link } from "react-router";
-import { Badge } from "@iwfw/ui";
 import { createDb } from "@iwfw/db";
 import { getEnv } from "../lib/env.server";
 import { requireStaffSession } from "../lib/session.server";
 import { formatAdminDate } from "../lib/admin-ops";
-import { ticketCategoryLabel, ticketStatusLabel } from "../lib/support";
+import { ticketCategoryLabel } from "../lib/support";
 import {
   listAdminTickets,
   listNotificationsForUser,
   markAllNotificationsRead,
 } from "../lib/support.server";
+import {
+  AdminCount,
+  AdminPageHeader,
+  AdminStatus,
+  staffTicketStatusLabel,
+} from "../components/admin-ui";
 import type { Route } from "./+types/admin.support";
 
 export function meta(_args: Route.MetaArgs) {
@@ -44,48 +49,42 @@ function tone(status: string): "success" | "warning" | "danger" | "neutral" {
 
 export default function AdminSupportPage({ loaderData }: Route.ComponentProps) {
   return (
-    <div className="iwfw-admin-page">
-      <header className="iwfw-admin-page__header">
-        <div>
-          <p className="iwfw-admin-page__eyebrow">Support</p>
-          <h1>Customer tickets</h1>
-          <p>
-            Reply to customer issues and requests. Unread counts show when they
-            message you.
-          </p>
-        </div>
-        <p className="iwfw-admin-page__count">
-          {loaderData.tickets.length} total
-        </p>
-      </header>
+    <div className="adm-page">
+      <AdminPageHeader
+        kicker="Support"
+        title="Customer tickets"
+        lead="Reply to customer issues and requests. Unread counts show when they message you."
+        aside={<AdminCount value={loaderData.tickets.length} label="total" />}
+      />
 
-      <div className="iwfw-admin-grid">
-        <section className="iwfw-admin-panel iwfw-admin-panel--wide">
-          <div className="iwfw-admin-panel__head">
-            <h2>Queue</h2>
+      <div className="adm-grid">
+        <section className="adm-sheet adm-sheet--wide" aria-labelledby="adm-ticket-q">
+          <div className="adm-sheet__head">
+            <h2 id="adm-ticket-q">Queue</h2>
           </div>
           {loaderData.tickets.length === 0 ? (
-            <p className="iwfw-admin-empty">No tickets yet.</p>
+            <p className="adm-empty">No tickets yet.</p>
           ) : (
-            <ul className="iwfw-ticket-list">
+            <ul className="adm-tickets">
               {loaderData.tickets.map((t) => (
                 <li key={t.id}>
                   <Link to={`/admin/support/${t.id}`}>
-                    <div>
-                      <strong>
-                        {t.subject}
-                        {t.unread > 0 ? (
-                          <span className="iwfw-notify-badge">{t.unread}</span>
-                        ) : null}
-                      </strong>
-                      <p>
-                        {t.tradingName} · {ticketCategoryLabel(t.category)} ·{" "}
-                        <Badge tone={tone(t.status)}>
-                          {ticketStatusLabel(t.status)}
-                        </Badge>{" "}
-                        · {formatAdminDate(t.lastMessageAt)}
-                      </p>
-                    </div>
+                    <strong>
+                      {t.subject}
+                      {t.unread > 0 ? (
+                        <span className="adm-unread">
+                          {t.unread}
+                          <span className="adm-sr"> unread</span>
+                        </span>
+                      ) : null}
+                    </strong>
+                    <p>
+                      {t.tradingName} · {ticketCategoryLabel(t.category)} ·{" "}
+                      <AdminStatus tone={tone(t.status)}>
+                        {staffTicketStatusLabel(t.status)}
+                      </AdminStatus>{" "}
+                      · {formatAdminDate(t.lastMessageAt)}
+                    </p>
                   </Link>
                 </li>
               ))}
@@ -93,14 +92,14 @@ export default function AdminSupportPage({ loaderData }: Route.ComponentProps) {
           )}
         </section>
 
-        <section className="iwfw-admin-panel iwfw-admin-panel--wide">
-          <div className="iwfw-admin-panel__head">
-            <h2>Your notifications</h2>
+        <section className="adm-sheet adm-sheet--wide" aria-labelledby="adm-ticket-n">
+          <div className="adm-sheet__head">
+            <h2 id="adm-ticket-n">Your notifications</h2>
           </div>
           {loaderData.notifications.length === 0 ? (
-            <p className="iwfw-admin-empty">No notifications yet.</p>
+            <p className="adm-empty">No notifications yet.</p>
           ) : (
-            <ul className="iwfw-admin-list">
+            <ul className="adm-list">
               {loaderData.notifications.map((n) => (
                 <li key={n.id}>
                   <div>

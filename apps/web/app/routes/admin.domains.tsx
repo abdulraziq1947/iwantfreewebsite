@@ -1,15 +1,17 @@
 import { Form, Link } from "react-router";
-import { Badge } from "@iwfw/ui";
 import { createDb } from "@iwfw/db";
 import { getEnv } from "../lib/env.server";
 import { requireStaffSession } from "../lib/session.server";
 import { formatAdminDate } from "../lib/admin-ops";
-import {
-  listAdminDomainTasks,
-  updateDomainTaskStatus,
-} from "../lib/admin-ops.server";
+import { listAdminDomainTasks, updateDomainTaskStatus } from "../lib/admin-ops.server";
 import { setDomainRenewsAt } from "../lib/ops-tasks.server";
 import { writeAuditLog, clientIpFromRequest } from "../lib/audit-log.server";
+import {
+  AdminCount,
+  AdminPageHeader,
+  AdminStatus,
+  statusLabel,
+} from "../components/admin-ui";
 import type { Route } from "./+types/admin.domains";
 
 export function meta(_args: Route.MetaArgs) {
@@ -96,35 +98,31 @@ const ACTIONS: Array<{ intent: string; label: string; when: string[] }> = [
 
 export default function AdminDomainsPage({ loaderData }: Route.ComponentProps) {
   return (
-    <div className="iwfw-admin-page">
-      <header className="iwfw-admin-page__header">
-        <div>
-          <p className="iwfw-admin-page__eyebrow">Pending tasks</p>
-          <h1>Domain registration</h1>
-          <p>
-            Manual domain work queue. Domains are never purchased automatically —
-            update status as you progress each request. Set renews-at so Ops
-            tasks can remind you before expiry.
-          </p>
-        </div>
-        <p className="iwfw-admin-page__count">{loaderData.tasks.length} total</p>
-      </header>
+    <div className="adm-page">
+      <AdminPageHeader
+        kicker="Pending tasks"
+        title="Domain registration"
+        lead="Manual domain work queue. Domains are never purchased automatically — update status as you progress each request. Set renews-at so Ops tasks can remind you before expiry."
+        aside={<AdminCount value={loaderData.tasks.length} label="total" />}
+      />
 
-      <section className="iwfw-admin-panel">
+      <section className="adm-sheet" aria-label="Domain tasks">
         {loaderData.tasks.length === 0 ? (
-          <p className="iwfw-admin-empty">No domain tasks yet.</p>
+          <p className="adm-empty">No domain tasks yet.</p>
         ) : (
-          <div className="iwfw-admin-table-wrap">
-            <table className="iwfw-admin-table">
+          <div className="adm-table-wrap">
+            <table className="adm-table">
               <thead>
                 <tr>
-                  <th>Domain</th>
-                  <th>Client</th>
-                  <th>Mode</th>
-                  <th>Status</th>
-                  <th>Renews</th>
-                  <th>Created</th>
-                  <th>Actions</th>
+                  <th scope="col">Domain</th>
+                  <th scope="col">Client</th>
+                  <th scope="col">Mode</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Renews</th>
+                  <th scope="col" className="is-num">
+                    Created
+                  </th>
+                  <th scope="col">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -133,9 +131,7 @@ export default function AdminDomainsPage({ loaderData }: Route.ComponentProps) {
                     <td>
                       <strong>{t.domainName}</strong>
                       {t.adminNotes ? (
-                        <span className="iwfw-admin-table__sub">
-                          {t.adminNotes}
-                        </span>
+                        <span className="adm-sub">{t.adminNotes}</span>
                       ) : null}
                     </td>
                     <td>
@@ -143,61 +139,49 @@ export default function AdminDomainsPage({ loaderData }: Route.ComponentProps) {
                         {t.tradingName}
                       </Link>
                     </td>
-                    <td>{t.domainMode}</td>
+                    <td>{statusLabel(t.domainMode)}</td>
                     <td>
-                      <Badge tone={domainTone(t.status)}>{t.status}</Badge>
+                      <AdminStatus tone={domainTone(t.status)}>
+                        {statusLabel(t.status)}
+                      </AdminStatus>
                       {t.registeredAt ? (
-                        <span className="iwfw-admin-table__sub">
+                        <span className="adm-sub">
                           Reg {formatAdminDate(t.registeredAt)}
                         </span>
                       ) : null}
                       {t.connectedAt ? (
-                        <span className="iwfw-admin-table__sub">
+                        <span className="adm-sub">
                           Conn {formatAdminDate(t.connectedAt)}
                         </span>
                       ) : null}
                     </td>
                     <td>
-                      <Form method="post" className="iwfw-admin-inline-form">
+                      <Form method="post" className="adm-inline">
                         <input type="hidden" name="taskId" value={t.id} />
                         <input type="hidden" name="intent" value="set_renews_at" />
                         <input
-                          className="iwfw-control"
+                          className="adm-input"
                           type="date"
                           name="renewsAt"
-                          defaultValue={
-                            t.renewsAt ? t.renewsAt.slice(0, 10) : undefined
-                          }
+                          defaultValue={t.renewsAt ? t.renewsAt.slice(0, 10) : undefined}
                         />
-                        <button
-                          type="submit"
-                          className="iwfw-btn iwfw-btn--outline iwfw-btn--sm"
-                        >
+                        <button type="submit" className="adm-btn adm-btn--sm">
                           Save
                         </button>
                       </Form>
                     </td>
-                    <td>{formatAdminDate(t.createdAt)}</td>
+                    <td className="is-num">{formatAdminDate(t.createdAt)}</td>
                     <td>
-                      <div className="iwfw-admin-actions">
-                        {ACTIONS.filter((a) => a.when.includes(t.status)).map(
-                          (a) => (
-                            <Form key={a.intent} method="post">
-                              <input type="hidden" name="taskId" value={t.id} />
-                              <input
-                                type="hidden"
-                                name="intent"
-                                value={a.intent}
-                              />
-                              <button
-                                type="submit"
-                                className="iwfw-btn iwfw-btn--outline iwfw-admin__btn-sm"
-                              >
-                                {a.label}
-                              </button>
-                            </Form>
-                          ),
-                        )}
+                      <div className="adm-actions">
+                        {ACTIONS.filter((a) => a.when.includes(t.status)).map((a) => (
+                          <Form key={a.intent} method="post">
+                            <input type="hidden" name="taskId" value={t.id} />
+                            <input type="hidden" name="intent" value={a.intent} />
+                            <button type="submit" className="adm-btn adm-btn--sm">
+                              {a.label}
+                            </button>
+                          </Form>
+                        ))}
                       </div>
                     </td>
                   </tr>

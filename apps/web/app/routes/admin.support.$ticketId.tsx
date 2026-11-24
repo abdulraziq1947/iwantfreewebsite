@@ -1,20 +1,20 @@
 import { Form, Link, redirect, useNavigation } from "react-router";
-import { Badge } from "@iwfw/ui";
 import { createDb } from "@iwfw/db";
 import { getEnv } from "../lib/env.server";
 import { requireStaffSession } from "../lib/session.server";
 import { formatAdminDate } from "../lib/admin-ops";
-import {
-  isTicketStatus,
-  ticketCategoryLabel,
-  ticketStatusLabel,
-} from "../lib/support";
+import { isTicketStatus, ticketCategoryLabel } from "../lib/support";
 import {
   getTicketThread,
   markTicketRead,
   replyToTicket,
   updateTicketStatus,
 } from "../lib/support.server";
+import {
+  AdminPageHeader,
+  AdminStatus,
+  staffTicketStatusLabel,
+} from "../components/admin-ui";
 import type { Route } from "./+types/admin.support.$ticketId";
 
 export function meta(_args: Route.MetaArgs) {
@@ -66,35 +66,45 @@ export default function AdminTicketPage({
   const navigation = useNavigation();
   const busy = navigation.state !== "idle";
 
+  const ticketTone =
+    thread.ticket.status === "resolved" || thread.ticket.status === "closed"
+      ? "success"
+      : thread.ticket.status === "awaiting_staff" || thread.ticket.status === "open"
+        ? "warning"
+        : "neutral";
+
   return (
-    <div className="iwfw-admin-page">
-      <header className="iwfw-admin-page__header">
-        <div>
-          <p className="iwfw-admin-page__eyebrow">
-            <Link to="/admin/support">Support</Link> ·{" "}
+    <div className="adm-page">
+      <AdminPageHeader
+        kicker={
+          <>
+            <Link to="/admin/support">Support</Link>
+            {" / "}
             <Link to={`/admin/clients/${thread.ticket.organisationId}`}>
               {thread.ticket.tradingName}
             </Link>
-          </p>
-          <h1>{thread.ticket.subject}</h1>
-          <p>
+          </>
+        }
+        title={thread.ticket.subject}
+        lead={
+          <>
             {ticketCategoryLabel(thread.ticket.category)} ·{" "}
-            <Badge>{ticketStatusLabel(thread.ticket.status)}</Badge>
-          </p>
-        </div>
-      </header>
+            <AdminStatus tone={ticketTone}>
+              {staffTicketStatusLabel(thread.ticket.status)}
+            </AdminStatus>
+          </>
+        }
+      />
 
-      <div className="iwfw-ticket-thread">
+      <div className="adm-thread">
         {thread.messages.map((m) => (
           <article
             key={m.id}
-            className={`iwfw-ticket-bubble${m.authorKind === "staff" ? " iwfw-ticket-bubble--staff" : ""}`}
+            className={`adm-bubble${m.authorKind === "staff" ? " adm-bubble--staff" : ""}`}
           >
-            <div className="iwfw-ticket-bubble__meta">
+            <div className="adm-bubble__meta">
               <span>
-                {m.authorKind === "staff"
-                  ? `${m.authorName} (staff)`
-                  : m.authorName}
+                {m.authorKind === "staff" ? `${m.authorName} (staff)` : m.authorName}
               </span>
               <span>{formatAdminDate(m.createdAt)}</span>
             </div>
@@ -103,17 +113,17 @@ export default function AdminTicketPage({
         ))}
       </div>
 
-      <div className="iwfw-admin-grid" style={{ marginTop: "1rem" }}>
-        <section className="iwfw-admin-panel">
-          <div className="iwfw-admin-panel__head">
-            <h2>Reply</h2>
+      <div className="adm-grid">
+        <section className="adm-sheet" aria-labelledby="adm-reply-h">
+          <div className="adm-sheet__head">
+            <h2 id="adm-reply-h">Reply</h2>
           </div>
-          <Form method="post" className="iwfw-start__form">
+          <Form method="post" className="adm-form">
             <input type="hidden" name="intent" value="reply" />
-            <label className="iwfw-field">
+            <label className="adm-field">
               <span>Message</span>
               <textarea
-                className="iwfw-control"
+                className="adm-input"
                 name="body"
                 required
                 rows={5}
@@ -121,30 +131,26 @@ export default function AdminTicketPage({
               />
             </label>
             {actionData && "error" in actionData && actionData.error ? (
-              <p className="iwfw-start__error" role="alert">
+              <p className="adm-alert adm-alert--error" role="alert">
                 {actionData.error}
               </p>
             ) : null}
-            <button
-              type="submit"
-              className="iwfw-btn iwfw-btn--green"
-              disabled={busy}
-            >
+            <button type="submit" className="adm-btn adm-btn--go" disabled={busy}>
               {busy ? "Sending…" : "Send reply"}
             </button>
           </Form>
         </section>
 
-        <section className="iwfw-admin-panel">
-          <div className="iwfw-admin-panel__head">
-            <h2>Status</h2>
+        <section className="adm-sheet" aria-labelledby="adm-tstatus-h">
+          <div className="adm-sheet__head">
+            <h2 id="adm-tstatus-h">Status</h2>
           </div>
-          <Form method="post" className="iwfw-start__form">
+          <Form method="post" className="adm-form">
             <input type="hidden" name="intent" value="status" />
-            <label className="iwfw-field">
+            <label className="adm-field">
               <span>Update status</span>
               <select
-                className="iwfw-control"
+                className="adm-input"
                 name="status"
                 defaultValue={thread.ticket.status}
               >
@@ -155,11 +161,7 @@ export default function AdminTicketPage({
                 <option value="closed">Closed</option>
               </select>
             </label>
-            <button
-              type="submit"
-              className="iwfw-btn iwfw-btn--outline"
-              disabled={busy}
-            >
+            <button type="submit" className="adm-btn" disabled={busy}>
               Save status
             </button>
           </Form>

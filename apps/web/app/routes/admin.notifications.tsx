@@ -7,6 +7,7 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "../lib/notifications.server";
+import { AdminCount, AdminPageHeader } from "../components/admin-ui";
 import type { Route } from "./+types/admin.notifications";
 
 export function meta(_args: Route.MetaArgs) {
@@ -33,56 +34,58 @@ export async function action({ request, context }: Route.ActionArgs) {
   return { ok: true };
 }
 
-export default function AdminNotificationsPage({
-  loaderData,
-}: Route.ComponentProps) {
+export default function AdminNotificationsPage({ loaderData }: Route.ComponentProps) {
   return (
-    <div className="iwfw-admin-page">
-      <header className="iwfw-admin-page__header">
-        <div>
-          <p className="iwfw-admin-page__eyebrow">Live ops</p>
-          <h1>Notifications</h1>
-          <p>
-            New prospects, new customers, support requests, and GMB updates —
-            refreshed as they happen.
-          </p>
-        </div>
-        {loaderData.unread > 0 ? (
-          <Form method="post">
-            <input type="hidden" name="intent" value="mark_all_read" />
-            <button type="submit" className="iwfw-btn iwfw-btn--outline">
-              Mark all read
-            </button>
-          </Form>
-        ) : null}
-      </header>
+    <div className="adm-page">
+      <AdminPageHeader
+        kicker="Live ops"
+        title="Notifications"
+        lead="New prospects, new customers, support requests, and GMB updates — refreshed as they happen."
+        aside={
+          <>
+            <AdminCount
+              value={loaderData.unread}
+              label="unread"
+              detail={`of ${loaderData.items.length} shown`}
+            />
+            {loaderData.unread > 0 ? (
+              <Form method="post">
+                <input type="hidden" name="intent" value="mark_all_read" />
+                <button type="submit" className="adm-btn">
+                  Mark all read
+                </button>
+              </Form>
+            ) : null}
+          </>
+        }
+      />
 
-      <section className="iwfw-admin-panel">
+      <section className="adm-sheet" aria-label="Notifications">
         {loaderData.items.length === 0 ? (
-          <p className="iwfw-admin-empty">No notifications yet.</p>
+          <p className="adm-empty">No notifications yet.</p>
         ) : (
-          <ul className="iwfw-notify-page-list">
+          <ul className="adm-notify">
             {loaderData.items.map((n) => (
               <li key={n.id} className={n.readAt ? undefined : "is-unread"}>
                 <div>
                   <strong>{n.title}</strong>
                   <p>{n.body}</p>
-                  <p className="iwfw-notify-page-meta">
+                  <p className="adm-notify__meta">
                     {n.kind.replaceAll("_", " ")}
                     {n.createdAt
                       ? ` · ${new Date(n.createdAt).toLocaleString("en-GB")}`
                       : ""}
                   </p>
                 </div>
-                <div className="iwfw-notify-page-actions">
-                  <Link to={n.href} className="iwfw-btn iwfw-btn--outline">
+                <div className="adm-notify__actions">
+                  <Link to={n.href} className="adm-btn adm-btn--sm">
                     Open
                   </Link>
                   {!n.readAt ? (
                     <Form method="post">
                       <input type="hidden" name="intent" value="mark_one_read" />
                       <input type="hidden" name="id" value={n.id} />
-                      <button type="submit" className="iwfw-btn iwfw-btn--outline">
+                      <button type="submit" className="adm-btn adm-btn--sm">
                         Mark read
                       </button>
                     </Form>
