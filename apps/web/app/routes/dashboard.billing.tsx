@@ -1,5 +1,4 @@
 import { data, Form, Link, redirect, useNavigation } from "react-router";
-import { Badge, Panel } from "@iwfw/ui";
 import { desc, eq, assetTransferTasks } from "@iwfw/db";
 import { getConfig } from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
@@ -12,6 +11,15 @@ import {
   setSubscriptionCancelAtPeriodEnd,
 } from "../lib/billing.server";
 import { WebsiteSwitcher } from "../components/website-switcher";
+import {
+  Alert,
+  CheckIcon,
+  ExternalIcon,
+  PageHead,
+  StatusMark,
+  toneFromBadge,
+  type DashTone,
+} from "../components/dash-ui";
 import type { Route } from "./+types/dashboard.billing";
 
 export function meta(_args: Route.MetaArgs) {
@@ -163,6 +171,20 @@ function transferStatusLabel(status: string): string {
   }
 }
 
+function invoiceTone(status: string | null | undefined): DashTone {
+  if (status === "paid") return "ok";
+  if (status === "open") return "wait";
+  if (status === "uncollectible") return "stop";
+  return "muted";
+}
+
+function subscriptionTone(status: string): DashTone {
+  if (status === "active" || status === "trialing") return "ok";
+  if (status === "past_due" || status === "unpaid") return "stop";
+  if (status === "incomplete") return "wait";
+  return "muted";
+}
+
 export default function BillingPage({
   loaderData,
   actionData,
@@ -177,17 +199,17 @@ export default function BillingPage({
     ["active", "trialing", "past_due", "unpaid"].includes(subscription.status);
 
   return (
-    <div className="iwfw-dash-page">
-      <header className="iwfw-dash-page__header">
-        <div>
-          <h1>Billing</h1>
-          <p>
-            £39.99/month for your managed website, hosting and domain care. No
-            minimum contract. Cancel anytime.
-          </p>
-        </div>
-        <Badge tone={orgStatusTone(status)}>{orgStatusLabel(status)}</Badge>
-      </header>
+    <div className="dash-page">
+      <PageHead
+        kicker={workspace.primary?.tradingName ?? "Account"}
+        title="Billing"
+        lead="£39.99 a month for your managed website, hosting and domain care. No minimum contract. Cancel anytime."
+        aside={
+          <StatusMark tone={toneFromBadge(orgStatusTone(status))}>
+            {orgStatusLabel(status)}
+          </StatusMark>
+        }
+      />
 
       <WebsiteSwitcher
         orgs={workspace.orgs}
@@ -195,94 +217,52 @@ export default function BillingPage({
         hint="Billing, invoices and cancellation apply to the selected website subscription."
       />
 
-      <section className="iwfw-dash-panel">
-        <div className="iwfw-dash-panel-head">
-          <h2>Invoices</h2>
-        </div>
-        {invoiceError ? (
-          <p className="iwfw-dash-fine">{invoiceError}</p>
-        ) : invoices.length === 0 ? (
-          <p className="iwfw-dash-fine">
-            Invoices appear here after your first payment.
+      <div className="dash-split dash-split--plan">
+        <section className="dash-ledger" aria-labelledby="dash-plan-title">
+          <h2 id="dash-plan-title" className="dash-ledger__head">
+            Current plan
+          </h2>
+          <p className="dash-figure">
+            <strong>£39.99</strong>
+            <span>/month</span>
           </p>
-        ) : (
-          <ul className="iwfw-invoice-list">
-            {invoices.map((inv) => (
-              <li key={inv.id}>
-                <div>
-                  <strong>
-                    {inv.number || "Invoice"}{" "}
-                    <Badge
-                      tone={
-                        inv.status === "paid"
-                          ? "success"
-                          : inv.status === "open"
-                            ? "warning"
-                            : "neutral"
-                      }
-                    >
-                      {inv.status || "—"}
-                    </Badge>
-                  </strong>
-                  <p className="iwfw-dash-fine iwfw-dash-fine--tight">
-                    Billed {formatDate(inv.createdAt)}
-                    {inv.periodStart && inv.periodEnd
-                      ? ` · period ${formatDate(inv.periodStart)} → ${formatDate(inv.periodEnd)}`
-                      : ""}
-                    {" · "}
-                    {formatMoney(inv.total, inv.currency)}
-                    {inv.amountPaid > 0 && inv.amountPaid !== inv.total
-                      ? ` (paid ${formatMoney(inv.amountPaid, inv.currency)})`
-                      : ""}
-                  </p>
-                </div>
-                <div className="iwfw-dash-inline-actions">
-                  {inv.invoicePdfUrl ? (
-                    <a
-                      href={`/dashboard/billing/invoice/${inv.id}.pdf`}
-                      className="iwfw-btn iwfw-btn--green iwfw-btn--sm"
-                    >
-                      Download PDF
-                    </a>
-                  ) : null}
-                  {inv.hostedInvoiceUrl ? (
-                    <a
-                      href={inv.hostedInvoiceUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="iwfw-btn iwfw-btn--outline iwfw-btn--sm"
-                    >
-                      View online
-                    </a>
-                  ) : null}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <div className="iwfw-dash-split">
-        <Panel>
-          <h2>Current plan</h2>
-          <p className="iwfw-dash-price">
-            £39.99 <span>/month</span>
-          </p>
-          <ul className="iwfw-dash-list">
-            <li>Managed business website</li>
-            <li>Hosting &amp; maintenance</li>
-            <li>Domain help</li>
-            <li>One business email mailbox</li>
-            <li>Weekly Google Business Profile post</li>
-            <li>Review reply help</li>
+          <ul className="dash-ticks">
+            <li>
+              <CheckIcon />
+              Managed business website
+            </li>
+            <li>
+              <CheckIcon />
+              Hosting &amp; maintenance
+            </li>
+            <li>
+              <CheckIcon />
+              Domain help
+            </li>
+            <li>
+              <CheckIcon />
+              One business email mailbox
+            </li>
+            <li>
+              <CheckIcon />
+              Weekly Google Business Profile post
+            </li>
+            <li>
+              <CheckIcon />
+              Review reply help
+            </li>
           </ul>
 
           {subscription ? (
             <>
-              <dl className="iwfw-dash-dl">
+              <dl className="dash-rows">
                 <div>
                   <dt>Status</dt>
-                  <dd>{subscriptionStatusLabel(subscription.status)}</dd>
+                  <dd>
+                    <StatusMark tone={subscriptionTone(subscription.status)}>
+                      {subscriptionStatusLabel(subscription.status)}
+                    </StatusMark>
+                  </dd>
                 </div>
                 <div>
                   <dt>
@@ -301,62 +281,60 @@ export default function BillingPage({
                   </dd>
                 </div>
               </dl>
-              <Form method="post">
+              <Form method="post" className="dash-ledger__action">
                 <input type="hidden" name="intent" value="portal" />
                 {workspace.primary?.id ? (
                   <input type="hidden" name="org" value={workspace.primary.id} />
                 ) : null}
                 <button
                   type="submit"
-                  className="iwfw-btn iwfw-btn--outline"
+                  className="dash-btn dash-btn--line"
                   disabled={busy}
                 >
                   {busy ? "Opening…" : "Update payment method"}
                 </button>
+                <p className="dash-fine">
+                  Opens Stripe’s secure customer portal to update your card.
+                </p>
               </Form>
-              <p className="iwfw-dash-fine">
-                Opens Stripe’s secure customer portal to update your card.
-              </p>
             </>
           ) : status === "prospect" ? (
             <Link
               to="/get-started"
-              className="iwfw-btn iwfw-btn--green iwfw-btn--block"
+              className="dash-btn dash-btn--go dash-btn--block"
             >
               Subscribe
             </Link>
           ) : (
-            <p className="iwfw-dash-copy">
+            <p className="dash-ledger__foot">
               Subscription details will appear here once your payment is
               confirmed.
             </p>
           )}
-        </Panel>
+        </section>
 
-        <Panel>
-          <h2>Cancel anytime</h2>
-          <p className="iwfw-dash-copy">
+        <section className="dash-prose" aria-labelledby="dash-cancel-title">
+          <h2 id="dash-cancel-title" className="dash-h2">
+            Cancel anytime
+          </h2>
+          <p>
             No minimum term and no cancellation penalty. If you cancel, your
             subscription stays active until the end of the current paid billing
             period, and billing will not renew after that date. You can reverse a
             scheduled cancellation before the period ends.
           </p>
-          <p className="iwfw-dash-copy">
+          <p>
             When your subscription ends, we help transfer your website and
             domain to you. We do not automatically delete your site, domain,
             email or files.
           </p>
 
-          {actionData && "error" in actionData && actionData.error && (
-            <p className="iwfw-start__error" role="alert">
-              {actionData.error}
-            </p>
-          )}
-          {actionData && "ok" in actionData && actionData.ok && (
-            <p className="iwfw-start__ok" role="status">
-              Billing preference updated.
-            </p>
-          )}
+          {actionData && "error" in actionData && actionData.error ? (
+            <Alert tone="error">{actionData.error}</Alert>
+          ) : null}
+          {actionData && "ok" in actionData && actionData.ok ? (
+            <Alert tone="ok">Billing preference updated.</Alert>
+          ) : null}
 
           {activeLike && !subscription?.cancelAtPeriodEnd && (
             <Form method="post">
@@ -366,7 +344,7 @@ export default function BillingPage({
               ) : null}
               <button
                 type="submit"
-                className="iwfw-btn iwfw-btn--outline"
+                className="dash-btn dash-btn--line"
                 disabled={busy}
               >
                 {busy ? "Updating…" : "Cancel at end of billing period"}
@@ -375,19 +353,19 @@ export default function BillingPage({
           )}
 
           {activeLike && subscription?.cancelAtPeriodEnd && (
-            <Form method="post">
+            <Form method="post" className="dash-prose__form">
               <input type="hidden" name="intent" value="resume" />
               {workspace.primary?.id ? (
                 <input type="hidden" name="org" value={workspace.primary.id} />
               ) : null}
-              <p className="iwfw-dash-fine">
+              <p className="dash-fine">
                 Cancellation is scheduled for{" "}
                 {formatDate(subscription.currentPeriodEnd)}. You can keep your
                 subscription by reversing this before that date.
               </p>
               <button
                 type="submit"
-                className="iwfw-btn iwfw-btn--green"
+                className="dash-btn dash-btn--go"
                 disabled={busy}
               >
                 {busy ? "Updating…" : "Keep my subscription"}
@@ -396,15 +374,15 @@ export default function BillingPage({
           )}
 
           {!activeLike && (
-            <p className="iwfw-dash-fine">
+            <p className="dash-fine">
               Cancellation controls appear when you have an active subscription.
             </p>
           )}
 
           {transfer ? (
-            <>
-              <h2 className="iwfw-start__subhead">Website transfer</h2>
-              <dl className="iwfw-dash-dl">
+            <div className="dash-prose__block">
+              <h3 className="dash-h3">Website transfer</h3>
+              <dl className="dash-rows">
                 <div>
                   <dt>Status</dt>
                   <dd>{transferStatusLabel(transfer.status)}</dd>
@@ -418,10 +396,94 @@ export default function BillingPage({
                   <dd>{formatDate(transfer.completedAt)}</dd>
                 </div>
               </dl>
-            </>
+            </div>
           ) : null}
-        </Panel>
+        </section>
       </div>
+
+      <section className="dash-section" aria-labelledby="dash-invoices-title">
+        <div className="dash-section-head">
+          <h2 id="dash-invoices-title" className="dash-h2">
+            Invoices
+          </h2>
+        </div>
+        {invoiceError ? (
+          <p className="dash-empty">{invoiceError}</p>
+        ) : invoices.length === 0 ? (
+          <p className="dash-empty">
+            Invoices appear here after your first payment.
+          </p>
+        ) : (
+          <table className="dash-table">
+            <thead>
+              <tr>
+                <th scope="col">Invoice</th>
+                <th scope="col">Billed</th>
+                <th scope="col">Period</th>
+                <th scope="col" className="dash-table__num">
+                  Amount
+                </th>
+                <th scope="col">Status</th>
+                <th scope="col">
+                  <span className="dash-sr">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoices.map((inv) => (
+                <tr key={inv.id}>
+                  <th scope="row" data-label="Invoice">
+                    {inv.number || "Invoice"}
+                  </th>
+                  <td data-label="Billed">{formatDate(inv.createdAt)}</td>
+                  <td data-label="Period">
+                    {inv.periodStart && inv.periodEnd
+                      ? `${formatDate(inv.periodStart)} – ${formatDate(inv.periodEnd)}`
+                      : "—"}
+                  </td>
+                  <td data-label="Amount" className="dash-table__num">
+                    {formatMoney(inv.total, inv.currency)}
+                    {inv.amountPaid > 0 && inv.amountPaid !== inv.total ? (
+                      <small>
+                        Paid {formatMoney(inv.amountPaid, inv.currency)}
+                      </small>
+                    ) : null}
+                  </td>
+                  <td data-label="Status">
+                    <StatusMark tone={invoiceTone(inv.status)}>
+                      {inv.status
+                        ? inv.status.charAt(0).toUpperCase() +
+                          inv.status.slice(1).replaceAll("_", " ")
+                        : "—"}
+                    </StatusMark>
+                  </td>
+                  <td className="dash-table__actions">
+                    {inv.invoicePdfUrl ? (
+                      <a
+                        href={`/dashboard/billing/invoice/${inv.id}.pdf`}
+                        className="dash-btn dash-btn--line dash-btn--sm"
+                      >
+                        Download PDF
+                      </a>
+                    ) : null}
+                    {inv.hostedInvoiceUrl ? (
+                      <a
+                        href={inv.hostedInvoiceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="dash-link"
+                      >
+                        View online
+                        <ExternalIcon />
+                      </a>
+                    ) : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import { Form, Link, redirect, useNavigation } from "react-router";
-import { Badge } from "@iwfw/ui";
 import { createDb } from "@iwfw/db";
 import { getEnv } from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
@@ -10,6 +9,7 @@ import {
   markTicketRead,
   replyToTicket,
 } from "../lib/support.server";
+import { Alert, StatusMark, ticketTone } from "../components/dash-ui";
 import type { Route } from "./+types/dashboard.support.$ticketId";
 
 export function meta(_args: Route.MetaArgs) {
@@ -51,6 +51,12 @@ export async function action({ request, context, params }: Route.ActionArgs) {
   throw redirect(`/dashboard/support/${params.ticketId}`);
 }
 
+function initialsFor(name: string | null | undefined): string {
+  const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
+  const letters = parts.slice(0, 2).map((part) => part.charAt(0).toUpperCase());
+  return letters.join("") || "You";
+}
+
 export default function CustomerTicketPage({
   loaderData,
   actionData,
@@ -61,45 +67,59 @@ export default function CustomerTicketPage({
   const closed = thread.ticket.status === "closed";
 
   return (
-    <div className="iwfw-dash-page">
-      <header className="iwfw-dash-page__header">
-        <div>
-          <p className="iwfw-admin-page__eyebrow">
-            <Link to="/dashboard/support">Support</Link>
+    <div className="dash-page dash-page--narrow">
+      <header className="dash-head dash-head--thread">
+        <div className="dash-head__copy">
+          <p className="dash-kicker">
+            <Link to="/dashboard/support" className="dash-back">
+              <span aria-hidden="true">←</span> Support
+            </Link>
           </p>
-          <h1>{thread.ticket.subject}</h1>
-          <p>
-            {ticketCategoryLabel(thread.ticket.category)} ·{" "}
-            <Badge>{ticketStatusLabel(thread.ticket.status)}</Badge>
+          <h1 className="dash-h1 dash-h1--thread">{thread.ticket.subject}</h1>
+          <p className="dash-thread-meta">
+            <StatusMark tone={ticketTone(thread.ticket.status)}>
+              {ticketStatusLabel(thread.ticket.status)}
+            </StatusMark>
+            <span>{ticketCategoryLabel(thread.ticket.category)}</span>
           </p>
         </div>
       </header>
 
-      <div className="iwfw-ticket-thread">
-        {thread.messages.map((m) => (
-          <article
-            key={m.id}
-            className={`iwfw-ticket-bubble${m.authorKind === "staff" ? " iwfw-ticket-bubble--staff" : ""}`}
-          >
-            <div className="iwfw-ticket-bubble__meta">
-              <span>
-                {m.authorKind === "staff" ? "Support team" : m.authorName}
+      <ol className="dash-thread" aria-label="Messages">
+        {thread.messages.map((m) => {
+          const staff = m.authorKind === "staff";
+          return (
+            <li
+              key={m.id}
+              className={`dash-thread__msg${staff ? " is-staff" : ""}`}
+            >
+              <span className="dash-thread__avatar" aria-hidden="true">
+                {staff ? "IW" : initialsFor(m.authorName)}
               </span>
-              <span>{formatAdminDate(m.createdAt)}</span>
-            </div>
-            <p>{m.body}</p>
-          </article>
-        ))}
-      </div>
+              <article className="dash-thread__body">
+                <header className="dash-thread__meta">
+                  <strong>{staff ? "Support team" : m.authorName}</strong>
+                  <span>{formatAdminDate(m.createdAt)}</span>
+                </header>
+                <p>{m.body}</p>
+              </article>
+            </li>
+          );
+        })}
+      </ol>
 
-      <section className="iwfw-admin-panel" style={{ marginTop: "1rem" }}>
-        <div className="iwfw-admin-panel__head">
-          <h2>Reply</h2>
-        </div>
+      <section className="dash-panel dash-reply" aria-labelledby="dash-reply-title">
+        <h2 id="dash-reply-title" className="dash-h2">
+          Reply
+        </h2>
         {closed ? (
-          <p className="iwfw-admin-empty">This ticket is closed.</p>
+          <p className="dash-empty">
+            This ticket is closed. Open a new ticket from{" "}
+            <Link to="/dashboard/support">Support</Link> if you need anything
+            else.
+          </p>
         ) : (
-          <Form method="post" className="iwfw-start__form">
+          <Form method="post" className="dash-form">
             <label className="iwfw-field">
               <span>Message</span>
               <textarea
@@ -111,17 +131,17 @@ export default function CustomerTicketPage({
               />
             </label>
             {actionData && "error" in actionData && actionData.error ? (
-              <p className="iwfw-start__error" role="alert">
-                {actionData.error}
-              </p>
+              <Alert tone="error">{actionData.error}</Alert>
             ) : null}
-            <button
-              type="submit"
-              className="iwfw-btn iwfw-btn--green"
-              disabled={busy}
-            >
-              {busy ? "Sending…" : "Send reply"}
-            </button>
+            <div>
+              <button
+                type="submit"
+                className="dash-btn dash-btn--go"
+                disabled={busy}
+              >
+                {busy ? "Sending…" : "Send reply"}
+              </button>
+            </div>
           </Form>
         )}
       </section>

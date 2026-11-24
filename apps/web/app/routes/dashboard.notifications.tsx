@@ -7,6 +7,7 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "../lib/notifications.server";
+import { PageHead } from "../components/dash-ui";
 import type { Route } from "./+types/dashboard.notifications";
 
 export function meta(_args: Route.MetaArgs) {
@@ -37,57 +38,77 @@ export default function CustomerNotificationsPage({
   loaderData,
 }: Route.ComponentProps) {
   return (
-    <div className="iwfw-dash-page">
-      <header className="iwfw-dash-page__header">
-        <div>
-          <h1>Notifications</h1>
-          <p>Live updates when we need you, or when something changes on your site.</p>
-        </div>
-        {loaderData.unread > 0 ? (
-          <Form method="post">
-            <input type="hidden" name="intent" value="mark_all_read" />
-            <button type="submit" className="iwfw-btn iwfw-btn--outline">
-              Mark all read
-            </button>
-          </Form>
-        ) : null}
-      </header>
+    <div className="dash-page dash-page--narrow">
+      <PageHead
+        kicker="Account"
+        title="Notifications"
+        lead="Updates when we need something from you, or when something changes on your site."
+        aside={
+          loaderData.unread > 0 ? (
+            <Form method="post">
+              <input type="hidden" name="intent" value="mark_all_read" />
+              <button type="submit" className="dash-btn dash-btn--line dash-btn--sm">
+                Mark all read
+              </button>
+            </Form>
+          ) : null
+        }
+      />
 
-      <section className="iwfw-admin-panel">
-        {loaderData.items.length === 0 ? (
-          <p className="iwfw-admin-empty">No notifications yet.</p>
-        ) : (
-          <ul className="iwfw-notify-page-list">
-            {loaderData.items.map((n) => (
-              <li key={n.id} className={n.readAt ? undefined : "is-unread"}>
-                <div>
-                  <strong>{n.title}</strong>
-                  <p>{n.body}</p>
-                  <p className="iwfw-notify-page-meta">
-                    {n.createdAt
-                      ? new Date(n.createdAt).toLocaleString("en-GB")
-                      : ""}
-                  </p>
-                </div>
-                <div className="iwfw-notify-page-actions">
-                  <Link to={n.href} className="iwfw-btn iwfw-btn--outline">
-                    Open
-                  </Link>
-                  {!n.readAt ? (
-                    <Form method="post">
-                      <input type="hidden" name="intent" value="mark_one_read" />
-                      <input type="hidden" name="id" value={n.id} />
-                      <button type="submit" className="iwfw-btn iwfw-btn--outline">
-                        Mark read
-                      </button>
-                    </Form>
-                  ) : null}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      {loaderData.items.length === 0 ? (
+        <p className="dash-empty">
+          No notifications yet. We’ll post updates here as your website moves
+          along.
+        </p>
+      ) : (
+        <ul className="dash-feed dash-feed--page">
+          {loaderData.items.map((n) => (
+            <li key={n.id} className={n.readAt ? undefined : "is-unread"}>
+              <div className="dash-feed__body">
+                <p className="dash-feed__title">
+                  {!n.readAt ? <span className="dash-sr">New: </span> : null}
+                  {n.title}
+                </p>
+                <p>{n.body}</p>
+                <p className="dash-feed__when">
+                  {n.createdAt
+                    ? new Date(n.createdAt).toLocaleString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        timeZone: "Europe/London",
+                      })
+                    : ""}
+                </p>
+              </div>
+              <div className="dash-feed__actions">
+                <Link
+                  to={n.href}
+                  className="dash-btn dash-btn--line dash-btn--sm"
+                  aria-label={`Open: ${n.title}`}
+                >
+                  Open
+                </Link>
+                {!n.readAt ? (
+                  <Form method="post">
+                    <input type="hidden" name="intent" value="mark_one_read" />
+                    <input type="hidden" name="id" value={n.id} />
+                    <button
+                      type="submit"
+                      className="dash-btn dash-btn--quiet dash-btn--sm"
+                      aria-label={`Mark as read: ${n.title}`}
+                    >
+                      Mark read
+                    </button>
+                  </Form>
+                ) : null}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

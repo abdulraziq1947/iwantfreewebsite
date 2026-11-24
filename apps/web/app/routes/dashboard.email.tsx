@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { data as rrData, Form, Link, useNavigation } from "react-router";
-import { Badge, Panel } from "@iwfw/ui";
 import { eq, onboardingProfiles } from "@iwfw/db";
 import { getConfig } from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
@@ -8,6 +7,13 @@ import { getCustomerWorkspace } from "../lib/customer-org.server";
 import { loadCustomerWorkspace } from "../lib/customer-workspace.server";
 import { QuestionnaireField } from "../components/questionnaire-field";
 import { WebsiteSwitcher } from "../components/website-switcher";
+import {
+  Alert,
+  ExternalIcon,
+  PageHead,
+  StatusMark,
+  type DashTone,
+} from "../components/dash-ui";
 import {
   MAIL_CLIENT_GUIDES,
   mailboxSecurityLabel,
@@ -84,18 +90,19 @@ function CopyRow({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt>{label}</dt>
-      <dd className="iwfw-mail-copy-row">
-        <code className="iwfw-dash-code">{value}</code>
+      <dd className="dash-copyrow">
+        <code className="dash-code">{value}</code>
         {value && value !== "—" ? (
           <button
             type="button"
-            className="iwfw-btn iwfw-btn--outline iwfw-btn--sm"
+            className="dash-copybtn"
             onClick={copy}
+            aria-label={copied ? `${label} copied` : `Copy ${label.toLowerCase()}`}
           >
             {copied ? "Copied" : "Copy"}
           </button>
         ) : null}
-        <span className="iwfw-sr-only" aria-live="polite">
+        <span className="dash-sr" aria-live="polite">
           {copied ? `${label} copied to clipboard` : ""}
         </span>
       </dd>
@@ -116,32 +123,40 @@ function PasswordRow({ value }: { value: string }) {
     }
   }
   return (
-    <div className="iwfw-mail-password">
+    <div>
       <dt>Password</dt>
-      <dd>
-        <code className="iwfw-dash-code">
+      <dd className="dash-copyrow">
+        <code className="dash-code">
           {visible ? value : "•".repeat(Math.min(Math.max(value.length, 8), 16))}
         </code>
         <button
           type="button"
-          className="iwfw-btn iwfw-btn--outline iwfw-mail-password__toggle"
+          className="dash-copybtn"
           onClick={() => setVisible((v) => !v)}
+          aria-pressed={visible}
         >
           {visible ? "Hide" : "Show"}
         </button>
         <button
           type="button"
-          className="iwfw-btn iwfw-btn--outline iwfw-btn--sm"
+          className="dash-copybtn"
           onClick={copy}
+          aria-label={copied ? "Password copied" : "Copy password"}
         >
           {copied ? "Copied" : "Copy"}
         </button>
-        <span className="iwfw-sr-only" aria-live="polite">
+        <span className="dash-sr" aria-live="polite">
           {copied ? "Password copied to clipboard" : ""}
         </span>
       </dd>
     </div>
   );
+}
+
+function mailboxTone(status: string | undefined): DashTone {
+  if (status === "active") return "ok";
+  if (status === "suspended") return "stop";
+  return "wait";
 }
 
 export default function EmailPage({
@@ -166,26 +181,27 @@ export default function EmailPage({
   const ready = mailbox?.status === "active";
 
   return (
-    <div className="iwfw-dash-page">
-      <header className="iwfw-dash-page__header">
-        <div>
-          <h1>Business email</h1>
-          <p>
-            {ready
-              ? "Your mailbox is ready. Use webmail or add it to Outlook, Apple Mail, Gmail and your phone."
-              : "One custom mailbox is included. Tell us the address you prefer — we’ll add login and setup details here once it’s ready."}
-          </p>
-        </div>
-        {mailbox ? (
-          <Badge tone={ready ? "success" : "warning"}>
-            {mailboxStatusLabel(mailbox.status)}
-          </Badge>
-        ) : (
-          <Link to="/dashboard" className="iwfw-btn iwfw-btn--outline">
-            Back to overview
-          </Link>
-        )}
-      </header>
+    <div className="dash-page">
+      <PageHead
+        kicker={loaderData.primary?.tradingName ?? "Your website"}
+        title="Business email"
+        lead={
+          ready
+            ? "Your mailbox is ready. Use webmail, or add it to Outlook, Apple Mail, Gmail and your phone."
+            : "One custom mailbox is included. Tell us the address you’d like, and we’ll add login and setup details here once it’s ready."
+        }
+        aside={
+          mailbox ? (
+            <StatusMark tone={mailboxTone(mailbox.status)}>
+              {mailboxStatusLabel(mailbox.status)}
+            </StatusMark>
+          ) : (
+            <Link to="/dashboard" className="dash-btn dash-btn--line dash-btn--sm">
+              Back to overview
+            </Link>
+          )
+        }
+      />
 
       <WebsiteSwitcher
         orgs={loaderData.orgs}
@@ -195,21 +211,28 @@ export default function EmailPage({
 
       {ready && mailbox ? (
         <>
-          <section className="iwfw-dash-panel iwfw-mail-access">
-            <div className="iwfw-dash-panel-head">
-              <h2>Your mailbox access</h2>
+          <section
+            className="dash-ledger dash-mailbox"
+            aria-labelledby="dash-mailbox-title"
+          >
+            <div className="dash-ledger__top">
+              <h2 id="dash-mailbox-title" className="dash-ledger__head">
+                Your mailbox access
+              </h2>
               {mailbox.webmailUrl ? (
                 <a
                   href={mailbox.webmailUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="iwfw-btn iwfw-btn--green"
+                  className="dash-btn dash-btn--go"
                 >
                   Open webmail
+                  <ExternalIcon />
                 </a>
               ) : null}
             </div>
-            <dl className="iwfw-dash-dl">
+            <p className="dash-mailbox__address">{mailbox.emailAddress}</p>
+            <dl className="dash-rows dash-rows--copy">
               <CopyRow label="Email address" value={mailbox.emailAddress} />
               <CopyRow
                 label="Username"
@@ -220,11 +243,8 @@ export default function EmailPage({
               ) : (
                 <div>
                   <dt>Password</dt>
-                  <dd>
-                    <p className="iwfw-dash-fine" style={{ margin: 0 }}>
-                      Not set yet — we’ll add it here when your mailbox is
-                      ready.
-                    </p>
+                  <dd className="dash-rows__note">
+                    Not set yet. We’ll add it here when your mailbox is ready.
                   </dd>
                 </div>
               )}
@@ -233,36 +253,43 @@ export default function EmailPage({
               ) : null}
             </dl>
             {mailbox.customerNotes ? (
-              <p className="iwfw-dash-copy">{mailbox.customerNotes}</p>
+              <p className="dash-ledger__foot dash-ledger__foot--note">
+                {mailbox.customerNotes}
+              </p>
             ) : (
-              <p className="iwfw-dash-fine">
+              <p className="dash-ledger__foot">
                 Use this password for webmail and when adding the account to
                 Outlook, Apple Mail, Gmail or your phone.
               </p>
             )}
           </section>
 
-          <section className="iwfw-dash-panel">
-            <div className="iwfw-dash-panel-head">
-              <h2>Server settings for apps</h2>
+          <section className="dash-section" aria-labelledby="dash-servers-title">
+            <div className="dash-section-head">
+              <div>
+                <h2 id="dash-servers-title" className="dash-h2">
+                  Server settings for apps
+                </h2>
+                <p className="dash-section-head__intro">
+                  When your phone or computer asks for mail servers, use{" "}
+                  <strong>Incoming</strong> to receive mail and{" "}
+                  <strong>Outgoing</strong> to send it. Your username is usually
+                  your full email address, with the mailbox password we gave
+                  you.
+                </p>
+              </div>
             </div>
-            <p className="iwfw-dash-fine" style={{ marginBottom: "1rem" }}>
-              When your phone or computer asks for mail servers, use{" "}
-              <strong>Incoming</strong> to receive mail and{" "}
-              <strong>Outgoing</strong> to send mail. Username is usually your
-              full email address; use the mailbox password we gave you.
-            </p>
-            <div className="iwfw-mail-servers">
-              <article className="iwfw-mail-card iwfw-mail-card--in">
-                <header className="iwfw-mail-card__head">
-                  <p className="iwfw-mail-card__eyebrow">Incoming mail</p>
-                  <h3>IMAP — receive emails</h3>
+            <div className="dash-servers">
+              <article className="dash-server">
+                <header className="dash-server__head">
+                  <p className="dash-server__eyebrow">Incoming mail</p>
+                  <h3 className="dash-h3">IMAP: receive emails</h3>
                   <p>
                     Enter these under Incoming / IMAP when Outlook, Apple Mail,
                     Gmail or another app asks how to download your mail.
                   </p>
                 </header>
-                <dl className="iwfw-dash-dl">
+                <dl className="dash-rows dash-rows--copy">
                   <CopyRow
                     label="IMAP server"
                     value={mailbox.imapHost || "—"}
@@ -282,16 +309,16 @@ export default function EmailPage({
                 </dl>
               </article>
 
-              <article className="iwfw-mail-card iwfw-mail-card--out">
-                <header className="iwfw-mail-card__head">
-                  <p className="iwfw-mail-card__eyebrow">Outgoing mail</p>
-                  <h3>SMTP — send emails</h3>
+              <article className="dash-server">
+                <header className="dash-server__head">
+                  <p className="dash-server__eyebrow">Outgoing mail</p>
+                  <h3 className="dash-h3">SMTP: send emails</h3>
                   <p>
                     Enter these under Outgoing / SMTP so the same app can send
                     mail from your business address.
                   </p>
                 </header>
-                <dl className="iwfw-dash-dl">
+                <dl className="dash-rows dash-rows--copy">
                   <CopyRow
                     label="SMTP server"
                     value={mailbox.smtpHost || "—"}
@@ -312,16 +339,16 @@ export default function EmailPage({
               </article>
 
               {mailbox.popHost ? (
-                <article className="iwfw-mail-card iwfw-mail-card--pop">
-                  <header className="iwfw-mail-card__head">
-                    <p className="iwfw-mail-card__eyebrow">Optional</p>
-                    <h3>POP3 — alternate incoming</h3>
+                <article className="dash-server dash-server--optional">
+                  <header className="dash-server__head">
+                    <p className="dash-server__eyebrow">Optional</p>
+                    <h3 className="dash-h3">POP3: alternative incoming</h3>
                     <p>
-                      Only needed if an app asks for POP instead of IMAP. Prefer
+                      Only needed if an app asks for POP instead of IMAP. Use
                       IMAP when you can.
                     </p>
                   </header>
-                  <dl className="iwfw-dash-dl">
+                  <dl className="dash-rows dash-rows--copy">
                     <CopyRow label="POP3 server" value={mailbox.popHost} />
                     <CopyRow
                       label="Port"
@@ -341,14 +368,16 @@ export default function EmailPage({
             </div>
           </section>
 
-          <section className="iwfw-dash-panel">
-            <div className="iwfw-dash-panel-head">
-              <h2>Set up on your devices</h2>
+          <section className="dash-section" aria-labelledby="dash-guides-title">
+            <div className="dash-section-head">
+              <h2 id="dash-guides-title" className="dash-h2">
+                Set up on your devices
+              </h2>
             </div>
-            <ul className="iwfw-mail-guides">
+            <ul className="dash-guides">
               {MAIL_CLIENT_GUIDES.map((guide) => (
                 <li key={guide.id}>
-                  <strong>{guide.title}</strong>
+                  <h3 className="dash-h3">{guide.title}</h3>
                   {"body" in guide ? <p>{guide.body}</p> : null}
                   {"steps" in guide ? (
                     <ol>
@@ -363,10 +392,12 @@ export default function EmailPage({
           </section>
         </>
       ) : (
-        <div className="iwfw-dash-split">
-          <Panel>
-            <h2>Mailbox preference</h2>
-            <Form method="post" className="iwfw-start__form">
+        <div className="dash-split">
+          <section className="dash-panel" aria-labelledby="dash-mail-pref-title">
+            <h2 id="dash-mail-pref-title" className="dash-h2">
+              Mailbox preference
+            </h2>
+            <Form method="post" className="dash-form">
               {loaderData.primary?.id ? (
                 <input type="hidden" name="org" value={loaderData.primary.id} />
               ) : null}
@@ -393,7 +424,7 @@ export default function EmailPage({
                   name="migrationRequired"
                   defaultChecked={current?.migrationRequired}
                 />
-                <span>I need help migrating from an existing mailbox</span>
+                <span>I need help moving from an existing mailbox</span>
               </label>
               <label className="iwfw-check">
                 <input
@@ -405,29 +436,29 @@ export default function EmailPage({
                   I understand MX changes may be needed when we set this up
                 </span>
               </label>
-              {actionData && "saved" in actionData && actionData.saved && (
-                <p className="iwfw-start__ok" role="status">
-                  Preference saved.
-                </p>
-              )}
-              {"error" in (actionData ?? {}) && actionData?.error && (
-                <p className="iwfw-start__error" role="alert">
-                  {actionData.error}
-                </p>
-              )}
-              <button
-                type="submit"
-                className="iwfw-btn iwfw-btn--green"
-                disabled={busy}
-              >
-                {busy ? "Saving…" : "Save preference"}
-              </button>
+              {actionData && "saved" in actionData && actionData.saved ? (
+                <Alert tone="ok">Preference saved.</Alert>
+              ) : null}
+              {"error" in (actionData ?? {}) && actionData?.error ? (
+                <Alert tone="error">{actionData.error}</Alert>
+              ) : null}
+              <div>
+                <button
+                  type="submit"
+                  className="dash-btn dash-btn--go"
+                  disabled={busy}
+                >
+                  {busy ? "Saving…" : "Save preference"}
+                </button>
+              </div>
             </Form>
-          </Panel>
+          </section>
 
-          <Panel>
-            <h2>Status</h2>
-            <dl className="iwfw-dash-dl">
+          <section className="dash-prose" aria-labelledby="dash-mail-status-title">
+            <h2 id="dash-mail-status-title" className="dash-h2">
+              Status
+            </h2>
+            <dl className="dash-rows">
               <div>
                 <dt>Preferred mailbox</dt>
                 <dd>{preferredAddress || "info@your-domain"}</dd>
@@ -435,17 +466,22 @@ export default function EmailPage({
               <div>
                 <dt>Mailbox status</dt>
                 <dd>
-                  {mailbox
-                    ? mailboxStatusLabel(mailbox.status)
-                    : "We’ll add webmail and app setup details here once your mailbox is ready"}
+                  {mailbox ? (
+                    <StatusMark tone={mailboxTone(mailbox.status)}>
+                      {mailboxStatusLabel(mailbox.status)}
+                    </StatusMark>
+                  ) : (
+                    "Not set up yet"
+                  )}
                 </dd>
               </div>
             </dl>
-            <p className="iwfw-dash-fine">
-              When it’s ready you’ll see webmail, SMTP/IMAP settings, and
-              step-by-step guides for Outlook, Apple Mail, Gmail and phones.
+            <p className="dash-fine">
+              {mailbox
+                ? "When it’s ready you’ll see webmail, SMTP/IMAP settings, and step-by-step guides for Outlook, Apple Mail, Gmail and phones."
+                : "We’ll add webmail and app setup details here once your mailbox is ready, including SMTP/IMAP settings and step-by-step guides for Outlook, Apple Mail, Gmail and phones."}
             </p>
-          </Panel>
+          </section>
         </div>
       )}
     </div>

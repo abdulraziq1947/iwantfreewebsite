@@ -1,7 +1,8 @@
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import { Link } from "react-router";
 import { Badge } from "@iwfw/ui";
 import type { AttentionBoard, AttentionItem } from "../lib/attention";
+import { StatusMark } from "./dash-ui";
 
 function severityTone(
   severity: AttentionItem["severity"],
@@ -67,6 +68,82 @@ function ItemList({
   );
 }
 
+function ItemLink({ item, className }: { item: AttentionItem; className: string }) {
+  if (!item.to || !item.cta) return null;
+  return item.to.startsWith("http") ? (
+    <a className={className} href={item.to} target="_blank" rel="noreferrer">
+      {item.cta}
+    </a>
+  ) : (
+    <Link className={className} to={item.to}>
+      {item.cta}
+    </Link>
+  );
+}
+
+/** Customer dashboard version; styled by `.dash-attn` in `app/dashboard.css`. */
+function CustomerAttention({
+  board,
+  title,
+  gbpActions,
+}: {
+  board: AttentionBoard;
+  title: string;
+  gbpActions?: ReactNode;
+}) {
+  const headingId = useId();
+  const pending = board.customerPendingCount;
+  const items = board.customer.filter((i) => i.severity === "action");
+
+  return (
+    <section className="dash-attn" aria-labelledby={headingId}>
+      <div className="dash-attn__head">
+        <span className="dash-attn__count" aria-hidden="true">
+          {pending}
+        </span>
+        <div>
+          <h2 id={headingId} className="dash-h2">
+            {title}
+          </h2>
+          <p className="dash-attn__lead">
+            {`${pending} thing${pending === 1 ? "" : "s"} to do on your side.`}
+          </p>
+        </div>
+      </div>
+
+      {items.length === 0 ? (
+        <p className="dash-attn__empty">You’re all caught up.</p>
+      ) : (
+        <ul className="dash-attn__list">
+          {items.map((item) => (
+            <li key={item.id}>
+              <div>
+                <h3 className="dash-h3">{item.title}</h3>
+                <p>{item.body}</p>
+              </div>
+              <ItemLink item={item} className="dash-btn dash-btn--ink dash-btn--sm" />
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="dash-attn__gbp">
+        <div>
+          <p className="dash-attn__label">Google Business Profile</p>
+          <p className="dash-attn__gbp-title">
+            <strong>{board.gbp.label}</strong>
+            <StatusMark tone={board.gbp.granted ? "ok" : "muted"}>
+              {board.gbp.granted ? "Confirmed" : "Not confirmed"}
+            </StatusMark>
+          </p>
+          <p>{board.gbp.detail}</p>
+        </div>
+        {gbpActions}
+      </div>
+    </section>
+  );
+}
+
 export function AttentionBoardCard({
   board,
   perspective,
@@ -88,18 +165,13 @@ export function AttentionBoardCard({
     return null;
   }
 
-  const primary =
-    perspective === "customer"
-      ? board.customer.filter((i) => i.severity === "action")
-      : board.staff;
-  const secondary =
-    perspective === "staff"
-      ? board.customer.filter((i) => i.severity === "action")
-      : [];
-  const primaryLabel =
-    perspective === "customer" ? "Your actions" : "Staff actions";
-  const secondaryLabel = "Waiting on customer";
-  const showSecondary = perspective === "staff";
+  if (perspective === "customer") {
+    return (
+      <CustomerAttention board={board} title={title} gbpActions={gbpActions} />
+    );
+  }
+
+  const customerActions = board.customer.filter((i) => i.severity === "action");
 
   return (
     <section
@@ -137,29 +209,18 @@ export function AttentionBoardCard({
         </div>
       </div>
 
-      <div
-        className={`iwfw-attention__columns${showSecondary ? "" : " is-single"}`}
-      >
+      <div className="iwfw-attention__columns">
         <div>
-          <h3>{primaryLabel}</h3>
+          <h3>Staff actions</h3>
+          <ItemList items={board.staff} empty="No staff actions open." />
+        </div>
+        <div>
+          <h3>Waiting on customer</h3>
           <ItemList
-            items={primary}
-            empty={
-              perspective === "customer"
-                ? "You’re all caught up."
-                : "No staff actions open."
-            }
+            items={customerActions}
+            empty="Customer has no open actions."
           />
         </div>
-        {showSecondary ? (
-          <div>
-            <h3>{secondaryLabel}</h3>
-            <ItemList
-              items={secondary}
-              empty="Customer has no open actions."
-            />
-          </div>
-        ) : null}
       </div>
     </section>
   );

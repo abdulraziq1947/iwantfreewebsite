@@ -345,6 +345,7 @@ export function MediaUploader({
           type="file"
           accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
           multiple
+          aria-label="Choose images to upload"
           className="iwfw-uploader__input"
           disabled={!ready}
           onChange={(e) => {

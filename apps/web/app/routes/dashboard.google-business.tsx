@@ -1,5 +1,4 @@
 import { data, Form, Link, useNavigation } from "react-router";
-import { Badge, Panel } from "@iwfw/ui";
 import { eq, onboardingProfiles } from "@iwfw/db";
 import { getConfig } from "../lib/env.server";
 import { requireAuth } from "../lib/session.server";
@@ -11,6 +10,13 @@ import {
   NewWebsiteButton,
   WebsiteSwitcher,
 } from "../components/website-switcher";
+import {
+  Alert,
+  CheckIcon,
+  PageHead,
+  StatusMark,
+  type DashTone,
+} from "../components/dash-ui";
 import type { Route } from "./+types/dashboard.google-business";
 
 export function meta(_args: Route.MetaArgs) {
@@ -115,24 +121,25 @@ export default function GoogleBusinessPage({
         : gbp?.outcome === "no_profile"
           ? "No profile yet"
           : "Not granted yet";
+  const tone: DashTone = granted ? "ok" : gbp?.outcome ? "wait" : "muted";
 
   return (
-    <div className="iwfw-dash-page">
-      <header className="iwfw-dash-page__header">
-        <div>
-          <h1>Google Business Profile</h1>
-          <p>
-            Weekly posts and review replies are included. Invite us as Manager —
-            not Owner — for the selected website.
-          </p>
-        </div>
-        <div className="iwfw-dash-page__header-actions">
-          {workspace.orgs.length > 0 ? <NewWebsiteButton /> : null}
-          <Badge tone={granted ? "success" : gbp?.outcome ? "warning" : "neutral"}>
-            {label}
-          </Badge>
-        </div>
-      </header>
+    <div className="dash-page">
+      <PageHead
+        kicker={tradingName ?? "Your website"}
+        title="Google Business Profile"
+        lead="Weekly posts and review replies are included. Invite us as Manager (not Owner) for the selected website."
+        aside={
+          <>
+            <StatusMark tone={tone}>{label}</StatusMark>
+            {workspace.orgs.length > 0 ? (
+              <NewWebsiteButton className="dash-btn dash-btn--line dash-btn--sm">
+                New website
+              </NewWebsiteButton>
+            ) : null}
+          </>
+        }
+      />
 
       <WebsiteSwitcher
         orgs={workspace.orgs}
@@ -141,31 +148,32 @@ export default function GoogleBusinessPage({
       />
 
       {!workspace.primary ? (
-        <Panel>
-          <h2>No website yet</h2>
-          <p className="iwfw-dash-copy">
+        <section className="dash-empty-state" aria-labelledby="dash-gbp-empty">
+          <h2 id="dash-gbp-empty" className="dash-h2">
+            No website yet
+          </h2>
+          <p className="dash-copy">
             Finish checkout first, then come back to connect Google Business for
             that site.
           </p>
-        </Panel>
+        </section>
       ) : (
-        <div className="iwfw-dash-split" key={activeId ?? "none"}>
-          <Panel>
-            <h2>
+        <div className="dash-split" key={activeId ?? "none"}>
+          <section className="dash-panel" aria-labelledby="dash-gbp-invite-title">
+            <h2 id="dash-gbp-invite-title" className="dash-h2">
               Manager invite
               {tradingName ? (
-                <>
-                  {" "}
-                  · <span className="iwfw-dash-inline-site">{tradingName}</span>
-                </>
+                <span className="dash-h2__site"> for {tradingName}</span>
               ) : null}
             </h2>
-            <p className="iwfw-dash-copy">
+            <p className="dash-copy">
               In Google Business Profile, invite this email as{" "}
               <strong>Manager</strong>:
             </p>
-            <code className="iwfw-dash-code">{loaderData.gbpManagerEmail}</code>
-            <Form method="post" className="iwfw-start__form" style={{ marginTop: "1rem" }}>
+            <p className="dash-invite">
+              <code>{loaderData.gbpManagerEmail}</code>
+            </p>
+            <Form method="post" className="dash-form">
               {activeId ? (
                 <input type="hidden" name="org" value={activeId} />
               ) : null}
@@ -175,7 +183,7 @@ export default function GoogleBusinessPage({
                 defaultValue={gbp?.profileUrl || ""}
                 placeholder="https://g.page/…"
               />
-              <fieldset className="iwfw-dash-fieldset">
+              <fieldset className="dash-fieldset">
                 <legend>How’s the invite going?</legend>
                 <label className="iwfw-check">
                   <input
@@ -212,47 +220,61 @@ export default function GoogleBusinessPage({
                   defaultChecked={gbp?.publishDirectly}
                 />
                 <span>
-                  Team may publish weekly posts without asking each time
+                  Our team may publish weekly posts without asking you each
+                  time
                 </span>
               </label>
-              {actionData && "saved" in actionData && actionData.saved && (
-                <p className="iwfw-start__ok" role="status">
-                  Saved for {tradingName ?? "this website"} — thanks.
-                </p>
-              )}
-              {"error" in (actionData ?? {}) && actionData?.error && (
-                <p className="iwfw-start__error" role="alert">
-                  {actionData.error}
-                </p>
-              )}
-              <button
-                type="submit"
-                className="iwfw-btn iwfw-btn--green"
-                disabled={busy}
-              >
-                {busy ? "Saving…" : "Save update"}
-              </button>
+              {actionData && "saved" in actionData && actionData.saved ? (
+                <Alert tone="ok">
+                  Saved for {tradingName ?? "this website"}. Thank you.
+                </Alert>
+              ) : null}
+              {"error" in (actionData ?? {}) && actionData?.error ? (
+                <Alert tone="error">{actionData.error}</Alert>
+              ) : null}
+              <div>
+                <button
+                  type="submit"
+                  className="dash-btn dash-btn--go"
+                  disabled={busy}
+                >
+                  {busy ? "Saving…" : "Save update"}
+                </button>
+              </div>
             </Form>
-          </Panel>
+          </section>
 
-          <Panel>
-            <h2>What’s included</h2>
-            <ul className="iwfw-dash-list">
-              <li>One Google Business Profile post each week</li>
-              <li>Help replying to reviews</li>
-              <li>Status tracking per website in your dashboard</li>
+          <section className="dash-prose" aria-labelledby="dash-gbp-included-title">
+            <h2 id="dash-gbp-included-title" className="dash-h2">
+              What’s included
+            </h2>
+            <ul className="dash-ticks">
+              <li>
+                <CheckIcon />
+                One Google Business Profile post each week
+              </li>
+              <li>
+                <CheckIcon />
+                Help replying to reviews
+              </li>
+              <li>
+                <CheckIcon />
+                Status tracking per website in your dashboard
+              </li>
             </ul>
-            <p className="iwfw-dash-fine">
-              Access is marked connected only after our team accepts the invite
-              in Google for this website.
+            <p className="dash-fine">
+              Access is marked as connected only after our team accepts the
+              invite in Google for this website.
             </p>
-            <Link
-              to={withActiveOrg("/dashboard", activeId)}
-              className="iwfw-btn iwfw-btn--outline"
-            >
-              Back to overview
-            </Link>
-          </Panel>
+            <div>
+              <Link
+                to={withActiveOrg("/dashboard", activeId)}
+                className="dash-btn dash-btn--line"
+              >
+                Back to overview
+              </Link>
+            </div>
+          </section>
         </div>
       )}
     </div>
