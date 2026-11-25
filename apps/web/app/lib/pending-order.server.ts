@@ -13,6 +13,31 @@ import {
 export const ORDER_COOKIE = "iwfw_order";
 export const ORDER_TTL_MS = 1000 * 60 * 60 * 24 * 14; // 14 days
 
+/** Unpaid get-started funnel statuses staff can remind or delete. */
+export const UNPAID_FUNNEL_STATUSES = [
+  "draft",
+  "ready_for_checkout",
+  "checkout_open",
+  "expired",
+  "abandoned",
+  "failed",
+] as const;
+
+export type UnpaidFunnelStatus = (typeof UNPAID_FUNNEL_STATUSES)[number];
+
+export function isUnpaidFunnelStatus(
+  status: string,
+): status is UnpaidFunnelStatus {
+  return (UNPAID_FUNNEL_STATUSES as readonly string[]).includes(status);
+}
+
+export function cookieMaxAgeSecFromExpiry(
+  expiresAt: Date,
+  nowMs = Date.now(),
+): number {
+  return Math.max(60, Math.floor((expiresAt.getTime() - nowMs) / 1000));
+}
+
 type Db = ReturnType<typeof createDb>;
 
 export function orderCookieHeader(resumeToken: string, maxAgeSec: number): string {
@@ -39,6 +64,26 @@ export async function getPendingOrderByResumeToken(db: Db, token: string) {
 
 export async function getPendingOrderById(db: Db, id: string) {
   return db.select().from(pendingOrders).where(eq(pendingOrders.id, id)).get();
+}
+
+/** Statuses getOrCreateDraftOrder will refuse, creating a new draft instead. */
+export function unpaidOrderNeedsRevive(status: string): boolean {
+  return status === "expired" || status === "abandoned" || status === "failed";
+}
+
+export function revivedUnpaidOrderStatus(order: {
+  status: string;
+  termsAcceptedAt: Date | null;
+  domainName: string | null;
+  email: string | null;
+}): "draft" | "ready_for_checkout" | "checkout_open" {
+  if (order.status === "ready_for_checkout" || order.status === "checkout_open") {
+    return order.status;
+  }
+  if (order.termsAcceptedAt && order.domainName && order.email) {
+    return "ready_for_checkout";
+  }
+  return "draft";
 }
 
 export async function getOrCreateDraftOrder(

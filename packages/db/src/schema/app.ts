@@ -283,6 +283,8 @@ export const pendingOrders = sqliteTable(
     userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
     paidAt: integer("paid_at", { mode: "timestamp_ms" }),
     expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+    reminderSentAt: integer("reminder_sent_at", { mode: "timestamp_ms" }),
+    reminderSendCount: integer("reminder_send_count").notNull().default(0),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .notNull()
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),

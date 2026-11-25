@@ -944,6 +944,10 @@ html body .iwfw-admin {
   font-size: 0.84rem;
 }
 
+.iwfw-admin .adm-table--orders {
+  min-width: 52rem;
+}
+
 .iwfw-admin .adm-table th,
 .iwfw-admin .adm-table td {
   text-align: left;
