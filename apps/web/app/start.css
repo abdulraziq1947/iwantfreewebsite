@@ -28,8 +28,10 @@
 
 .st-wrap {
   width: min(var(--st-wrap), calc(100% - 2 * var(--st-gutter)));
+  max-width: 100%;
   margin: 0 auto;
   padding: 1.5rem 0 3.5rem;
+  min-width: 0;
 }
 
 .iwfw-start-shell--solo .st-wrap {
@@ -39,6 +41,7 @@
 .st-grid {
   display: grid;
   gap: 1.5rem;
+  min-width: 0;
 }
 
 @media (min-width: 960px) {
@@ -269,11 +272,13 @@
 
 .st-title {
   margin: 0;
+  max-width: 100%;
   font-family: var(--st-display);
-  font-size: clamp(1.7rem, 4.5vw, 2.45rem);
+  font-size: clamp(1.55rem, 4.5vw, 2.45rem);
   font-weight: 800;
   letter-spacing: -0.04em;
-  line-height: 1.08;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
 }
 
 .st-lead {

@@ -50,6 +50,8 @@ html {
 html,
 body {
   min-height: 100%;
+  max-width: 100%;
+  overflow-x: clip;
   color: var(--iwfw-ink);
   background: #ffffff;
   font-family: var(--iwfw-font-sans);
@@ -74,6 +76,11 @@ h3 {
 }
 
 /* <Reveal>: visible by default; JS marks below-fold blocks pending, then visible. */
+.iwfw-reveal {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .iwfw-reveal.is-pending {
   opacity: 0;
   transform: translateY(1.25rem);
@@ -172,6 +179,8 @@ h3 {
 /* Top bar */
 .iwfw-public {
   min-height: 100vh;
+  max-width: 100%;
+  overflow-x: clip;
   background:
     radial-gradient(ellipse 72% 48% at 88% 0%, #e4edff 0%, transparent 56%),
     radial-gradient(ellipse 48% 36% at 0% 12%, #eef9f2 0%, transparent 50%),
@@ -222,6 +231,7 @@ h3 {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
 .iwfw-topbar__tld {
@@ -392,14 +402,18 @@ h3 {
 /* Generic public content pages */
 .iwfw-page {
   width: min(720px, calc(100% - 1.5rem));
+  max-width: 100%;
   margin: 0 auto;
   padding: 2.5rem 0 3.5rem;
+  min-width: 0;
 }
 
 .iwfw-page h1 {
   margin: 0;
-  font-size: clamp(1.9rem, 4vw, 2.5rem);
+  max-width: 100%;
+  font-size: clamp(1.7rem, 4vw, 2.5rem);
   font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .iwfw-page__lead {
@@ -533,14 +547,18 @@ h3 {
 /* Pricing page */
 .iwfw-pricing {
   width: min(720px, calc(100% - 1.5rem));
+  max-width: 100%;
   margin: 0 auto;
   padding: 2.75rem 0 4rem;
+  min-width: 0;
 }
 
 .iwfw-pricing h1 {
   margin: 0;
-  font-size: clamp(2rem, 4vw, 2.6rem);
+  max-width: 100%;
+  font-size: clamp(1.7rem, 4vw, 2.6rem);
   font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .iwfw-pricing__lead {
@@ -3011,6 +3029,23 @@ h3 {
 }
 
 @media (max-width: 640px) {
+  .iwfw-cookie {
+    padding: 0.55rem 0.55rem calc(0.55rem + env(safe-area-inset-bottom));
+  }
+
+  .iwfw-cookie__panel {
+    gap: 0.55rem;
+    padding: 0.8rem 0.85rem 0.85rem;
+  }
+
+  .iwfw-cookie__copy h2 {
+    font-size: 0.98rem;
+  }
+
+  .iwfw-cookie__copy p {
+    font-size: 0.82rem;
+  }
+
   .iwfw-cookie__actions {
     display: grid;
   }
@@ -3919,6 +3954,17 @@ h3 {
 
 .iwfw-topbar__brand .iwfw-brand__wordmark {
   font-size: 1.05rem;
+}
+
+@media (max-width: 359.98px) {
+  .iwfw-topbar__brand .iwfw-brand__wordmark {
+    font-size: 0.88rem;
+  }
+
+  /* Hamburger already includes Call — free room for the wordmark. */
+  .iwfw-topbar__phone {
+    display: none;
+  }
 }
 
 .iwfw-dash__logo .iwfw-brand,
