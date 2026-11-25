@@ -18,7 +18,7 @@ type ShellVariant = "intro" | "step" | "solo";
 function shellVariant(pathname: string): ShellVariant {
   const path = pathname.replace(/\/+$/, "");
   if (path === "/get-started") return "intro";
-  if (/^\/get-started\/(confirmation|activate|account)\b/.test(path)) {
+  if (/^\/get-started\/(confirmation|activate|account|resume)\b/.test(path)) {
     return "solo";
   }
   return "step";

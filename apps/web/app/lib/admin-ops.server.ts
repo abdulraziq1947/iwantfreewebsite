@@ -324,6 +324,8 @@ export async function listAdminOrders(db: Db) {
     paidAt: o.paidAt ? o.paidAt.toISOString() : null,
     createdAt: o.createdAt ? o.createdAt.toISOString() : null,
     expiresAt: o.expiresAt ? o.expiresAt.toISOString() : null,
+    reminderSentAt: o.reminderSentAt ? o.reminderSentAt.toISOString() : null,
+    reminderSendCount: o.reminderSendCount ?? 0,
   }));
 }
 

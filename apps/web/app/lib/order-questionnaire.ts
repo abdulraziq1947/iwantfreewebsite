@@ -142,6 +142,20 @@ export function questionnaireResumePath(rawStep: number): string {
   return "/get-started/personal";
 }
 
+/** Where an unpaid funnel order should land after a reminder or resume link. */
+export function unpaidOrderResumePath(order: {
+  status: string;
+  questionnaireStep: number;
+}): string {
+  if (
+    order.status === "ready_for_checkout" ||
+    order.status === "checkout_open"
+  ) {
+    return "/get-started/review";
+  }
+  return questionnaireResumePath(order.questionnaireStep);
+}
+
 export function validateQuestionnaireStep(
   step: number,
   data: OrderQuestionnaire,
